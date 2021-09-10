@@ -1,0 +1,18 @@
+.scroll-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    opacity: 0;
+    transition: all .2s ease-in-out;    
+    .button{    
+        background: #705870;   
+        .icon{
+            color: white;
+        } 
+    }
+    
+   }
+   .show-scrollTop {
+    opacity: 1;
+    transition: all .2s ease-in-out;
+   }

@@ -1,0 +1,70 @@
+.field {
+    max-width: 600px;
+    margin: auto;
+}
+
+.box {
+    border-radius: 10px;
+    #wrap {
+        border-radius: 5px;
+        &:hover {
+            box-shadow: 0px 0px 10px -2px rgba(0, 0, 0, 0.75) inset;
+        }
+
+        #link {
+            color: lightblue;
+            &:hover {
+                color: blue;
+                text-decoration: underline;
+            }
+        }
+    }
+}
+
+.hyphenate {
+    /* Careful, this breaks the word wherever it is without a hyphen */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+
+    /* Adds a hyphen where the word breaks */
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    -moz-hyphens: auto;
+    hyphens: auto;
+}
+@media only screen and (min-width: 0px) {
+    #wrap {
+        max-width: 150px;
+        margin: auto;
+        border-style: solid;
+        border-width: 1px;
+    }
+}
+
+@media only screen and (min-width: 200px) {
+    #wrap {
+        max-width: 150px;
+        margin: auto;
+        border-style: solid;
+        border-width: 1px;
+    }
+}
+@media only screen and (min-width: 320px) {
+    #wrap {
+        max-width: 220px;
+        margin: auto;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+    #wrap {
+        max-width: 350px;
+        margin: auto;
+    }
+}
+@media only screen and (min-width: 1200px) {
+    #wrap {
+        max-width: 100%;
+        margin: auto;
+    }
+}

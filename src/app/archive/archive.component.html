@@ -1,0 +1,208 @@
+ <div class="columns is-multiline">
+   <div class="column is-full">
+     <!--======================== LOGIN BUTTON ====================================-->
+     <div class="section">
+       <div class="content">
+         <h1 class="has-text-centered">Archive</h1>
+       </div>
+       <div class="divider is-black"><button routerLink="/archiveedit" class="button is-dark">Login
+           Archive Manager</button>
+       </div>
+     </div>
+     <!--======================== LOGIN BUTTON ====================================-->
+   </div>
+
+   <div class="column">
+     <section class="hero is-fullheight">
+       <div class="hero-body has-background-primary-dark is-align-items-stretch">
+         <div class="container">
+           <!-- ========================== Search Filter ================================= -->
+           <div [ngSwitch]="SelectedIndex">
+             <div class="section" id="s1">
+               <div class="field has-addons" *ngSwitchCase="0">
+                 <div class="dropdown is-hoverable">
+                   <div class="dropdown-trigger">
+                     <p class="control">
+                       <a class="button is-dark" aria-haspopup="true" aria-controls="dropdown-menu">
+                         <span class="is-hidden-mobile">Search Filter</span>
+                         <span class="icon is-small">
+                           <fa-icon [icon]="faChevronDown"></fa-icon>
+                         </span>
+                       </a>
+                     </p>
+                   </div>
+                   <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                     <div class="dropdown-content has-background-dark" *ngFor="let SearchText of Search; index as i">
+                       <a class="dropdown-item button is-dark" (click)="ShowSearch(i)">
+                         {{ SearchText }}
+                       </a>
+                     </div>
+                   </div>
+                 </div>
+                 <div class="control is-expanded">
+                   <input class="input" type="text" [(ngModel)]="SearchRoom" placeholder="Search By Room">
+                 </div>
+                 <div class="control">
+                   <a class="button is-dark" [routerLink]="['/archive']" [queryParams]="SearchQueryParamCreator(2, 0)"><span class="is-hidden-mobile">Search</span><span
+                       class="icon is-small">
+                       <fa-icon [icon]="faSearch"></fa-icon>
+                     </span></a>
+                 </div>
+                 <div class="control">
+                   <a class="button is-dark" [routerLink]="['/archive']"><span class="is-hidden-mobile">Clear</span><span
+                       class="icon is-small">
+                       <fa-icon [icon]="faRedoAlt"></fa-icon>
+                     </span></a>
+                 </div>
+               </div>
+               <div class="field has-addons" *ngSwitchCase="1">
+                 <div class="dropdown is-hoverable">
+                   <div class="dropdown-trigger">
+                     <p class="control">
+                       <a class="button is-dark" aria-haspopup="true" aria-controls="dropdown-menu">
+                         <span class="is-hidden-mobile">Search Filter</span>
+                         <span class="icon is-small">
+                           <fa-icon [icon]="faChevronDown"></fa-icon>
+                         </span>
+                       </a>
+                     </p>
+                   </div>
+                   <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                     <div class="dropdown-content has-background-dark" *ngFor="let SearchText of Search; index as i">
+                       <a class="dropdown-item button is-dark" (click)="ShowSearch(i)">
+                         {{ SearchText }}
+                       </a>
+                     </div>
+                   </div>
+                 </div>
+                 <div class="control is-expanded">
+                   <input class="input" type="text" [(ngModel)]="SearchLink" placeholder="Search By Link">
+                 </div>
+                 <div class="control">
+                   <a class="button is-dark" [routerLink]="['/archive']" [queryParams]="SearchQueryParamCreator(2, 1)"><span class="is-hidden-mobile">Search</span><span
+                       class="icon is-small">
+                       <fa-icon [icon]="faSearch"></fa-icon>
+                     </span></a>
+                 </div>
+                 <div class="control">
+                   <a class="button is-dark" [routerLink]="['/archive']"><span class="is-hidden-mobile">Clear</span><span
+                       class="icon is-small">
+                       <fa-icon [icon]="faRedoAlt"></fa-icon>
+                     </span></a>
+                 </div>
+               </div>
+               <div class="field has-addons" *ngSwitchCase="2">
+                 <div class="dropdown is-hoverable">
+                   <div class="dropdown-trigger">
+                     <p class="control">
+                       <a class="button is-dark" aria-haspopup="true" aria-controls="dropdown-menu">
+                         <span class="is-hidden-mobile">Search Filter</span>
+                         <span class="icon is-small">
+                           <fa-icon [icon]="faChevronDown"></fa-icon>
+                         </span>
+                       </a>
+                     </p>
+                   </div>
+                   <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                     <div class="dropdown-content has-background-dark" *ngFor="let SearchText of Search; index as i">
+                       <a class="dropdown-item button is-dark" (click)="ShowSearch(i)">
+                         {{ SearchText }}
+                       </a>
+                     </div>
+                   </div>
+                 </div>
+                 <div class="control is-expanded">
+                   <input class="input" type="text" [(ngModel)]="SearchTags" placeholder="Search By Tags">
+                 </div>
+                 <div class="control">
+                   <a class="button is-dark" [routerLink]="['/archive']" [queryParams]="SearchQueryParamCreator(2, 2)"><span class="is-hidden-mobile">Search</span><span
+                       class="icon is-small">
+                       <fa-icon [icon]="faSearch"></fa-icon>
+                     </span></a>
+                 </div>
+                 <div class="control">
+                   <a class="button is-dark" [routerLink]="['/archive']"><span class="is-hidden-mobile">Clear</span><span
+                       class="icon is-small">
+                       <fa-icon [icon]="faRedoAlt"></fa-icon>
+                     </span></a>
+                 </div>
+               </div>
+             </div>
+           </div>
+           <!--====================== Search Filter ================================-->
+
+           <!--                Card is working           -->
+           <div class="columns is-multiline">
+             <div class="column is-6" *ngFor="let Archive of ArchiveList">
+               <div class="card animate__animated animate__fadeInUp">
+                 <header class="card-header has-background-dark">
+                   <div class="card-header-title has-text-centered has-text-white">
+                     Room : <a style="margin-left: 10px;" class="tag taglinks is-clickable"
+                     [routerLink]="['/room', Archive.Room]">
+                       {{ Archive.Room }} </a>
+                     <div class="pl-6" *ngIf="Archive.Pass"><span class="icon is-small">
+                         <fa-icon [icon]="faLock"></fa-icon>
+                       </span>Password Protected</div>
+                   </div>
+                   <button class="card-header-icon" style="pointer-events: none;" aria-label="more options">
+                     <strong> {{ Archive.Star }} </strong>
+                     <fa-icon style="margin-left: 5px;" [icon]="faStar"></fa-icon>
+                   </button>
+                 </header>
+                 <div class="card-content">
+                   <div class="content">
+                     Title : {{ Archive.Nick }} <br>
+                     Link to stream : <a href="{{ Archive.StreamLink }}" target="_blank">{{ Archive.StreamLink }}</a>
+                     <br>
+                     Tags:
+                     <span *ngFor="let Tag of Archive.Tags">
+                       <a style="margin-left: 5px;" class="tag taglinks is-rounded is-link is-clickable"
+                         *ngIf="Tag !== ''" [routerLink]="['/archive']" [queryParams]="TagClick(Tag)">{{ Tag }}</a>
+                     </span>
+                   </div>
+                 </div>
+                 <footer class="card-footer">
+                   <a class="card-footer-item" [href]="sanitize(Archive.Link)">
+                     Desktop Client
+                   </a>
+                   <a class="card-footer-item" [routerLink]="['/proxyapp']" [queryParams]="{archive: Archive.Link}">
+                     Web Client
+                   </a>
+                   <a class="card-footer-item" [routerLink]="['/archivecard', Archive.Link]">
+                     Archive Page
+                   </a>
+                 </footer>
+               </div>
+             </div>
+           </div>
+           <!--==================== CARD ================-->
+
+            <!--                PAGE PICKER           -->
+            <div *ngIf="this.TotalPage > 0" class="columns is-centered is-multiline">
+              <div class="column is-narrow">
+                <a class="icon is-clickable" style="color: white;" [routerLink]="['/archive']" [queryParams]="SearchQueryParamCreator(0, 0)">
+                  <fa-icon [icon]="faAngleDoubleLeft"></fa-icon>
+                </a>
+                <a class="icon is-clickable" style="color: white;" [routerLink]="['/archive']" [queryParams]="SearchQueryParamCreator(0, 1)">
+                  <fa-icon [icon]="faAngleLeft"></fa-icon>
+                </a>
+                <span *ngFor="let i of PageArray">
+                  <a *ngIf="i != this.CurrentPage" style="margin-left: 5px;" class="tag is-medium is-rounded is-link is-clickable" [routerLink]="['/archive']" [queryParams]="SearchQueryParamCreator(1, i)">{{ i }}</a>
+                  <span *ngIf="i == this.CurrentPage" style="margin-left: 5px; background-color: green;" class="tag is-medium is-rounded is-link is-clickable">{{ i }}</span>
+                </span>
+                <a class="icon is-clickable" style="color: white;" [routerLink]="['/archive']" [queryParams]="SearchQueryParamCreator(0, 2)">
+                  <fa-icon [icon]="faAngleRight"></fa-icon>
+                </a>
+                <a class="icon is-clickable" style="color: white;" [routerLink]="['/archive']" [queryParams]="SearchQueryParamCreator(0, 3)">
+                  <fa-icon [icon]="faAngleDoubleRight"></fa-icon>
+                </a>
+              </div>
+            </div>
+            <!--============= PAGE PICKER ============-->
+           
+         </div>
+       </div>
+     </section>
+   </div>
+ </div>
+ <app-scroll-to-top></app-scroll-to-top>

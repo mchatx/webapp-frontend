@@ -1,0 +1,57 @@
+.box1 {
+    max-width: 700px;
+    margin: auto;
+}
+.wrap {
+    /* These are technically the same, but use both */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+
+    -ms-word-break: break-all;
+    /* This is the dangerous one in WebKit, as it breaks things wherever */
+    word-break: break-all;
+    /* Instead use this non-standard one: */
+    word-break: break-word;
+
+    /* Adds a hyphen where the word breaks, if supported (No Blink) */
+    -ms-hyphens: auto;
+    -moz-hyphens: auto;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+}
+
+textarea {
+    resize: none;
+}
+@media only screen and (min-width: 0px) {
+    .wrap {
+        max-width: 150px;
+        margin: auto;
+    }
+}
+
+@media only screen and (min-width: 200px) {
+    .wrap {
+        max-width: 150px;
+        margin: auto;
+    }
+}
+@media only screen and (min-width: 420px) {
+    .wrap {
+        max-width: 260px;
+        margin: auto;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+    .wrap {
+        max-width: 100%;
+        margin: auto;
+    }
+}
+@media only screen and (min-width: 1200px) {
+    .wrap {
+        max-width: 100%;
+        margin: auto;
+    }
+}

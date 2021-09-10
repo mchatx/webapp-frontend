@@ -1,0 +1,233 @@
+<section class="hero is-fullheight-with-navbar">
+  <div class="hero-body is-align-items-stretch">
+    <div class="container">
+      <div class="mt-4">
+        <div class="box1 p-6">
+          <div class="columns">
+            <div class="column">
+              <!--------------------------  HEAD  -------------------------->
+              <div class="card">
+                <header class="card-header">
+                  <p class="card-header-title">
+                    Nick : {{ Nick }}
+                  </p>
+                </header>
+                <div class="card-content">
+                  <div class="content">
+                    <label class="label">Email :</label> {{ EmailAddress }}
+                  </div>
+                </div>
+              </div>
+              <!--========================  HEAD  ========================-->
+              <div class="control">
+                <p *ngIf="status !== ''" class="has-text-danger">{{ status }}</p>
+              </div>
+            </div>
+            <div class="column">
+              <div class="buttons">
+                <!--------------------------  CHANGE EMAIL ADDRESS  -------------------------->
+                <button class="button is-dark" [ngClass]="{'is-hidden': ishiddenemail}" (click)="ChangeMode(1)">Change
+                  Email Address</button>
+                <div *ngIf="mode == 1">
+                  <div class="field has-text-left">
+                    <label class="label">Email Address.</label>
+                    <div class="control has-icons-left">
+                      <input class="input is-rounded" type="text" placeholder="New email address" [(ngModel)]="input1">
+                      <span class="icon is-left is-small">
+                        <fa-icon [icon]="faAt"></fa-icon>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="field has-text-left">
+                    <label class="label">Password.</label>
+                    <div class="control has-icons-left">
+                      <input class="input is-rounded" type="password" placeholder="Password" [(ngModel)]="Pass">
+                      <span class="icon is-left is-small">
+                        <fa-icon [icon]="faLock"></fa-icon>
+                      </span>
+                    </div>
+                  </div>
+                  <a class="button is-dark" (click)="ChangeEmail()" #loadstate>Confirm</a>
+                  <a class="button is-dark" (click)="ChangeMode(0)">Cancel</a>
+                </div>
+                <!--========================  CHANGE EMAIL ADDRESS  ========================-->
+
+                <!--------------------------  CHANGE PASSWORD  -------------------------->
+                <button class="button is-dark" [ngClass]="{'is-hidden': ishiddenpass}" (click)="ChangeMode(2)">Change
+                  Password</button>
+
+                <div *ngIf="mode == 2">
+                  <div class="field has-text-left">
+                    <label class="label">Old Password.</label>
+                    <div class="control has-icons-left">
+                      <input class="input is-rounded" type="password" placeholder="Old password" [(ngModel)]="Pass">
+                      <span class="icon is-left is-small">
+                        <fa-icon [icon]="faLock"></fa-icon>
+                      </span>
+                    </div>
+                    <label class="label">New Password.</label>
+                    <div class="control has-icons-left">
+                      <input class="input is-rounded" type="password" placeholder="New password" [(ngModel)]="input1">
+                      <span class="icon is-left is-small">
+                        <fa-icon [icon]="faLock"></fa-icon>
+                      </span>
+                    </div>
+                    <div class="control has-icons-left">
+                      <input class="input is-rounded" type="password" placeholder="Confirm new password"
+                        [(ngModel)]="input2">
+                      <span class="icon is-left is-small">
+                        <fa-icon [icon]="faLock"></fa-icon>
+                      </span>
+                    </div>
+                  </div>
+                  <a class="button is-dark" (click)="ChangePass()" #loadstate>Change</a>
+                  <a class="button is-dark" (click)="ChangeMode(0)">Cancel</a>
+                </div>
+                <!--========================  CHANGE PASSWORD  ========================-->
+
+                <!--------------------------  DELETE  -------------------------->
+                <button class="button is-dark" [ngClass]="{'is-hidden': ishiddendel}" (click)="ChangeMode(3)">Delete
+                  Account</button>
+                <div [ngClass]="{ 'is-active' : isModalActive }" class="modal">
+                  <div class="modal-background" (click)="ChangeMode(0)"></div>
+                  <div class="modal-content">
+                    <div class="field has-text-left">
+                      <label class="label has-text-white">Enter your nick to confirm.</label>
+                      <div class="control has-icons-left">
+                        <input class="input is-rounded" type="text" placeholder="{{ Nick }}" [(ngModel)]="input1">
+                      </div>
+                    </div>
+                    <div class="field has-text-left">
+                      <label class="label has-text-white">Password.</label>
+                      <div class="control has-icons-left">
+                        <input class="input is-rounded" type="password" placeholder="Password" [(ngModel)]="Pass">
+                      </div>
+                    </div>
+                    <a class="button is-dark" (click)="DeleteAccount()" #loadstate>Delete</a>
+                    <a class="button is-dark" (click)="ChangeMode(0)">Cancel</a>
+                    <div class="control">
+                      <p *ngIf="status !== ''" class="has-text-danger">{{ status }}</p>
+                    </div>
+                  </div>
+                </div>
+                <!--========================  DELETE  ========================-->
+              </div>
+            </div>
+          </div>
+
+          <!------------------------- FRONT PAGE DATA ------------------------->
+          <div class="mt-6 columns" *ngIf="RoleTL">
+            <div class="column">
+              <div class="card">
+                <header class="card-header">
+                  <p class="card-header-title">
+                    Front Page Info
+                  </p>
+                </header>
+                <div class="card-content">
+                  <div class="content">
+                    <!--    DISPLAY MODE   -->
+                    <div *ngIf="!FPEditmode">
+                      <div class="field has-text-left">
+                        <label class="label">Links:</label>
+                        <div class="control">
+                          <div class="wrap" *ngFor="let Link of Links;">
+                            <span class="icon-text">
+                              <span class="icon">
+                                <ng-container [ngTemplateOutlet]="LinkIcon" [ngTemplateOutletContext]="{link:Link}">
+                                </ng-container>
+                              </span>
+                              <span>{{ Link }}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="field has-text-left">
+                        <label class="label">Note:</label>
+                        <div class="control">
+                          <article class="message is-black" [style.display]="Note === '' ? 'none' : 'block'">
+                            <div class="message-body" style="white-space: pre-wrap;">
+                              {{ Note }}
+                            </div>
+                          </article>
+                        </div>
+                      </div>
+                      <div class="field">
+                        <p class="control">
+                          <button class="button is-dark" (click)="OpenFPEdit()">Edit</button>
+                        </p>
+                      </div>
+                    </div>
+                    <!--    EDIT MODE   -->
+                    <div *ngIf="FPEditmode">
+                      <!--    LINKS   -->
+                      <div class="field has-text-left">
+                        <label class="label">Links:</label>
+                        <div class="wrap" *ngFor="let Link of LinksTemp; let i = index">
+                          <span class="icon-text">
+                            <span class="icon">
+                              <ng-container [ngTemplateOutlet]="LinkIcon" [ngTemplateOutletContext]="{link:Link}">
+                              </ng-container>
+                            </span>
+                            <span>{{ Link }}</span>
+                          </span>
+                          <button class="delete is-dark" (click)="DeleteFPLinks(i)"></button>
+                        </div>
+                        <div class="mt-2 control has-icons-left">
+                          <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="LinkInput"
+                            placeholder="Link...">
+                          <span class="icon is-left is-small">
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                          </span>
+                        </div>
+                      </div>
+                      <div class="field">
+                        <p class="control">
+                          <button class="button is-dark" (click)="AddLink()">Add</button>
+                        </p>
+                      </div>
+                      <!--    NOTE   -->
+                      <div class="field has-text-left">
+                        <label class="label">Note:</label>
+                        <p class="control">
+                          <textarea class="textarea" placeholder="Extra Note..." maxlength="1024"
+                            [(ngModel)]="NoteTemps"></textarea>
+                        </p>
+                      </div>
+                      <div class="field">
+                        <div class="control">
+                          <div class="buttons">
+                            <button class="button is-dark" (click)="CancelFPEdit()">Cancel Edit</button>
+                            <button class="button is-dark" (click)="SaveFPEdit()">Save Edit</button>
+                            <span class="ml-2">{{ NoteTemps.length }}/1024 </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!--======================= FRONT PAGE DATA =======================-->
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<!-------------------------------- LINK ICON SWITCHER ------------------------------->
+<ng-template #LinkIcon let-link='link'>
+  <div [ngSwitch]="CheckLink(link)">
+    <fa-icon *ngSwitchCase="'mail.com'" [icon]="faEnvelope"></fa-icon>
+    <fa-icon *ngSwitchCase="'youtube.com/channel/'" [icon]="faYoutube"></fa-icon>
+    <fa-icon *ngSwitchCase="'ko-fi.com/'" [icon]="faCoffee"></fa-icon>
+    <fa-icon *ngSwitchCase="'www.patreon.com/'" [icon]="faPatreon"></fa-icon>
+    <fa-icon *ngSwitchCase="'twitter.com/'" [icon]="faTwitter"></fa-icon>
+    <fa-icon *ngSwitchDefault [icon]="faLink"></fa-icon>
+  </div>
+</ng-template>
+<!--============================== LINK ICON SWITCHER =============================-->

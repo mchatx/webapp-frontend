@@ -1,0 +1,15 @@
+.box{
+    max-width: 700px;
+    margin: auto;        
+    border-radius: 15px;   
+    #sign_in{
+        color: #3273DC;
+        text-decoration: underline;
+        &:hover{
+            color: blue;
+            
+        }
+    }     
+           
+}     
+

@@ -1,0 +1,54 @@
+//Changing bulma variables and Global Styles
+// Import a Google Font
+
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,400;1,600;1,700;1,800&display=swap");
+
+body {
+    &::-webkit-scrollbar {
+        width: 7px;
+        height: 7px;
+    }
+    /* Track */
+    &::-webkit-scrollbar-track {
+        background: #8d8db1;
+        border-radius: 0px;
+    }
+    /* Handle */
+    &::-webkit-scrollbar-thumb {
+        background: #705870;
+        border-radius: 3px;
+    }
+    /* Handle on hover */
+    &::-webkit-scrollbar-thumb:hover {
+        background: #d84a85;
+    }
+}
+
+$body-overflow-y: auto;
+
+// Set your brand colors
+$comet: #585870;
+$brickred: #c32c3f;
+$bluevoilet: #ba39e2;
+$dandelion: #ffdb66;
+$trendy_pink: #705870;
+$brown: #757763;
+$beige-light: #d0d1cd;
+$beige-lighter: #f6f7f2;
+
+// Update Bulma's global variables
+$family-sans-serif: "Open Sans", sans-serif;
+$primary: $comet;
+
+// Update some of Bulma's component variables
+$body-background-color: $beige-lighter;
+$control-border-width: 2px;
+//$input-border-color: $brickred;
+//$input-border-color: $success;
+$input-shadow: none;
+
+$subtitle-size: 1.1rem;
+
+$section-padding: 1rem 1.5rem;
+$message-body-padding: 0.5em 1em;
+$hero-body-padding: 0.5rem 0.5rem;

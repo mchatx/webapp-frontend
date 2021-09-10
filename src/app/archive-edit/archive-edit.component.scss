@@ -1,0 +1,74 @@
+/*   ARCHIVE LIST   */
+
+  .box{
+      max-width: 700px;
+      margin: auto;        
+      border-radius: 15px;   
+             
+  }     
+
+  .field{
+    max-width: 360px;
+    margin:auto;                
+    }
+           
+  ul{
+      margin: auto;
+      text-align: left;
+      height:20vh;
+      overflow:hidden; 
+      overflow-y:scroll;
+      overflow-x:scroll;
+      .ArchiveUIList{
+          cursor: pointer;
+          p{ 
+             color: lightblue;                   
+             &:hover{ 
+               color: blue;          
+               text-decoration: underline;
+              }        
+          }
+          .marked {
+            color: rgb(19, 163, 0);
+            font-weight: bold;            
+          }/*   WHEN SCHEDULE IS CLICKED   */
+         
+      }     
+      
+  }
+
+@media only screen and (min-width : 0px){
+  #wrap{
+     max-width: 150px;
+     margin: auto;
+  } 
+}
+@media only screen 
+ and (min-width : 200px) {
+  #wrap{
+      max-width: 150px;
+      margin: auto;
+  }
+}
+@media only screen 
+and (min-width : 320px) {
+  #wrap{
+      max-width: 220px;
+      margin: auto;
+  }
+}
+
+@media only screen 
+ and (min-width : 768px) {
+  #wrap{
+      max-width: 360px;
+      margin: auto;
+  } 
+}
+/* @media only screen 
+ and (min-width : 1200px) {
+  #wrap{
+      max-width: 100%;
+      margin: auto;
+  }
+} */

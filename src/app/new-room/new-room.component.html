@@ -1,0 +1,123 @@
+<div class="columns">
+  <div class="column has-background-primary-dark">
+    <div class="columns is-multiline">
+      <div class="column is-full">
+        <section class="section content has-text-white">
+          <h1 class="has-text-white has-text-centered">Translation Guidelines</h1>
+          <ul>
+            <li>Be extra careful, keep in mind that you're responsible for painting the streamer's persona and image in
+              front of the listeners, and if you make mistake, remember that it might hurt your beloved streamer.</li>
+            <li>One thing I can guarantee you is that you'll make mistake. When that happens, be open minded, admit
+              you're
+              wrong and take other people's criticism.
+              But don't let it down you too hard, it's only human to make mistake, you'll get better with more practice.
+            </li>
+            <li>Before you even try, think carefully if you have the skill. If you don't feel you have enough skill,
+              then
+              don't. Learn and practice more and you'll eventually get there.</li>
+          </ul>
+        </section>
+      </div>
+      <div class="column has-text-white">
+        <div class="section content">
+          <h1 class="has-text-white has-text-centered">Form Instructions</h1>
+          <div class="block">
+            <h6 class="has-text-white">Name :</h6>
+            <ul>
+              <li>NO PROVOCATIVE OR PROFANE NAMES!!!!</li>
+              <li>Make it easy to identify. For example, based on name like "Monmon Room" or add extra identifiers like
+                "Monmon Mio EN"</li>
+            </ul>
+          </div>
+          <div class="block">
+            <h6 class="has-text-white">Note : (Optional)</h6>
+            <p> You can put in anything that might vouch for your skill, lika a link to anything that can show
+              your live Translating skill for an example (youtube channel link).</p>
+          </div>
+          <div class="block">
+            <h6 class="has-text-white">Contact :</h6>
+            <p>Can be email or discord to inform you if your application is approved or not, and also in case you want
+              to
+              change password or room name.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="column is-one-third">
+    <div class="section">
+      <!-- name field -->
+      <div class="field">
+        <label class="label">Name</label>
+        <div class="control has-icons-left">
+          <input class="input" type="text" placeholder="Nick" [(ngModel)]="Data.Nick">
+          <span class="icon is-left is-small">
+            <fa-icon [icon]="faUser"></fa-icon>
+          </span>
+        </div>
+      </div>
+
+      <!-- password field -->
+      <div class="field">
+        <label class="label">Password</label>
+        <p class="control has-icons-left">
+          <input class="input" type="password" placeholder="Password" [(ngModel)]="Data.Pass">
+          <span class="icon is-left is-small">
+            <fa-icon [icon]="faLock"></fa-icon>
+          </span>
+        </p>
+      </div>
+      <!-- confrom pass field -->
+      <div class="field">
+        <label class="label">Password Confirm</label>
+        <p class="control has-icons-left">
+          <input class="input" type="password" placeholder="Confirm Password" [(ngModel)]="Passconfirm">
+          <span class="icon is-left is-small">
+            <fa-icon [icon]="faLock"></fa-icon>
+          </span>
+        </p>
+      </div>
+      <!-- message field -->
+      <div class="field">
+        <label class="label">Note</label>
+        <div class="control ">
+          <textarea class="textarea" placeholder="Note (Optional)" [(ngModel)]="Data.Link"></textarea>
+        </div>
+      </div>
+      <!-- Discord ID/email -->
+      <div class="field">
+        <label class="label">Contact</label>
+        <div class="control has-icons-left">
+          <input class="input" type="text" placeholder="Contact" [(ngModel)]="Data.Contact">
+          <span class="icon is-left is-small">
+            <fa-icon [icon]="faMailBulk"></fa-icon>
+          </span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="control">
+          <label class="checkbox">
+            <input type="checkbox" [(ngModel)]="Data.Agree">
+            I agree to the <strong>Guidelines</strong>
+          </label>
+        </div>
+      </div>
+
+      <div class="field is-grouped">
+        <div class="control">
+          <button (click)="PushData()" class="button is-link">Submit</button>
+        </div>
+        <!-- <div class="control">
+          <button (click)="PushData()" class="button is-link is-light">Cancel</button>
+        </div> -->
+        <div class="is-block">
+          <p class="has-text-danger">{{ status }}</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

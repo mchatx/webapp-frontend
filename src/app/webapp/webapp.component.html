@@ -1,0 +1,81 @@
+<button style="z-index: 1; position:absolute; left: 0; top: 0;" class="button is-small is-fullwidth is-primary"
+  (click)="OpenOption=true">Menu</button>
+
+<div [ngClass]="BGColour == '#28282B' ? 'has-background-primary-light' : 'has-background-black'" *ngIf="OpenOption"
+  style="z-index: 1; position: absolute; width: 100%; left: 0; top: 0;">
+  <div
+    style="width: 100%; display:flex; flex-direction: column; padding-left: 30px; padding-right: 30px; padding-top: 10px; padding-bottom: 10px;">
+    <div style="width: 100%; display: flex; align-items: center;">
+      <a class="button is-small is-link" routerLink="/archive" [routerLinkActive]="['is-active']">
+        <fa-icon [icon]="faHome"></fa-icon>
+      </a>
+      <button class="button is-small is-link" style="margin-left: 15px;" (click)="OpenOption=false">←</button>
+      <div style="margin-left: 15px;">
+        <label [ngStyle]="{'color': BGColour == '#28282B' ? 'black' : 'white'}">Font Size </label>
+        <input type="number" min="1" [(ngModel)]="FFsize" (ngModelChange)="EntryRepaintEverything()" />
+      </div>
+      <div *ngIf="ArchiveMode" style="margin-left: 15px;">
+        <button class="button is-small is-link" style="margin-right: auto;" (click)="StopButtonClick()">
+          <fa-icon [icon]="faStop"></fa-icon>
+        </button>
+        <label class="TimeLabel"
+          [ngStyle]="{'color': BGColour == '#28282B' ? 'black' : 'white'}">{{ ParseTime() }}</label>
+        <button *ngIf="!BoolPlay" class="button is-small is-link" (click)="PlayButtonClick()">
+          <fa-icon [icon]="faPlay"></fa-icon>
+        </button>
+        <button *ngIf="BoolPlay" class="button is-small is-link" (click)="PauseButtonClick()">
+          <fa-icon [icon]="faPause"></fa-icon>
+        </button>
+      </div>
+      <div *ngIf="ArchiveMode" style="margin-left: 15px;">
+        <label [ngStyle]="{'color': BGColour == '#28282B' ? 'black' : 'white'}"> Time Shift </label>
+        <input type="number" style="width: 50px;" [(ngModel)]="TimeShift" />
+      </div>
+      <button class="button is-small is-link" style="margin-left: 15px; margin-right: auto;"
+        (click)="SwitchColour()">Switch BG
+        Colour</button>
+      <button class="button is-small is-link" (click)="SaveSetting()">Save Setting</button>
+    </div>
+    <input *ngIf="ArchiveMode" id="sliderWithValue" class="slider has-output is-fullwidth" min="0"
+      [max]="MaxRange-TimeShift" [(ngModel)]="Currtime" step="0.1" type="range" (mouseup)="SlideRelease()"
+      (touchend)="SlideRelease()">
+  </div>
+</div>
+
+<div style="height: 100vh" [style.background-color]="BGColour">
+  <div (window:resize)="onResize($event)" class="container is-fluid"
+    style="height: 98%; display: flex; flex-direction: column-reverse;" (click)="OpenOption=false">
+    <div style="display: flex; flex-direction: column;" #cardcontainer>
+    </div>
+  </div>
+</div>
+
+<!------------------------------------------- PASSWORD MODAL ------------------------------------------->
+<div class="modal" [ngClass]="{ 'is-active' : passmodal}">
+  <div class="modal-background"></div>
+  <div class="modal-content">
+    <div class="box">
+      <a style="float: right;" class="delete is-dark" (click)="passmodal=false"></a>
+      <p class="title">Password Protected</p>
+      <div class="divider is-left is-black"></div>
+
+      <div class="field has-text-left">
+        <label class="label">Password</label>
+        <div class="control has-icons-left">
+          <input class="input is-rounded" type="password" placeholder="Password" [(ngModel)]="PassString">
+          <span class="icon is-left is-small">
+            <fa-icon [icon]="faLock"></fa-icon>
+          </span>
+        </div>
+      </div>
+
+      <div class="field is-grouped p-4">
+        <div class="control">
+          <button class="button is-dark" (click)="TryFetch()" #loadstate1>Enter</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!--========================================= PASSWORD MODAL =========================================-->

@@ -1,0 +1,14 @@
+/* You can add global styles to this file, and also import other style files */
+//main stylesheet
+@import './main-styles.scss';
+
+//Bulma sass import
+@import '../node_modules/bulma/bulma.sass';
+
+@import "~@creativebulma/bulma-divider";
+
+//animate.css
+@import '~animate.css/animate.min';
+
+//highlight.js import
+@import '~highlight.js/styles/github.css';
