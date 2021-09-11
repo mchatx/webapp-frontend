@@ -35,11 +35,11 @@
               <!-- --------------- Password Input ---------------->
 
               <!-- --------------- Enter Button ---------------->
-              <div class="field is-grouped p-4" style="display: flex; flex-direction: row; justify-content: space-between;">
+              <div class="field is-grouped p-4" style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
                 <div class="control">
                   <button class="button is-dark" routerLink="/">Back</button>
                 </div>
-                <div class="control" style="align-self: center;">
+                <div class="control">
                   <p *ngIf="status !== ''" class="has-text-danger">{{ status }}</p>
                 </div>
                 <div class="control">
@@ -58,88 +58,112 @@
 
 
 
-
-
-<div *ngIf="LoginMode">
+<section class="hero is-dark is-fullheight" *ngIf="LoginMode">
   <!---------------------- MENU ------------------------>
-  <div>
-    <a class="button is-small is-link" routerLink="/" [routerLinkActive]="['is-active']">
-      <fa-icon [icon]="faHome"></fa-icon>
-    </a>
-
-    <div>
-      <label>Font Size </label>
-      <input type="number" min="1" [(ngModel)]="FFsize"/>
+  <div class="hero-head">
+    <button style="z-index: 1; position:absolute; left: 0; top: 0;" class="button is-small is-fullwidth is-primary"
+    (click)="OpenOption=true">Menu</button>
+  
+    <div [ngClass]="BGColour == '#28282B' ? 'has-background-primary-light' : 'has-background-black'" *ngIf="OpenOption"
+    style="z-index: 1; position: absolute; width: 100%; left: 0; top: 0;">
+      <div style="width: 100%; display:flex; flex-direction: column; padding-left: 30px; padding-right: 30px; padding-top: 10px; padding-bottom: 10px;">
+        <div style="width: 100%; display: flex; align-items: center;">
+          <a class="button is-small is-link" routerLink="/" [routerLinkActive]="['is-active']">
+            <fa-icon [icon]="faHome"></fa-icon>
+          </a>
+      
+          <div>
+            <label style="color: black;">Font Size </label>
+            <input type="number" min="1" [(ngModel)]="FFsize"/>
+          </div>
+      
+          <input type="checkbox" [(ngModel)]="ThirdPartySharing" (ngModelChange)="ThirdPartyChange()">
+          <span style="color: black;">Third Party Sharing</span>
+          <a class="button" (click)="SetModalMenu(2)">Host Open Session</a>
+          <a class="button" (click)="SetModalMenu(3)">Extra Info (Stream Link, Tags, Note)</a>
+          <a class="button" (click)="SetModalMenu(4)">Password</a>
+          <a class="button">Sync</a>
+          <a class="button">UnSync</a>
+          <a class="button" (click)="SetModalMenu(5)">Export Script</a>
+          <a class="button" (click)="SetModalMenu(6)">Save to Archive</a>
+          <a class="button" (click)="SetModalMenu(7)">Clear Room</a>  
+        </div>
+      </div>
     </div>
-
-    <input type="checkbox" [(ngModel)]="ThirdPartySharing" (ngModelChange)="ThirdPartyChange()"><span>Third Party Sharing</span>
-    <a class="button" (click)="SetModalMenu(2)">Host Open Session</a>
-    <a class="button" (click)="SetModalMenu(3)">Extra Info (Stream Link, Tags, Note)</a>
-    <a class="button" (click)="SetModalMenu(4)">Password</a>
-    <a class="button" (click)="SetModalMenu(5)">Export Script</a>
-    <a class="button" (click)="SetModalMenu(6)">Save to Archive</a>
-    <a class="button" (click)="SetModalMenu(7)">Clear Room</a>  
   </div>
   <!--==================== MENU ======================-->
 
   <!---------------------- ENTRY VIEWER ------------------------>
-  <div class="container is-fluid">
-    <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" 
+  <div class="hero-body" (click)="OpenOption=false" style="flex-direction: column-reverse; display: flex;">
+    <div class="container is-fluid" style="flex-direction: column-reverse; display: flex;">
+      <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" 
       [style.font-size]="FFsize + 'px'" [style.text-align]="TxAlign" style="display: flex; flex-direction: column;" #cardcontainer>
-      <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft" (click)=OpenEditEntry(i)>
-        <h1>{{ Entry.Stime | date:'HH:mm:ss'}} : 
-          <span [style.-webkit-text-fill-color]="'#' + Entry.CC" [style.-webkit-text-stroke-color]="'#' + Entry.OC">{{ Entry.Stext }}</span>
-        </h1>
+        <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft" (click)=OpenEditEntry(i)>
+          <h1>{{ Entry.Stime | date:'HH:mm:ss'}} : 
+            <span [style.-webkit-text-fill-color]="'#' + Entry.CC" [style.-webkit-text-stroke-color]="'#' + Entry.OC">{{ Entry.Stext }}</span>
+          </h1>
+        </div>
       </div>
     </div>
   </div>
   <!--==================== ENTRY VIEWER ======================-->
 
+  <!-------------------- PROFILE LIST -------------------->
+  <div *ngIf="ProfileTab" style="align-self: center;">
+    <div *ngFor="let prf of ProfileList; index as i;">
+      <p *ngIf="i == SelectedProfile">> {{prf.Name}}</p>
+      <p *ngIf="i != SelectedProfile">{{prf.Name}}</p>
+    </div>
+  </div>
+  <!--================== PROFILE LIST ==================-->
+
+
   <!---------------------- TL TOOL ------------------------>
-  <div>
-    <!-------------------- PROFILE LIST -------------------->
-    <div *ngIf="ProfileTab">
-      <div *ngFor="let prf of ProfileList; index as i;">
-        <p *ngIf="i == SelectedProfile">> {{prf.Name}}</p>
-        <p *ngIf="i != SelectedProfile">{{prf.Name}}</p>
+  <div class="hero-foot" (click)="OpenOption=false">
+    <div class="container is-fluid" style="display: flex; flex-direction: column;">
+
+      <div style="display: flex; flex-direction: row; margin-bottom: 5px;">
+        <input type="text" [(ngModel)]="TLEntry.Stext" (keydown.enter)="SendEntry()" max="200" style="width: 100%;"/>
+        <div class="control" style="margin-left: auto;">
+          <a class="button" (click)="SendEntry()" style="margin-left: 10px;">Enter</a>
+        </div>        
+      </div>
+
+      <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 5px;">
+        <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
+          <label style="margin-right: 10px;">Prefix </label>
+          <input type="text" [(ngModel)]="Prefix" max="30"/>
+        </div>
+
+        <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
+          <label style="margin-right: 10px;">Suffix </label>
+          <input type="text" [(ngModel)]="Suffix" max="30"/>
+        </div>
+
+        <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
+          <input type="checkbox" [(ngModel)]="CCcheck">
+          <label style="margin-right: 10px;">Character Colour </label>
+          <input type="color" [(ngModel)]="CCcolour"/>
+        </div>
+
+        <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
+          <input type="checkbox" [(ngModel)]="OCcheck">
+          <label style="margin-right: 10px;">Outline Colour </label>
+          <input type="color" [(ngModel)]="OCcolour"/>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: row; align-items: center;">
+        <a class="button" (click)="SetModalMenu(1)" style="margin-right: 5px;">Add Profile</a>
+        <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
+        <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
+        <a class="button" (click)="DeleteProfile()" style="margin-right: 5px;">Delete Profile</a>
+        <a class="button" style="margin-right: 5px;">Start Broadcast</a>
       </div>
     </div>
-    <!--================== PROFILE LIST ==================-->
-
-    <div>
-      <input type="text" [(ngModel)]="TLEntry.Stext" (keydown.enter)="SendEntry()" max="200"/>
-      <a class="button" (click)="SendEntry()">Enter</a>
-    </div>
-
-    <div>
-      <label>Prefix </label>
-      <input type="text" [(ngModel)]="Prefix" max="30"/>
-    </div>
-
-    <div>
-      <label>Suffix </label>
-      <input type="text" [(ngModel)]="Suffix" max="30"/>
-    </div>
-
-    <div>
-      <input type="checkbox" [(ngModel)]="CCcheck">
-      <label>Character Colour </label>
-      <input type="color" [(ngModel)]="CCcolour"/>
-    </div>
-
-    <div>
-      <input type="checkbox" [(ngModel)]="OCcheck">
-      <label>Outline Colour </label>
-      <input type="color" [(ngModel)]="OCcolour"/>
-    </div>
-
-    <a class="button" (click)="SetModalMenu(1)">Add Profile</a>
-    <a class="button" (click)="ShiftUp()">Shift Up</a>
-    <a class="button" (click)="ShiftDown()">Shift Down</a>
-    <a class="button" (click)="DeleteProfile()">Delete Profile</a>
   </div>
   <!--==================== TL TOOL ======================-->
-</div>
+</section>
 
 
 

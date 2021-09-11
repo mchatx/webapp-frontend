@@ -34,6 +34,7 @@ export class TranslatorClientComponent implements OnInit {
   ModalMenu:number = 0;
 
   //  DISPLAY VARIABLES
+  OpenOption:Boolean = false
   EntryList: FullEntry[] = [];
   OT:number = 1;
   ChatProxy:HTMLIFrameElement | undefined;
@@ -75,18 +76,18 @@ export class TranslatorClientComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    let test: string | null = localStorage.getItem("MChatAppToken");
+    let test: string | null = sessionStorage.getItem("MChatAppToken");
     if (test != undefined) {
       try {
         this.AppToken = this.TGEnc.TGDecoding(test);  
         this.LoginMode = true;
         return;
       } catch (error) {
-        localStorage.removeItem("MChatAppToken");
+        sessionStorage.removeItem("MChatAppToken");
       }
     }
 
-    test = localStorage.getItem("MChatToken");    
+    test = sessionStorage.getItem("MChatToken");    
     if (test != undefined) {
       try {
         let TokenData = JSON.parse(this.TGEnc.TGDecoding(test));
@@ -98,7 +99,7 @@ export class TranslatorClientComponent implements OnInit {
           }))).subscribe({
             next: data => {
               const TToken = JSON.parse(data.body).BToken;
-              localStorage.setItem("MChatAppToken", TToken)
+              sessionStorage.setItem("MChatAppToken", TToken)
               location.reload();
             }
           });
@@ -126,11 +127,11 @@ export class TranslatorClientComponent implements OnInit {
         }, 2000);
         this.status = "WRONG PASSWORD/ROOM NAME";
         this.SearchPass = "";
-        localStorage.removeItem("MChatAppToken");
+        sessionStorage.removeItem("MChatAppToken");
       },
       next: data => {
         const TToken = JSON.parse(data.body).BToken;
-        localStorage.setItem("MChatAppToken", TToken)
+        sessionStorage.setItem("MChatAppToken", TToken)
         location.reload();
       }
     });
