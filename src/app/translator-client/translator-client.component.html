@@ -35,12 +35,15 @@
               <!-- --------------- Password Input ---------------->
 
               <!-- --------------- Enter Button ---------------->
-              <div class="field is-grouped p-4">
+              <div class="field is-grouped p-4" style="display: flex; flex-direction: row; justify-content: space-between;">
                 <div class="control">
-                  <button class="button is-dark" (click)="LoginRoom()" #loadstate>Enter</button>
+                  <button class="button is-dark" routerLink="/">Back</button>
+                </div>
+                <div class="control" style="align-self: center;">
+                  <p *ngIf="status !== ''" class="has-text-danger">{{ status }}</p>
                 </div>
                 <div class="control">
-                  <p *ngIf="status !== ''" class="has-text-danger">{{ status }}</p>
+                  <button class="button is-dark" (click)="LoginRoom()" #loadstate>Enter</button>
                 </div>
               </div>
               <!-- --------------- Enter Button ---------------->

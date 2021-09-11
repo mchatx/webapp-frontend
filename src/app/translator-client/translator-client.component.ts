@@ -2,7 +2,6 @@ import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular
 import { Router } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
-import {  AccountService } from '../services/account.service';
 import { faHome, faLock, faUser } from '@fortawesome/free-solid-svg-icons';
 
 class FullEntry {
@@ -46,6 +45,7 @@ export class TranslatorClientComponent implements OnInit {
   BGColour:string = "#28282B";
 
   RoomNick: string = "";
+  AppToken: string = "";
 
   //  TL VARIABLES
   TLEntry:FullEntry = ({
@@ -72,37 +72,40 @@ export class TranslatorClientComponent implements OnInit {
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
     private router: Router,
-    private AccService: AccountService
   ) { }
 
   ngOnInit(): void {
-    let test: string | null = localStorage.getItem("MChatToken");
+    let test: string | null = localStorage.getItem("MChatAppToken");
+    if (test != undefined) {
+      try {
+        this.AppToken = this.TGEnc.TGDecoding(test);  
+        this.LoginMode = true;
+        return;
+      } catch (error) {
+        localStorage.removeItem("MChatAppToken");
+      }
+    }
+
+    test = localStorage.getItem("MChatToken");    
     if (test != undefined) {
       try {
         let TokenData = JSON.parse(this.TGEnc.TGDecoding(test));
         this.RoomNick = TokenData["Room"];
         if (TokenData["Role"] == "TL") {
-          this.AccService.CheckToken(TokenData["Room"], TokenData["Token"]).subscribe({
-            error: error => {
-              localStorage.removeItem("MChatToken");
-            },
+          this.TLService.Login(this.TGEnc.TGEncoding(JSON.stringify({
+            room: this.RoomNick,
+            verivied: true
+          }))).subscribe({
             next: data => {
-              this.LoginMode = true;
-
-              this.ProfileList.push({
-                Name: 'Default',
-                Prefix: '',
-                Suffix: '',
-                OC: undefined,
-                CC: undefined
-              });
+              const TToken = JSON.parse(data.body).BToken;
+              localStorage.setItem("MChatAppToken", TToken)
+              location.reload();
             }
           });
         } else {
           this.router.navigate(['']);
         }
       } catch (error) {
-        localStorage.removeItem("MChatToken");
       }
     }
   }
@@ -113,27 +116,22 @@ export class TranslatorClientComponent implements OnInit {
     setTimeout(() => {
       this.loadbutton.nativeElement.classList.remove('is-loading')
     }, 1000);
-    this.AccService.GetToken(this.RoomNick, this.SearchPass).subscribe({
+
+    this.TLService.Login(this.TGEnc.TGEncoding(JSON.stringify({
+      room: this.RoomNick,
+      pass: this.SearchPass
+    }))).subscribe({
       error: error => {
         setTimeout(() => {
         }, 2000);
         this.status = "WRONG PASSWORD/ROOM NAME";
         this.SearchPass = "";
-        localStorage.removeItem("MChatToken");
+        localStorage.removeItem("MChatAppToken");
       },
       next: data => {
-        if (data.body[0]["Role"] == "TL") {
-          localStorage.setItem("MChatToken", this.TGEnc.TGEncoding(JSON.stringify({
-            Room: this.RoomNick,
-            Token: data.body[0]["Token"],
-            Role: "TL"
-          })));
-
-          location.reload();
-        } else {
-          this.status = "THIS ACCOUNT DOESN'T HAVE TL PRIVILEGE";
-          this.SearchPass = "";
-        }
+        const TToken = JSON.parse(data.body).BToken;
+        localStorage.setItem("MChatAppToken", TToken)
+        location.reload();
       }
     });
   }

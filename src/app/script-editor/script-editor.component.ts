@@ -2,7 +2,6 @@ import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular
 import { Router } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
-import {  AccountService } from '../services/account.service';
 import { faHome, faPause, faPlay, faStop, faLock, faUser } from '@fortawesome/free-solid-svg-icons';
 
 class FullEntry {
@@ -98,7 +97,6 @@ export class ScriptEditorComponent implements OnInit {
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
     private router: Router,
-    private AccService: AccountService
   ) { }
 
   ngOnInit(): void {
@@ -107,27 +105,6 @@ export class ScriptEditorComponent implements OnInit {
       try {
         let TokenData = JSON.parse(this.TGEnc.TGDecoding(test));
         this.RoomNick = TokenData["Room"];
-        if (TokenData["Role"] == "TL") {
-          this.AccService.CheckToken(TokenData["Room"], TokenData["Token"]).subscribe({
-            error: error => {
-              localStorage.removeItem("MChatToken");
-            },
-            next: data => {
-              this.LoginMode = true;
-              this.Token = TokenData["Token"];
-
-              this.ProfileList.push({
-                Name: 'Default',
-                Prefix: '',
-                Suffix: '',
-                OC: undefined,
-                CC: undefined
-              });
-            }
-          });
-        } else {
-          this.router.navigate(['']);
-        }
       } catch (error) {
         localStorage.removeItem("MChatToken");
       }
@@ -141,29 +118,7 @@ export class ScriptEditorComponent implements OnInit {
     setTimeout(() => {
       this.loadbutton.nativeElement.classList.remove('is-loading')
     }, 1000);
-    this.AccService.GetToken(this.RoomNick, this.SearchPass).subscribe({
-      error: error => {
-        setTimeout(() => {
-        }, 2000);
-        this.status = "WRONG PASSWORD/ROOM NAME";
-        this.SearchPass = "";
-        localStorage.removeItem("MChatToken");
-      },
-      next: data => {
-        if (data.body[0]["Role"] == "TL") {
-          localStorage.setItem("MChatToken", this.TGEnc.TGEncoding(JSON.stringify({
-            Room: this.RoomNick,
-            Token: data.body[0]["Token"],
-            Role: "TL"
-          })));
 
-          location.reload();
-        } else {
-          this.status = "THIS ACCOUNT DOESN'T HAVE TL PRIVILEGE";
-          this.SearchPass = "";
-        }
-      }
-    });
   }
 
 

@@ -17,10 +17,19 @@ export class TranslatorService {
 
     const headers = { 'Content-Type': 'application/json' };
 
-    return (this.httpclient.post(environment.DBConn + '/Archive/', {
+    return (this.httpclient.post(environment.DBConn2 + '/Archive/', {
       Act: 'GetArchive',
       Room: room,
       Token: token
     }, { headers, observe: 'response', responseType: 'text' }));
   }
+
+  Login(token: string): Observable<any> {
+    const headers = {'Content-Type': 'application/json'};
+
+    return (this.httpclient.post(environment.DBConn + '/Login/', {
+      BToken: token
+    }, { headers, observe: 'response', responseType: 'text'}));
+  }
+
 }

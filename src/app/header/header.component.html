@@ -1,7 +1,7 @@
 <nav class="navbar is-primary" role="navigation" aria-label="dropdown navigation">
   <div class="navbar-brand">
     <a class="navbar-item" routerLink="/">
-      <h1 class="title has-text-white">MCHAD</h1>
+      <h1 class="title has-text-white">MCHAD APP</h1>
     </a>
     <div (click)="toggleNavbar()" class="navbar-burger" #navBurger>
       <span></span>
@@ -14,109 +14,8 @@
     <div class="navbar-start">
       <a class="navbar-item is-tab" routerLink="/" [routerLinkActive]="['is-active']"
         [routerLinkActiveOptions]="{exact:true}" (click)="toggleNavbar()">Home</a>
-      <a class="navbar-item is-tab" href="docs" (click)="toggleNavbar()">How to Use</a>
       <a class="navbar-item is-tab" routerLink="/schedule" [routerLinkActive]="['is-active']"
         (click)="toggleNavbar()">Schedule</a>
-      <a class="navbar-item is-tab" routerLink="/archive" [routerLinkActive]="['is-active']"
-        (click)="toggleNavbar()">Archive</a>
-      <a class="navbar-item is-tab" routerLink="/requestboard" [routerLinkActive]="['is-active']"
-        (click)="toggleNavbar()">Request Board</a>
-      <a class="navbar-item is-tab" routerLink="/about" [routerLinkActive]="['is-active']"
-        (click)="toggleNavbar()">About</a>
-    </div>
-
-    <div class="navbar-end">
-      <div class="navbar-item">
-        <div class="field is-grouped">
-          <p class="control">
-            <a class="button is-white" href="https://discord.gg/g9t52ms" target="_blank" (click)="toggleNavbar()">
-              <span class="icon">
-                <fa-icon [icon]="faDiscord"></fa-icon>
-              </span>
-            </a>
-          </p>
-          <p class="control">
-            <a class="button is-white" routerLink="/roomapply" (click)="toggleNavbar()">
-              New Room
-            </a>
-          </p>
-          <div class="control">
-            <div *ngIf="!LoggedIn">
-              <a class="button is-white" routerLink="/login" [routerLinkActive]="['is-active']"><span class="icon">
-                  <fa-icon [icon]="faUser"></fa-icon>
-                </span><span>Login</span></a>
-            </div>
-            <div *ngIf="LoggedIn">
-              <div class="dropdown is-hoverable is-right">
-                <div class="dropdown-trigger">
-                  <button class="button is-info" aria-haspopup="true" aria-controls="dropdown-menu">
-                    <span class="icon">
-                      <fa-icon [icon]="faUserAlt"></fa-icon>
-                    </span><span>{{ AccountName }}</span>
-                  </button>
-                </div>
-                <div class="dropdown-menu has-text-centered" id="dropdown-menu" role="menu">
-                  <div class="dropdown-content">
-                    <a class="dropdown-item has-background-primary has-text-white" routerLink="/account"
-                      [routerLinkActive]="['is-active']"> <span class="icon">
-                        <fa-icon [icon]="faSignInAlt"></fa-icon>
-                      </span> <span>Account</span> </a>
-                    <div *ngIf="TL">
-                      <hr class="dropdown-divider">
-                      <a class="dropdown-item" [routerLink]="['/room', AccountName]"
-                        [routerLinkActive]="['is-active']"> <span>Room Front Page</span> </a>
-                      <a class="dropdown-item" routerLink="/archiveedit"
-                        [routerLinkActive]="['is-active']"> <span>Archive Manager</span> </a>
-                      <!--
-                      <a class="dropdown-item" routerLink="/TLClient"
-                        [routerLinkActive]="['is-active']"> <span>Broadcast Room (WIP)</span> </a>
-                      <a class="dropdown-item" routerLink="/ScriptEditor"
-                        [routerLinkActive]="['is-active']"> <span>Script Editor (WIP)</span> </a>
-                      -->
-                    </div>
-                    <hr class="dropdown-divider">
-                    <a class="dropdown-item" (click)="LogoutButtonPush()"><span class="icon">
-                        <fa-icon [icon]="faSignOutAlt"></fa-icon>
-                      </span> <span>Logout</span></a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </div>
-
-      <!-- <div class="navbar-item">
-        <div *ngIf="!LoggedIn">
-          <a class="button is-white" routerLink="/login" [routerLinkActive]="['is-active']"><span class="icon">
-              <fa-icon [icon]="faUser"></fa-icon>
-            </span><span>Login</span></a>
-        </div>
-        <div *ngIf="LoggedIn">
-          <div class="dropdown is-hoverable">
-            <div class="dropdown-trigger">
-              <button class="button is-info" aria-haspopup="true" aria-controls="dropdown-menu">
-                <span class="icon">
-                  <fa-icon [icon]="faUserAlt"></fa-icon>
-                </span><span>{{ AccountName }}</span>
-              </button>
-            </div>
-            <div class="dropdown-menu" id="dropdown-menu" role="menu">
-              <div class="dropdown-content">
-                <a class="dropdown-item" routerLink="/account" [routerLinkActive]="['is-active']"> <span class="icon">
-                    <fa-icon [icon]="faSignInAlt"></fa-icon>
-                  </span> <span>Account</span> </a>
-                <a class="dropdown-item" (click)="LogoutButtonPush()"><span class="icon">
-                    <fa-icon [icon]="faSignOutAlt"></fa-icon>
-                  </span> <span>Logout</span></a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div> -->
-
     </div>
   </div>
 </nav>
