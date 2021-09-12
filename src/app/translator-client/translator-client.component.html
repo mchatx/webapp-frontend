@@ -134,31 +134,32 @@
   <!--==================== MENU ======================-->
 
   <!---------------------- ENTRY VIEWER ------------------------>
-  <div class="hero-body" (click)="OpenOption=false" style="position: relative;">
-    <div class="container is-fluid" style="flex-direction: column-reverse; display: flex; position: absolute; bottom: 10px;">
-      <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" 
-      [style.font-size]="FFsize + 'px'" [style.text-align]="TxAlign" style="display: flex; flex-direction: column;" #cardcontainer>
-        <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft" (click)=OpenEditEntry(i)>
-          <h1>{{ Entry.Stime | date:'HH:mm:ss'}} : 
-            <span [style.-webkit-text-fill-color]="'#' + Entry.CC" [style.-webkit-text-stroke-color]="'#' + Entry.OC">{{ Entry.Stext }}</span>
+  <div class="hero-body" (click)="OpenOption=false" style="position: relative; display:flex; align-items: stretch;">
+    <div class="container is-fluid">
+      <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" [style.font-size]="FFsize + 'px'" [style.text-align]="TxAlign" style="display: flex; flex-direction: column; overflow-y: auto;" #cardcontainer>
+        <div style="margin-top: auto;"></div>
+        <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft">
+          <h1>
+            {{ Entry.Stime }} 
+            <span [style.-webkit-text-fill-color]="'#' + Entry.CC" [style.-webkit-text-stroke-color]="'#' + Entry.OC" (click)=OpenEditEntry(i) style="cursor: pointer;">{{ Entry.Stext }}</span>
           </h1>
         </div>
       </div>
     </div>
     
     <!-------------------- PROFILE LIST -------------------->
-    <div *ngIf="ProfileTab" style="position: absolute; right: 25px; bottom: 10px; z-index: 1;">
+    <div *ngIf="ProfileTab" style="position: absolute; right: 25px; bottom: 10px; z-index: 1; background-color: black; color: white; font-weight: bold;">
       <div *ngFor="let prf of ProfileList; index as i;">
         <p *ngIf="i == SelectedProfile">> {{prf.Name}}</p>
         <p *ngIf="i != SelectedProfile">{{prf.Name}}</p>
       </div>
     </div>
-    <!--================== PROFILE LIST ==================-->
+    <!--================== PROFILE LIST ==================-->    
   </div>
   <!--==================== ENTRY VIEWER ======================-->
 
   <!---------------------- TL TOOL ------------------------>
-  <div class="hero-foot" (click)="OpenOption=false">
+  <div class="hero-foot" (click)="OpenOption=false" #footer>
     <div class="container is-fluid" style="display: flex; flex-direction: column;">
 
       <div style="display: flex; flex-direction: row; margin-bottom: 5px;">
@@ -192,7 +193,7 @@
         </div>
       </div>
 
-      <div style="display: flex; flex-direction: row; align-items: center;">
+      <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px;">
         <a class="button" (click)="SetModalMenu(1)" style="margin-right: 5px;">Add Profile</a>
         <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
         <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>

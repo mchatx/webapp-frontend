@@ -32,4 +32,14 @@ export class TranslatorService {
     }, { headers, observe: 'response', responseType: 'text'}));
   }
 
+  FetchRaw(token: string, btoken: string): Observable<any> {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    };
+
+    return (this.httpclient.post(environment.DBConn + '/FetchRaw/', {
+      BToken: btoken
+    }, { headers, observe: 'response', responseType: 'text'}));
+  }
 }

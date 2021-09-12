@@ -1,12 +1,12 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
 import { faHome, faLock, faUser } from '@fortawesome/free-solid-svg-icons';
 
 class FullEntry {
   Stext: string = "";
-  Stime: number = 0;
+  Stime: string = "";
   CC: string | undefined;
   OC: string | undefined;
   key: string = "";
@@ -20,16 +20,30 @@ class Profile {
   OC: string | undefined;
 }
 
+class RoomData {
+  ExtSharing: boolean = false;
+  EntryPass: boolean = false;
+  Empty: boolean = false;
+  Hidden: boolean = false;
+  StreamLink: string = "";
+  Tags: string = "";
+  Note: string = "";
+  SessPass: string = "";
+  PassList: string = "";
+}
+
 @Component({
   selector: 'app-translator-client',
   templateUrl: './translator-client.component.html',
   styleUrls: ['./translator-client.component.scss']
 })
 export class TranslatorClientComponent implements OnInit {
+  @ViewChild('footer') footer !: ElementRef;
   @ViewChild('cardcontainer') cardcontainer !: ElementRef; 
   @ViewChild('loadstate') loadbutton!: ElementRef;
   WinWidth: number = window.innerWidth;
 
+  RoomDt: RoomData = new RoomData();
   LoginMode: boolean = false;
   SearchPass: string = "";
   status:string = "";
@@ -44,7 +58,7 @@ export class TranslatorClientComponent implements OnInit {
   FFsize:number = 21;
   FStyle:string = "Ubuntu";
   TxAlign:CanvasTextAlign = "left";
-  MaxDisplay = 3;
+  MaxDisplay = 50;
   BGColour:string = "#28282B";
 
   RoomNick: string = "";
@@ -53,7 +67,7 @@ export class TranslatorClientComponent implements OnInit {
   //  TL VARIABLES
   TLEntry:FullEntry = ({
     Stext: "",
-    Stime: 0,
+    Stime: "",
     CC: undefined,
     OC: undefined,
     key: ""
@@ -92,6 +106,40 @@ export class TranslatorClientComponent implements OnInit {
           OC: undefined,
           CC: undefined
         });
+
+        this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+          act: "Get First"
+        }))).subscribe({
+          next: data => {
+            const dt = JSON.parse(this.TGEnc.TGDecoding(JSON.parse(data.body).BToken));
+            dt.forEach((e:FullEntry) => {
+              e.Stime = new Date(Date.parse('01 Jan 1970 ' + e.Stime.slice(0, e.Stime.lastIndexOf(":")) + ' UTC')).toTimeString().split(" ")[0];
+              this.EntryList.push(e);
+            });
+          }
+        });
+
+        this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+          act: "Get MetaData"
+        }))).subscribe({
+          next: data => {
+            const dt = JSON.parse(this.TGEnc.TGDecoding(JSON.parse(data.body).BToken));
+            this.RoomDt.Empty = dt["Empty"];
+            this.RoomDt.EntryPass = dt["EntryPass"];
+            this.RoomDt.ExtSharing = dt["ExtSharing"];
+            this.RoomDt.Hidden = dt["Hidden"];
+            this.RoomDt.Note = dt["Note"];
+            this.RoomDt.PassList = dt["PassList"];
+            this.RoomDt.SessPass = dt["SessPass"];
+            this.RoomDt.StreamLink = dt["StreamLink"];
+            this.RoomDt.Tags = dt["Tags"];
+
+            if(this.cardcontainer && this.footer){
+              this.cardcontainer.nativeElement.style["height"] = (window.innerHeight - this.footer.nativeElement.offsetHeight - 25).toString() + "px";
+            }
+          }
+        });
+
         return;
       } catch (error) {
         sessionStorage.removeItem("MChatAppToken");
@@ -137,7 +185,9 @@ export class TranslatorClientComponent implements OnInit {
   @HostListener('window:resize', ['$event'])
   onResize(event: any) {
     this.WinWidth = window.innerWidth;
-    console.log(this.WinWidth);
+    if(this.cardcontainer && this.footer){
+      this.cardcontainer.nativeElement.style["height"] = (window.innerHeight - this.footer.nativeElement.offsetHeight - 25).toString() + "px";
+    }
   }
 
 
@@ -266,11 +316,11 @@ export class TranslatorClientComponent implements OnInit {
       this.TLEntry.OC = undefined;
     }
 
-    this.TLEntry.Stime = Date.now();
+    this.TLEntry.Stime = new Date().toTimeString().split(" ")[0];
 
     this.EntryRepaint({
       Stext: this.EditText,
-      Stime: 0,
+      Stime: "",
       CC: this.TLEntry.CC,
       OC: this.TLEntry.OC,
       key: this.EditKey
@@ -441,7 +491,18 @@ export class TranslatorClientComponent implements OnInit {
         this.TLEntry.OC = undefined;
       }
   
-      this.TLEntry.Stime = Date.now();
+      this.TLEntry.Stime = new Date().toTimeString().split(" ")[0];
+
+      /*
+      var a: any = new Date();
+      var b: string = a.getMilliseconds().toString();
+      while (b.length < 3){
+        b = "0" + b;
+      }
+      a = a.toUTCString().split(" ");
+      a = a[a.length - 2];
+      console.log(a + ":" + b);
+      */
   
       this.EntryPrint({
         Stext: this.Prefix + this.TLEntry.Stext + this.Suffix,
@@ -478,7 +539,7 @@ export class TranslatorClientComponent implements OnInit {
             this.EntryPrint({
               Stext: dt["content"]["Stext"],
               key: dt["content"]["key"],
-              Stime: 0,
+              Stime: "",
               CC: dt["content"]["CC"],
               OC: dt["content"]["OC"]              
             });
@@ -486,7 +547,7 @@ export class TranslatorClientComponent implements OnInit {
             this.EntryRepaint({
               Stext: dt["content"]["Stext"],
               key: dt["content"]["key"],
-              Stime: 0,
+              Stime: "",
               CC: dt["content"]["CC"],
               OC: dt["content"]["OC"]              
             });
@@ -498,7 +559,7 @@ export class TranslatorClientComponent implements OnInit {
     RoomES.onerror = e => {
       RoomES.close();
       this.EntryPrint({
-        Stime: 0,
+        Stime: "",
         Stext: "CONNECTION ERROR",
         OC: undefined,
         CC: undefined,
@@ -508,7 +569,7 @@ export class TranslatorClientComponent implements OnInit {
 
     RoomES.onopen = e => {
       this.EntryPrint({
-        Stime: 0,
+        Stime: "",
         Stext: "CONNECTED",
         OC: undefined,
         CC: undefined,
