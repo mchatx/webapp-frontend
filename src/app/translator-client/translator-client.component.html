@@ -122,7 +122,7 @@
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(3)">Extra Info (Stream Link, Tags, Note)</a>
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(2)">Host Open Session</a>
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(4)">Password</a>
-          <a class="button" style="margin-right: 5px;" style="margin-bottom: 5px;">Sync</a>
+          <a class="button" style="margin-right: 5px;">Sync</a>
           <a class="button" style="margin-right: 5px;">UnSync</a>
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(5)">Export Script</a>
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(6)">Save to Archive</a>
@@ -134,8 +134,8 @@
   <!--==================== MENU ======================-->
 
   <!---------------------- ENTRY VIEWER ------------------------>
-  <div class="hero-body" (click)="OpenOption=false" style="flex-direction: column-reverse; display: flex;">
-    <div class="container is-fluid" style="flex-direction: column-reverse; display: flex;">
+  <div class="hero-body" (click)="OpenOption=false" style="position: relative;">
+    <div class="container is-fluid" style="flex-direction: column-reverse; display: flex; position: absolute; bottom: 10px;">
       <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" 
       [style.font-size]="FFsize + 'px'" [style.text-align]="TxAlign" style="display: flex; flex-direction: column;" #cardcontainer>
         <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft" (click)=OpenEditEntry(i)>
@@ -145,18 +145,17 @@
         </div>
       </div>
     </div>
+    
+    <!-------------------- PROFILE LIST -------------------->
+    <div *ngIf="ProfileTab" style="position: absolute; right: 25px; bottom: 10px; z-index: 1;">
+      <div *ngFor="let prf of ProfileList; index as i;">
+        <p *ngIf="i == SelectedProfile">> {{prf.Name}}</p>
+        <p *ngIf="i != SelectedProfile">{{prf.Name}}</p>
+      </div>
+    </div>
+    <!--================== PROFILE LIST ==================-->
   </div>
   <!--==================== ENTRY VIEWER ======================-->
-
-  <!-------------------- PROFILE LIST -------------------->
-  <div *ngIf="ProfileTab" style="align-self: center;">
-    <div *ngFor="let prf of ProfileList; index as i;">
-      <p *ngIf="i == SelectedProfile">> {{prf.Name}}</p>
-      <p *ngIf="i != SelectedProfile">{{prf.Name}}</p>
-    </div>
-  </div>
-  <!--================== PROFILE LIST ==================-->
-
 
   <!---------------------- TL TOOL ------------------------>
   <div class="hero-foot" (click)="OpenOption=false">
@@ -221,101 +220,200 @@
 <div class="modal" [ngClass]="{ 'is-active' : ModalMenu != 0 }">
   <div class="modal-background" (click)="ModalMenu = 0"></div>
   <div class="modal-content" [ngSwitch]="ModalMenu">
-    <!--  ADD NEW PROFILE  -->
-    <div *ngSwitchCase="1">
-      <p>NEW PROFILE</p>
-      <input type="text" [(ngModel)]="ProfileName"/>
-      <a class="button" (click)="ModalMenu = 0">Cancel</a>
-      <a class="button" (click)="AddProfile()">Ok</a>
-    </div>
-
-    <!--  HOST OPEN SESSION  -->
-    <div *ngSwitchCase="2">
-      <p>HOST OPEN SESSION</p>
-      <p>Session Password</p>
-      
-      <input type="text" [(ngModel)]="OpenSessionPass"/>
-      <p>Open session allows proofreader or other translator to access the room with limiter privilege using a temporary pasword to make sure that they won't be able to mess with the archive and other settings</p>
-      <a class="button" (click)="ModalMenu = 0">Cancel</a>
-      <a class="button" (click)="SaveOpenSessionPass()">Save</a>
-    </div>
-
-    <!--  STREAM LINK TAGS NOTE  -->
-    <div *ngSwitchCase="3">
-      <p>Stream Link</p>
-      <input type="text" [(ngModel)]="StreamLink" max="255"/>
-      <p>Tags</p>
-      <input type="text" [(ngModel)]="Tags" max="255"/>
-      <p>Note</p>
-      <input type="text" [(ngModel)]="Notes" max="1024"/>
-      <a class="button" (click)="ModalMenu = 0">Cancel</a>
-      <a class="button" (click)="SaveExtraInfo()">Save</a>
-    </div>
-
-    <!--  PASSWORD  -->
-    <div *ngSwitchCase="4">
-      <input type="checkbox" [(ngModel)]="PassCheck">
-      <p>Password protected</p>
-      <input type="text" [(ngModel)]="PassString" max="255"/>
-      <a class="button" (click)="ModalMenu = 0">Cancel</a>
-      <a class="button" (click)="SavePassword()">Save</a>
-    </div>
-
-    <!--  EXPORT  -->
-    <div *ngSwitchCase="5">
-      <p>EXPORT FORMAT</p>
-      <a class="button" (click)="ExportToFile(0)">Export to plain text</a>
-      <a class="button" (click)="ExportToFile(1)">Export to srt</a>
-      <a class="button" (click)="ExportToFile(2)">Export to ass</a>
-      <a class="button" (click)="ExportToFile(3)">Export to TTML</a>
-      <a class="button" (click)="ModalMenu = 0">Cancel</a>
-    </div>
-
-    <!--  SAVE TO ARCHIVE  -->
-    <div *ngSwitchCase="6">
-      <p>SAVE TO ARCHIVE</p>
-      <p>Title</p>
-      <input type="text" [(ngModel)]="ArchiveTitle" max="255"/>
-      <input type="checkbox" [(ngModel)]="PassCheck"><span>Password Protection</span>
-      <input type="text" [(ngModel)]="PassString" max="255"/>
-      <p>Link to stream</p>
-      <input type="text" [(ngModel)]="StreamLink" max="255"/>
-      <p>Tags</p>
-      <input type="text" [(ngModel)]="Tags" max="255"/>
-      <input type="checkbox" [(ngModel)]="ThirdPartySharing"><span>Party Sharing</span>
-      <input type="checkbox" [(ngModel)]="Hidden"><span>Hidden</span>
-      <a class="button" (click)="ModalMenu = 0">CANCEL</a>
-      <a class="button" (click)="SaveToArchive()">OK</a>
-    </div>
-
-    <!--  FLUSH ROOM  -->
-    <div *ngSwitchCase="7">
-      <p>FLUSH THE ROOM?</p>
-      <a class="button" (click)="ModalMenu = 0">CANCEL</a>
-      <a class="button" (click)="ClearRoom()">OK</a>
-    </div>
-
-    <!-- EDIT ENRTY -->
-    <div *ngSwitchCase="8">
-      <p>EDIT ENTRY</p>
-      <input type="text" [(ngModel)]="EditText" (keydown.enter)="SendEntry()" max="200"/>
-
-      <div>
-        <input type="checkbox" [(ngModel)]="EditCCheck">
-        <label>Character Colour </label>
-        <input type="color" [(ngModel)]="EditCC"/>
+    <div class="box">
+      <!--  ADD NEW PROFILE  -->
+      <div *ngSwitchCase="1">
+        <div class="field">
+          <label class="label">New profile</label>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="ProfileName"/>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+          <a class="button is-rounded is-danger" (click)="ModalMenu = 0">Cancel</a>
+          <a class="button is-rounded is-success" (click)="AddProfile()">Ok</a>
+        </div>
       </div>
-  
-      <div>
-        <input type="checkbox" [(ngModel)]="EditOCheck">
-        <label>Outline Colour </label>
-        <input type="color" [(ngModel)]="EditOC"/>
-      </div>
- 
-      <a class="button" (click)="ModalMenu = 0">CANCEL</a>
-      <a class="button" (click)="SendEdit()">OK</a>
-    </div>
 
+      <!--  HOST OPEN SESSION  -->
+      <div *ngSwitchCase="2">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <label class="label is-size-3">HOST OPEN SESSION</label>
+        </div>
+
+        <div class="field">
+          <label class="label">Session Password</label>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="OpenSessionPass"/>
+          </div>
+        </div>
+        
+        <div class="block">
+          <p>Open session allows proofreader or other translator to access the room with limiter privilege using a temporary pasword to make sure that they won't be able to mess with the archive and other settings</p>
+        </div>
+        
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+          <a class="button is-rounded is-danger" (click)="ModalMenu = 0">Cancel</a>
+          <a class="button is-rounded is-success" (click)="SaveOpenSessionPass()">Save</a>
+        </div>
+      </div>
+
+      <!--  STREAM LINK TAGS NOTE  -->
+      <div *ngSwitchCase="3">
+        <div class="field">
+          <label class="label">Stream Link</label>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="StreamLink" max="255"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Tags</label>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="Tags" max="255"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Note</label>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="Notes" max="1024"/>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+          <a class="button is-rounded is-danger" (click)="ModalMenu = 0">Cancel</a>
+          <a class="button is-rounded is-success" (click)="SaveExtraInfo()">Save</a>
+        </div>
+      </div>
+
+      <!--  PASSWORD  -->
+      <div *ngSwitchCase="4">
+        <div class="field">
+          <div style="display: flex; flex-direction: row; align-items: center;">
+            <input type="checkbox" [(ngModel)]="PassCheck" style="margin-right: 5px;">
+            <label class="label">Password protected</label>
+          </div>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="PassString" max="255" placeholder="Password"/>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+          <a class="button is-rounded is-danger" (click)="ModalMenu = 0">Cancel</a>
+          <a class="button is-rounded is-success" (click)="SavePassword()">Save</a>
+        </div>
+      </div>
+
+      <!--  EXPORT  -->
+      <div *ngSwitchCase="5">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <label class="label is-size-3">EXPORT FORMAT</label>
+        </div>
+
+        <div style="display: flex; flex-direction: column;">
+          <a class="button" style="margin-top: 5px;" (click)="ExportToFile(0)">Export to plain text</a>
+          <a class="button" style="margin-top: 5px;" (click)="ExportToFile(1)">Export to srt</a>
+          <a class="button" style="margin-top: 5px;" (click)="ExportToFile(2)">Export to ass</a>
+          <a class="button" style="margin-top: 5px;" (click)="ExportToFile(3)">Export to TTML</a>
+          <a class="button" style="margin-top: 5px;" (click)="ModalMenu = 0">Cancel</a>
+        </div>
+      </div>
+
+      <!--  SAVE TO ARCHIVE  -->
+      <div *ngSwitchCase="6">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <label class="label is-size-3">SAVE TO ARCHIVE</label>
+        </div>
+
+        <div class="field">
+          <label class="label">Title</label>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="ArchiveTitle" max="255"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <div style="display: flex; flex-direction: row; align-items: center;">
+            <input type="checkbox" [(ngModel)]="PassCheck" style="margin-right: 5px;">
+            <label class="label">Password Protected</label>
+          </div>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="PassString" max="255"/>
+          </div>
+        </div>
+        
+        <div class="field">
+          <label class="label">Link to stream</label>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="StreamLink" max="255"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Tags</label>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="Tags" max="255"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <div style="display: flex; flex-direction: row; align-items: center;">
+            <input type="checkbox" [(ngModel)]="ThirdPartySharing" style="margin-right: 5px;">
+            <label class="label">3rd Party Sharing</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <div style="display: flex; flex-direction: row; align-items: center;">
+            <input type="checkbox" [(ngModel)]="Hidden" style="margin-right: 5px;">
+            <label class="label">Hidden</label>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+          <a class="button is-rounded is-danger" (click)="ModalMenu = 0">CANCEL</a>
+          <a class="button is-rounded is-success" (click)="SaveToArchive()">OK</a>
+        </div>
+      </div>
+
+      <!--  FLUSH ROOM  -->
+      <div *ngSwitchCase="7">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <label class="label is-size-3">FLUSH ROOM ?</label>
+        </div>
+
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+          <a class="button is-rounded is-danger" (click)="ModalMenu = 0">CANCEL</a>
+          <a class="button is-rounded is-success" (click)="ClearRoom()">OK</a>
+        </div>
+      </div>
+
+      <!-- EDIT ENRTY -->
+      <div *ngSwitchCase="8">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <label class="label is-size-3">EDIT ENTRY</label>
+        </div>
+
+        <div class="field">
+          <input class="input" type="text" [(ngModel)]="EditText" (keydown.enter)="SendEdit()" max="200"/>
+          <div style="display: flex; flex-direction: row; align-items: center; margin-top: 10px;">
+            <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="EditCCheck">
+            <label style="margin-right: 5px; font-weight: bold;">Character Colour </label>
+            <input style="margin-right: 10px;"type="color" [(ngModel)]="EditCC"/>
+   
+            <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="EditOCheck">
+            <label style="margin-right: 5px; font-weight: bold;"> Outline Colour </label>
+            <input type="color" [(ngModel)]="EditOC"/>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+          <a class="button is-rounded is-danger" (click)="ModalMenu = 0">CANCEL</a>
+          <a class="button is-rounded is-success" (click)="SendEdit()">OK</a>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 <!--============================================ MODALS =====================================================-->

@@ -28,12 +28,6 @@ class Profile {
 export class TranslatorClientComponent implements OnInit {
   @ViewChild('cardcontainer') cardcontainer !: ElementRef; 
   @ViewChild('loadstate') loadbutton!: ElementRef;
-  
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any) {
-    this.WinWidth = window.innerWidth;
-    console.log(this.WinWidth);
-  }
   WinWidth: number = window.innerWidth;
 
   LoginMode: boolean = false;
@@ -84,36 +78,31 @@ export class TranslatorClientComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    let test: string | null = sessionStorage.getItem("MChatAppToken");
-    if (test != undefined) {
+    let test2: string | null = sessionStorage.getItem("MChatAppToken");
+
+    if (test2 != undefined) {
       try {
-        this.AppToken = this.TGEnc.TGDecoding(test);  
+        this.AppToken = this.TGEnc.TGDecoding(test2);  
         this.LoginMode = true;
+
+        this.ProfileList.push({
+          Name: 'Default',
+          Prefix: '',
+          Suffix: '',
+          OC: undefined,
+          CC: undefined
+        });
         return;
       } catch (error) {
         sessionStorage.removeItem("MChatAppToken");
       }
     }
-
-    test = sessionStorage.getItem("MChatToken");    
+    
+    let test: string | null = sessionStorage.getItem("MChatToken");    
     if (test != undefined) {
       try {
         let TokenData = JSON.parse(this.TGEnc.TGDecoding(test));
         this.RoomNick = TokenData["Room"];
-        if (TokenData["Role"] == "TL") {
-          this.TLService.Login(this.TGEnc.TGEncoding(JSON.stringify({
-            room: this.RoomNick,
-            verivied: true
-          }))).subscribe({
-            next: data => {
-              const TToken = JSON.parse(data.body).BToken;
-              sessionStorage.setItem("MChatAppToken", TToken)
-              location.reload();
-            }
-          });
-        } else {
-          this.router.navigate(['']);
-        }
       } catch (error) {
       }
     }
@@ -143,6 +132,12 @@ export class TranslatorClientComponent implements OnInit {
         location.reload();
       }
     });
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.WinWidth = window.innerWidth;
+    console.log(this.WinWidth);
   }
 
 
@@ -407,6 +402,7 @@ export class TranslatorClientComponent implements OnInit {
   }
 
   AddProfile():void {
+    this.SaveProfile();
     this.SelectedProfile = this.ProfileList.length;
     if (this.ProfileName != ''){
       this.ProfileList.push({
@@ -431,7 +427,7 @@ export class TranslatorClientComponent implements OnInit {
 
   SpamBlock:boolean = false;
   SendEntry(): void{
-    if (!this.SpamBlock){
+    if (!this.SpamBlock && (this.ModalMenu == 0) && (this.TLEntry.Stext.trim() != "")){
       this.SpamBlock = true;
       if (this.CCcheck){
         this.TLEntry.CC = this.CCcolour.substr(1);
