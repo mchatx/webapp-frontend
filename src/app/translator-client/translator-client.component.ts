@@ -43,7 +43,6 @@ export class TranslatorClientComponent implements OnInit {
   @ViewChild('loadstate') loadbutton!: ElementRef;
   WinWidth: number = window.innerWidth;
 
-  RoomDt: RoomData = new RoomData();
   LoginMode: boolean = false;
   SearchPass: string = "";
   status:string = "";
@@ -136,6 +135,7 @@ export class TranslatorClientComponent implements OnInit {
 
             if(this.cardcontainer && this.footer){
               this.cardcontainer.nativeElement.style["height"] = (window.innerHeight - this.footer.nativeElement.offsetHeight - 25).toString() + "px";
+              this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
             }
           }
         });
@@ -187,12 +187,14 @@ export class TranslatorClientComponent implements OnInit {
     this.WinWidth = window.innerWidth;
     if(this.cardcontainer && this.footer){
       this.cardcontainer.nativeElement.style["height"] = (window.innerHeight - this.footer.nativeElement.offsetHeight - 25).toString() + "px";
+      this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
     }
   }
 
 
 
   //-------------------------- AUX CONTROL --------------------------
+  RoomDt: RoomData = new RoomData();
   ProfileName:string = "";
   OpenSessionPass:string = "";
   StreamLink:string = "";
@@ -491,9 +493,8 @@ export class TranslatorClientComponent implements OnInit {
         this.TLEntry.OC = undefined;
       }
   
-      this.TLEntry.Stime = new Date().toTimeString().split(" ")[0];
+      const Stime2 = new Date().toTimeString().split(" ")[0];
 
-      /*
       var a: any = new Date();
       var b: string = a.getMilliseconds().toString();
       while (b.length < 3){
@@ -501,17 +502,44 @@ export class TranslatorClientComponent implements OnInit {
       }
       a = a.toUTCString().split(" ");
       a = a[a.length - 2];
-      console.log(a + ":" + b);
-      */
   
-      this.EntryPrint({
+      var dt: any = {
         Stext: this.Prefix + this.TLEntry.Stext + this.Suffix,
-        Stime: this.TLEntry.Stime,
+        Stime2: Date.now(),
         CC: this.TLEntry.CC,
         OC: this.TLEntry.OC,
-        key: Date.now().toString()
+        Stime: a + ":" + b
+      }
+
+      if (this.RoomDt.Empty == false){
+        dt.Empty = false;
+      }
+
+      this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+        act: "New Entry",
+        data: dt
+      }))).subscribe({
+        next: data => {
+          if (this.RoomDt.Empty == false){
+            this.RoomDt.Empty = true;
+          }
+    
+          const dt = JSON.parse(this.TGEnc.TGDecoding(JSON.parse(data.body).BToken));
+          this.EntryPrint({
+            Stext: dt["Stext"],
+            Stime: Stime2,
+            CC: dt["CC"],
+            OC: dt["OC"],
+            key: dt["key"]
+          });
+          setTimeout(() => {
+            if (this.cardcontainer){
+              this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+            }
+          }, 100);
+        }
       });
-  
+
       this.TLEntry.Stext = "";
       setTimeout(() => {
         this.SpamBlock = false;
