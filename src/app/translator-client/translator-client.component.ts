@@ -28,6 +28,14 @@ class Profile {
 export class TranslatorClientComponent implements OnInit {
   @ViewChild('cardcontainer') cardcontainer !: ElementRef; 
   @ViewChild('loadstate') loadbutton!: ElementRef;
+  
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.WinWidth = window.innerWidth;
+    console.log(this.WinWidth);
+  }
+  WinWidth: number = window.innerWidth;
+
   LoginMode: boolean = false;
   SearchPass: string = "";
   status:string = "";
