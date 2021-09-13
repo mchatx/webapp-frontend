@@ -195,14 +195,6 @@ export class TranslatorClientComponent implements OnInit {
     }
   }
 
-  OCCcheckclick(mode: number){
-    if (mode == 0){
-      this.CCcheck = !this.CCcheck;
-    } else if (mode == 1){
-      this.OCcheck = !this.OCcheck;
-    }
-  }
-
   //-------------------------- AUX CONTROL --------------------------
   RoomDt: RoomData = new RoomData();
   ProfileName:string = "";

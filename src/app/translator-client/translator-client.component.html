@@ -159,7 +159,7 @@
   <!--==================== ENTRY VIEWER ======================-->
 
   <!---------------------- TL TOOL ------------------------>
-  <div class="hero-foot" (click)="OpenOption=false" #footer>
+  <div class="hero-foot" #footer>
     <div class="container is-fluid" style="display: flex; flex-direction: column;">
 
       <div style="display: flex; flex-direction: row; margin-bottom: 5px;">
@@ -181,15 +181,13 @@
         </div>
 
         <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
-          <input *ngIf="CCcheck" style="margin-right: 5px;" type="checkbox" (click)="OCCcheckclick(0)" checked>
-          <input *ngIf="!CCcheck" style="margin-right: 5px;" type="checkbox" (click)="OCCcheckclick(0)">
+          <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="CCcheck">
           <label style="margin-right: 10px;">Character Colour </label>
           <input type="color" [(ngModel)]="CCcolour"/>
         </div>
 
         <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
-          <input *ngIf="OCcheck" style="margin-right: 5px;" type="checkbox" (click)="OCCcheckclick(1)" checked>
-          <input *ngIf="!OCcheck" style="margin-right: 5px;" type="checkbox" (click)="OCCcheckclick(1)">
+          <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="OCcheck">
           <label style="margin-right: 10px;">Outline Colour </label>
           <input type="color" [(ngModel)]="OCcolour"/>
         </div>
