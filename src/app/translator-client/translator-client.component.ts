@@ -233,15 +233,18 @@ export class TranslatorClientComponent implements OnInit {
         break;
       
       case 2:
-        
+        this.OpenSessionPass = this.RoomDt.SessPass;
         break;
 
       case 3:
-        
+        this.StreamLink = this.RoomDt.StreamLink;
+        this.Tags = this.RoomDt.Tags;
+        this.Notes = this.RoomDt.Note;
         break;
   
       case 4:
-        
+        this.PassCheck = this.RoomDt.EntryPass;
+        this.PassString = this.RoomDt.PassList;
         break;
 
       case 5:
@@ -249,7 +252,13 @@ export class TranslatorClientComponent implements OnInit {
         break;
   
       case 6:
-        
+        this.ArchiveTitle = "";
+        this.PassCheck = this.RoomDt.EntryPass;
+        this.PassString = this.RoomDt.PassList;
+        this.StreamLink = this.RoomDt.StreamLink;
+        this.Tags = this.RoomDt.Tags;
+        this.ThirdPartySharing = this.RoomDt.ExtSharing;
+        this.Hidden = this.RoomDt.Hidden;
         break;
   
       case 7:
@@ -283,19 +292,99 @@ export class TranslatorClientComponent implements OnInit {
   }
 
   SaveOpenSessionPass():void {
-    this.ModalMenu = 0;
+    this.ModalNotif = true;
+    this.NotifText = "Saving change";
+
+    this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+      act: "Update Metadata",
+      mode: 0,
+      data: this.OpenSessionPass
+    }))).subscribe({
+      next: data => {
+        this.RoomDt.SessPass = this.OpenSessionPass;
+        this.ModalNotif = false;
+        this.ModalMenu = 0;
+      },
+      error: err => {
+        console.log(err);
+      }
+    });
   }
 
   SaveExtraInfo():void {
-    this.ModalMenu = 0;
+    this.ModalNotif = true;
+    this.NotifText = "Saving change";
+
+    this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+      act: "Update Metadata",
+      mode: 1,
+      data: {
+        Link: this.StreamLink,
+        Tags: this.Tags,
+        Note: this.Notes
+      }
+    }))).subscribe({
+      next: data => {
+        this.RoomDt.StreamLink = this.StreamLink;
+        this.RoomDt.Tags = this.Tags;
+        this.RoomDt.Note = this.Notes;
+        this.ModalMenu = 0;
+        this.ModalNotif = false;
+      },
+      error: err => {
+        console.log(err);
+      }
+    });
   }
 
   SavePassword():void {
-    this.ModalMenu = 0;
+    this.ModalNotif = true;
+    this.NotifText = "Saving change";
+
+    if ((this.PassCheck == false) || (this.PassString.trim() == "")){
+      this.PassCheck = false;
+      this.PassString = "";
+    } else {
+      this.PassCheck = true;
+    }
+
+    this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+      act: "Update Metadata",
+      mode: 2,
+      data: {
+        PP: this.PassCheck,
+        PString: this.PassString
+      }
+    }))).subscribe({
+      next: data => {
+        this.RoomDt.EntryPass = this.PassCheck;
+        this.RoomDt.PassList = this.PassString;
+        this.ModalNotif = false;
+        this.ModalMenu = 0;
+      },
+      error: err => {
+        console.log(err);
+      }
+    });
   }
 
   ThirdPartyChange():void {
-    
+    this.ModalNotif = true;
+    this.NotifText = "Saving change";
+    this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+      act: "Update Metadata",
+      mode: 3,
+      data: this.ThirdPartySharing
+    }))).subscribe({
+      next: data => {
+        this.RoomDt.ExtSharing = this.ThirdPartySharing;
+        this.ModalNotif = false;
+        console.log("3rd Party Change");
+      },
+      error: err => {
+        console.log(err);
+      }
+    });
   }
 
   SaveToArchive():void {
