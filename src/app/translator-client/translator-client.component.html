@@ -181,13 +181,15 @@
         </div>
 
         <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
-          <input type="checkbox" [(ngModel)]="CCcheck">
+          <input *ngIf="CCcheck" style="margin-right: 5px;" type="checkbox" (click)="OCCcheckclick(0)" checked>
+          <input *ngIf="!CCcheck" style="margin-right: 5px;" type="checkbox" (click)="OCCcheckclick(0)">
           <label style="margin-right: 10px;">Character Colour </label>
           <input type="color" [(ngModel)]="CCcolour"/>
         </div>
 
         <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
-          <input type="checkbox" [(ngModel)]="OCcheck">
+          <input *ngIf="OCcheck" style="margin-right: 5px;" type="checkbox" (click)="OCCcheckclick(1)" checked>
+          <input *ngIf="!OCcheck" style="margin-right: 5px;" type="checkbox" (click)="OCCcheckclick(1)">
           <label style="margin-right: 10px;">Outline Colour </label>
           <input type="color" [(ngModel)]="OCcolour"/>
         </div>
@@ -418,3 +420,18 @@
   </div>
 </div>
 <!--============================================ MODALS =====================================================-->
+
+
+
+<!---------------------------------------------- NOTIF MODAL ------------------------------------------------------->
+<div class="modal" [ngClass]="{ 'is-active' : ModalNotif == true }">
+  <div class="modal-background"></div>
+  <div class="modal-content">
+    <div class="box">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <label class="label is-size-2">{{ NotifText }}</label>
+      </div>
+    </div>
+  </div>
+</div>
+<!--============================================ NOTIF MODAL =====================================================-->

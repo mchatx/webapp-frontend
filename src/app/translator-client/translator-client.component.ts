@@ -48,6 +48,10 @@ export class TranslatorClientComponent implements OnInit {
   status:string = "";
   ModalMenu:number = 0;
 
+  //  NOTIF
+  ModalNotif: Boolean = false;
+  NotifText: string = "";
+
   //  DISPLAY VARIABLES
   OpenOption:Boolean = false
   EntryList: FullEntry[] = [];
@@ -72,12 +76,12 @@ export class TranslatorClientComponent implements OnInit {
     key: ""
   });
 
-  Prefix: string = "";
-  Suffix: string = "";
-  OCcheck: boolean = false;
-  CCcheck: boolean = false;
-  OCcolour: string = "#000000";
-  CCcolour: string = "#FFFFFF";
+  Prefix:string = "";
+  Suffix:string = "";
+  OCcheck:boolean = false;
+  CCcheck:boolean = false;
+  OCcolour:string = "#000000";
+  CCcolour:string = "#FFFFFF";
 
   ProfileTab:boolean = false;
   Profiletabtimeout:any;
@@ -191,7 +195,13 @@ export class TranslatorClientComponent implements OnInit {
     }
   }
 
-
+  OCCcheckclick(mode: number){
+    if (mode == 0){
+      this.CCcheck = !this.CCcheck;
+    } else if (mode == 1){
+      this.OCcheck = !this.OCcheck;
+    }
+  }
 
   //-------------------------- AUX CONTROL --------------------------
   RoomDt: RoomData = new RoomData();
@@ -211,6 +221,7 @@ export class TranslatorClientComponent implements OnInit {
   EditOCheck:boolean = false;
   EditText:string = "";
   EditKey:string = "";
+  EditIdx:number = 0;
 
   /*
   1 => Add New Profile
@@ -256,8 +267,27 @@ export class TranslatorClientComponent implements OnInit {
   }
 
   ClearRoom():void {
-    this.EntryList = [];
+    this.ModalNotif = true;
+    this.NotifText = "FLUSHING ROOM..."
     this.ModalMenu = 0;
+
+    this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+      act: "Clear Room"
+    }))).subscribe({
+      next: data => {
+        this.EntryList = [];
+        this.ModalNotif = false;
+        this.RoomDt.SessPass = "";
+        this.RoomDt.Empty = true;
+        this.RoomDt.Note = "";
+      },
+      error: err => {
+        this.NotifText = "ERROR FLUSHING ROOM...";
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      }
+    });
   }
 
   SaveOpenSessionPass():void {
@@ -283,6 +313,7 @@ export class TranslatorClientComponent implements OnInit {
 
   OpenEditEntry(idx : number):void {
     let test = this.EntryList[idx].CC;
+    this.EditIdx = idx;
     if (test != undefined){
       this.EditCC = '#' + test;
       this.EditCCheck = true;
@@ -318,14 +349,28 @@ export class TranslatorClientComponent implements OnInit {
       this.TLEntry.OC = undefined;
     }
 
-    this.TLEntry.Stime = new Date().toTimeString().split(" ")[0];
-
-    this.EntryRepaint({
+    var TempEntry: any = {
       Stext: this.EditText,
-      Stime: "",
       CC: this.TLEntry.CC,
       OC: this.TLEntry.OC,
       key: this.EditKey
+    }
+
+    this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+      act: "Update Entry",
+      data: TempEntry,
+      ExtShare: this.RoomDt.ExtSharing,
+      OT: this.EntryList[this.EditIdx].Stext
+    }))).subscribe({
+      next: data => {
+        this.EntryRepaint({
+          Stext: TempEntry.Stext,
+          Stime: "",
+          CC: TempEntry.CC,
+          OC: TempEntry.OC,
+          key: TempEntry.key
+        });
+      }
     });
 
     this.ModalMenu = 0;
@@ -492,7 +537,7 @@ export class TranslatorClientComponent implements OnInit {
       } else {
         this.TLEntry.OC = undefined;
       }
-  
+      
       const Stime2 = new Date().toTimeString().split(" ")[0];
 
       var a: any = new Date();
@@ -503,7 +548,7 @@ export class TranslatorClientComponent implements OnInit {
       a = a.toUTCString().split(" ");
       a = a[a.length - 2];
   
-      var dt: any = {
+      var TempEntry: any = {
         Stext: this.Prefix + this.TLEntry.Stext + this.Suffix,
         Stime2: Date.now(),
         CC: this.TLEntry.CC,
@@ -511,25 +556,26 @@ export class TranslatorClientComponent implements OnInit {
         Stime: a + ":" + b
       }
 
-      if (this.RoomDt.Empty == false){
-        dt.Empty = false;
+      if (this.RoomDt.Empty == true){
+        TempEntry.Empty = true;
       }
 
       this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
         act: "New Entry",
-        data: dt
+        data: TempEntry,
+        ExtShare: this.RoomDt.ExtSharing
       }))).subscribe({
         next: data => {
-          if (this.RoomDt.Empty == false){
-            this.RoomDt.Empty = true;
+          if (this.RoomDt.Empty == true){
+            this.RoomDt.Empty = false;
           }
     
           const dt = JSON.parse(this.TGEnc.TGDecoding(JSON.parse(data.body).BToken));
           this.EntryPrint({
-            Stext: dt["Stext"],
+            Stext: TempEntry["Stext"],
             Stime: Stime2,
-            CC: dt["CC"],
-            OC: dt["OC"],
+            CC: TempEntry["CC"],
+            OC: TempEntry["OC"],
             key: dt["key"]
           });
           setTimeout(() => {
@@ -551,6 +597,7 @@ export class TranslatorClientComponent implements OnInit {
 
 
   //-----------------------------------  LIVE LISTENER  -----------------------------------
+  /*
   StartListening(Btoken: string): void {
     const RoomES = new EventSource('http://localhost:33333/TLAPI/?BToken=' + Btoken);
 
@@ -615,6 +662,7 @@ export class TranslatorClientComponent implements OnInit {
     RoomES.addEventListener('error', function(e) {
     }, false);
   }
+  */
   //===================================  LIVE LISTENER  ===================================
 
 
