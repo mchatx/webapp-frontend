@@ -214,6 +214,7 @@ export class TranslatorClientComponent implements OnInit {
   EditText:string = "";
   EditKey:string = "";
   EditIdx:number = 0;
+  Downloadable: boolean = false;
 
   /*
   1 => Add New Profile
@@ -259,6 +260,7 @@ export class TranslatorClientComponent implements OnInit {
         this.Tags = this.RoomDt.Tags;
         this.ThirdPartySharing = this.RoomDt.ExtSharing;
         this.Hidden = this.RoomDt.Hidden;
+        this.Downloadable = false;
         break;
   
       case 7:
@@ -388,8 +390,44 @@ export class TranslatorClientComponent implements OnInit {
   }
 
   SaveToArchive():void {
+    this.ModalNotif = true;
+    this.NotifText = "SAVING ARCHIVE..."
     this.ModalMenu = 0;
-    this.EntryList = [];
+
+    if ((this.PassCheck == false) || (this.PassString.trim() == "")){
+      this.PassCheck = false;
+      this.PassString = "";
+    } else {
+      this.PassCheck = true;
+    }
+
+    this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+      act: "SAVE ARCHIVE",
+      data: {
+        Title: this.ArchiveTitle,
+        EntryPass: this.PassString,
+        StreamLink: this.StreamLink,
+        Tags: this.Tags,
+        ExtShare: this.ThirdPartySharing,
+        Hidden: this.Hidden,
+        Note: this.RoomDt.Note,
+        Downloadable: this.Downloadable
+      }
+    }))).subscribe({
+      next: data => {
+        this.EntryList = [];
+        this.ModalNotif = false;
+        this.RoomDt.SessPass = "";
+        this.RoomDt.Empty = true;
+        this.RoomDt.Note = "";
+      },
+      error: err => {
+        this.NotifText = "ERROR FLUSHING ROOM...";
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      }
+    });
   }
 
   OpenEditEntry(idx : number):void {
@@ -671,6 +709,81 @@ export class TranslatorClientComponent implements OnInit {
       setTimeout(() => {
         this.SpamBlock = false;
       }, 1000);
+    }
+  }
+
+  Broadcast() {
+    this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+      act: "Broadcast",
+      data: {
+        Link: this.RoomDt.StreamLink,
+        Tag: this.RoomDt.Tags
+      }
+    }))).subscribe({
+      next: data => {
+        this.EntryPrint({
+          Stext: "(SYSTEM) Session Broadcasted",
+          Stime: new Date().toTimeString().split(" ")[0],
+          CC: undefined,
+          OC: undefined,
+          key: ""
+        });
+        setTimeout(() => {
+          if (this.cardcontainer){
+            this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+          }
+        }, 100);
+      }
+    });
+
+    if (this.EntryList.filter(e => (e.Stext.indexOf('- Stream Starts -') != -1)).length == 0) {
+      const Stime2 = new Date().toTimeString().split(" ")[0];
+
+      var a: any = new Date();
+      var b: string = a.getMilliseconds().toString();
+      while (b.length < 3){
+        b = "0" + b;
+      }
+      a = a.toUTCString().split(" ");
+      a = a[a.length - 2];
+  
+      var TempEntry: any = {
+        Stext: "--- Stream Starts ---",
+        Stime2: Date.now(),
+        CC: "",
+        OC: "",
+        Stime: a + ":" + b
+      }
+
+      if (this.RoomDt.Empty == true){
+        TempEntry.Empty = true;
+      }
+
+      this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+        act: "New Entry",
+        data: TempEntry,
+        ExtShare: this.RoomDt.ExtSharing
+      }))).subscribe({
+        next: data => {
+          if (this.RoomDt.Empty == true){
+            this.RoomDt.Empty = false;
+          }
+    
+          const dt = JSON.parse(this.TGEnc.TGDecoding(JSON.parse(data.body).BToken));
+          this.EntryPrint({
+            Stext: TempEntry["Stext"],
+            Stime: Stime2,
+            CC: TempEntry["CC"],
+            OC: TempEntry["OC"],
+            key: dt["key"]
+          });
+          setTimeout(() => {
+            if (this.cardcontainer){
+              this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+            }
+          }, 100);
+        }
+      });
     }
   }
   //========================== TL INPUT CONTROL ==========================  

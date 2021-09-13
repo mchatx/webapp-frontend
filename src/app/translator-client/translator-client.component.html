@@ -198,7 +198,7 @@
         <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
         <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
         <a class="button" (click)="DeleteProfile()" style="margin-right: 5px;">Delete Profile</a>
-        <a class="button" style="margin-right: 5px;">Start Broadcast</a>
+        <a class="button" (click)="Broadcast()" style="margin-right: 5px;">Start Broadcast</a>
       </div>
     </div>
   </div>
@@ -369,6 +369,13 @@
           <div style="display: flex; flex-direction: row; align-items: center;">
             <input type="checkbox" [(ngModel)]="Hidden" style="margin-right: 5px;">
             <label class="label">Hidden</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <div style="display: flex; flex-direction: row; align-items: center;">
+            <input type="checkbox" [(ngModel)]="Downloadable" style="margin-right: 5px;">
+            <label class="label">Downloadable</label>
           </div>
         </div>
 
