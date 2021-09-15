@@ -12,6 +12,7 @@ export class HomeComponent implements OnInit {
   constructor() { }
 
   ngOnInit(): void {
+    sessionStorage.removeItem("MChatAppToken");
   }
   faDownload = faDownload;
   faDiscord = faDiscord;

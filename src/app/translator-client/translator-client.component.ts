@@ -3,6 +3,7 @@ import { Router, RouterModule } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
 import { faHome, faLock, faUser } from '@fortawesome/free-solid-svg-icons';
+import { saveAs } from 'file-saver';
 
 class FullEntry {
   Stext: string = "";
@@ -887,8 +888,324 @@ export class TranslatorClientComponent implements OnInit {
   //-----------------------------------  EXPORT HANDLER  -----------------------------------
   ExportToFile(mode:number):void {
     this.ModalMenu = 0;
+    this.NotifText = "Exporting...";
+    this.ModalNotif = true;
+    this.Entriesdt = [];
+    this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+      act: "Export Room"
+    }))).subscribe({
+      next: data => {
+        this.Entriesdt = JSON.parse(this.TGEnc.TGDecoding(JSON.parse(data.body).BToken));
+        var msprev = 0;
+        var msnow = 0;
+        var totaltime = 0;
+    
+        for (let i = 0; i < this.Entriesdt.length; i++){
+            var TimeStringSplit = this.Entriesdt[i].Stime.split(":");
+            var TimeConv = parseInt(TimeStringSplit[0], 10)*3600*1000 + parseInt(TimeStringSplit[1], 10)*60*1000 + parseInt(TimeStringSplit[2], 10)*1000 + parseInt(TimeStringSplit[3], 10);
+            if (msprev == 0){
+                msprev = TimeConv;
+            }
+            msnow = TimeConv;
+    
+            if (msnow - msprev < 0){
+                totaltime += msnow - msprev + 24*3600*1000;
+            } else {
+                totaltime += msnow - msprev;
+            }
+    
+            this.Entriesdt[i].Stime = totaltime;
+    
+            if (i == this.Entriesdt.length - 1){
+              switch (mode) {
+                case 1:
+                  this.ExportSrt();
+                  break;
+                case 2:
+                  this.ExportAss();
+                  break;
+                case 3:
+                  this.ExportTTML();
+                  break;
+              }
+              this.ModalNotif = false;
+            }
+        }
+      },
+      error: err => {
+        setTimeout(() => {
+          this.NotifText = "ERROR EXPORTING...";
+          this.ModalNotif = false;          
+        }, 3000);
+      }
+    });
   }
   //===================================  EXPORt HANDLER  ===================================
+
+
+
+  //------------------------------------- EXPORT MODULES -------------------------------------
+  Entriesdt: any[] = [];
+  
+  ExportSrt(): void {
+    var WriteStream = "";
+  
+    for (let i: number = 0; i < this.Entriesdt.length; i++) {
+      WriteStream += (i + 1).toString() + "\n";
+      WriteStream += this.StringifyTime(this.Entriesdt[i].Stime - this.Entriesdt[0].Stime, true) + " --> ";
+      if (i == this.Entriesdt.length - 1) {
+        WriteStream += this.StringifyTime(this.Entriesdt[i].Stime + 3000 - this.Entriesdt[0].Stime, true) + "\n";
+      } else {
+        WriteStream += this.StringifyTime(this.Entriesdt[i + 1].Stime - this.Entriesdt[0].Stime, true) + "\n";
+      }
+      WriteStream += this.Entriesdt[i].Stext + "\n\n";
+    }
+  
+    const blob = new Blob([WriteStream], { type: 'text/plain' });
+    saveAs(blob, (new Date()).toISOString().split("T")[0] + ".srt");
+  }
+  
+  ExportAss(): void {
+    var WriteStream = "";
+    let ProfileName: string[] = [];
+    let ProfileData: (string | undefined)[][] = [];
+    let ProfileContainer: (string | undefined)[] = ["", ""];
+  
+    ProfileName.push("Default");
+    ProfileData.push(["FFFFFF", "000000"]);
+  
+    for (let i: number = 0; i < this.Entriesdt.length; i++) {
+      if (this.Entriesdt[i].CC != undefined) {
+        ProfileContainer[0] = this.Entriesdt[i].CC;
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+  
+      if (this.Entriesdt[i].OC != undefined) {
+        ProfileContainer[1] = this.Entriesdt[i].OC;
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+  
+      let find: boolean = false;
+      for (let j: number = 0; j < ProfileData.length; j++) {
+        if ((ProfileData[j][0] == ProfileContainer[0]) && (ProfileData[j][1] == ProfileContainer[1])) {
+          find = true;
+          break;
+        } else if ((!find) && (j == ProfileData.length - 1)) {
+          ProfileData.push([ProfileContainer[0], ProfileContainer[1]]);
+          ProfileName.push("Profile" + (ProfileData.length - 1).toString());
+        }
+      }
+    }
+  
+    WriteStream += "[V4+ Styles]\n";
+    WriteStream += "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n";
+  
+    for (let i: number = 0; i < ProfileName.length; i++) {
+      WriteStream += "Style: " + ProfileName[i] + ",Arial,20,&H00"
+        + ProfileData[i][0]?.substring(4, 6) + ProfileData[i][0]?.substring(2, 4) + ProfileData[i][0]?.substring(0, 2)
+        + ",&H00000000,&H00"
+        + ProfileData[i][1]?.substring(4, 6) + ProfileData[i][1]?.substring(2, 4) + ProfileData[i][1]?.substring(0, 2)
+        + ",&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n";
+    }
+    WriteStream += "\n[Events]\n";
+    WriteStream += "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
+  
+    for (let i: number = 0; i < this.Entriesdt.length; i++) {
+      WriteStream += "Dialogue: 0," + this.StringifyTime(this.Entriesdt[i].Stime - this.Entriesdt[0].Stime, false) + ",";
+  
+      if (i == this.Entriesdt.length - 1) {
+        WriteStream += this.StringifyTime(this.Entriesdt[i].Stime + 3000 - this.Entriesdt[0].Stime, false) + ",";
+      } else {
+        WriteStream += this.StringifyTime(this.Entriesdt[i + 1].Stime - this.Entriesdt[0].Stime, false) + ",";
+      }
+  
+      if (this.Entriesdt[i].CC != undefined) {
+        ProfileContainer[0] = this.Entriesdt[i].CC;
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+      if (this.Entriesdt[i].OC != undefined) {
+        ProfileContainer[1] = this.Entriesdt[i].OC;
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+  
+      let find: boolean = false;
+      for (let j: number = 0; j < ProfileData.length; j++) {
+        if ((ProfileData[j][0] == ProfileContainer[0]) && (ProfileData[j][1] == ProfileContainer[1])) {
+          find = true;
+          WriteStream += ProfileName[j] + ",";
+          break;
+        } else if ((!find) && (j == ProfileData.length - 1)) {
+          WriteStream += "Default,";
+        }
+      }
+  
+      WriteStream += ",0,0,0,," + this.Entriesdt[i].Stext + "\n";
+    }
+  
+    const blob = new Blob([WriteStream], { type: 'text/plain' });
+    saveAs(blob, (new Date()).toISOString().split("T")[0] + ".ass");
+  }
+  
+  ExportTTML(): void {
+    var WriteStream = "";
+    let ProfileData: (string | undefined)[][] = [];
+    let ProfileContainer: (string | undefined)[] = ["", ""];
+  
+    ProfileData.push(["FFFFFF", "000000"]);
+  
+    for (let i: number = 0; i < this.Entriesdt.length; i++) {
+      if (this.Entriesdt[i].CC != undefined) {
+        ProfileContainer[0] = this.Entriesdt[i].CC;
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+  
+      if (this.Entriesdt[i].OC != undefined) {
+        ProfileContainer[1] = this.Entriesdt[i].OC;
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+  
+      let find: boolean = false;
+      for (let j: number = 0; j < ProfileData.length; j++) {
+        if ((ProfileData[j][0] == ProfileContainer[0]) && (ProfileData[j][1] == ProfileContainer[1])) {
+          find = true;
+          break;
+        } else if ((!find) && (j == ProfileData.length - 1)) {
+          ProfileData.push([ProfileContainer[0], ProfileContainer[1]]);
+        }
+      }
+    }
+  
+    WriteStream += "<?xml version=\"1.0\" encoding=\"utf-8\"?><timedtext format=\"3\">\n"
+      + "\t<head>"
+      + "\t\t<wp id=\"0\" ap=\"7\" ah=\"0\" av=\"0\" />\n"
+      + "\t\t<wp id=\"1\" ap=\"7\" ah=\"50\" av=\"100\" />\n"
+      + "\t\t<ws id=\"0\" ju=\"2\" pd=\"0\" sd=\"0\" />\n"
+      + "\t\t<ws id=\"1\" ju=\"2\" pd=\"0\" sd=\"0\" />\n\n"
+      + "\t\t<pen id=\"0\" sz=\"100\" fc=\"#000000\" fo=\"0\" bo=\"0\" />\n"
+      + "\t\t<pen id=\"1\" sz=\"0\" fc=\"#A0AAB4\" fo=\"0\" bo=\"0\" />\n";
+  
+    for (let i: number = 0; i < ProfileData.length; i++) {
+      WriteStream += "\t\t<pen id=\"" + ((i * 2) + 2).toString() + "\" sz=\"100\" fc=\"#" + ProfileData[i][0] + "\" fo=\"254\" et=\"4\" ec=\"#" + ProfileData[i][1] + "\" />\n";
+      WriteStream += "\t\t<pen id=\"" + ((i * 2) + 3).toString() + "\" sz=\"100\" fc=\"#" + ProfileData[i][0] + "\" fo=\"254\" et=\"3\" ec=\"#" + ProfileData[i][1] + "\" />\n";
+    }
+  
+    WriteStream += "\t</head>\n\n\t<body>\n";
+  
+    for (let i: number = 0; i < this.Entriesdt.length; i++) {
+      WriteStream += "\t\t<p t=\""
+        + (this.Entriesdt[i].Stime + 1 - this.Entriesdt[0].Stime).toString()
+        + "\" d=\"";
+  
+      if (i == this.Entriesdt.length - 1) {
+        WriteStream += (this.Entriesdt[i].Stime + 3001 - this.Entriesdt[0].Stime).toString() + "\"";
+      } else {
+        WriteStream += (this.Entriesdt[i + 1].Stime + 1 - this.Entriesdt[0].Stime).toString() + "\"";
+      }
+  
+      WriteStream += " wp=\"1\" ws=\"1\"><s p=\"1\">​</s>​<s p=\"";
+
+      if (this.Entriesdt[i].CC != undefined) {
+        ProfileContainer[0] = this.Entriesdt[i].CC;
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+      if (this.Entriesdt[i].OC != undefined) {
+        ProfileContainer[1] = this.Entriesdt[i].OC;
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+  
+      let find: boolean = false;
+      let idnum: number = 0;
+      for (let j: number = 0; j < ProfileData.length; j++) {
+        if ((ProfileData[j][0] == ProfileContainer[0]) && (ProfileData[j][1] == ProfileContainer[1])) {
+          find = true;
+          idnum = j;
+          break;
+        } else if ((!find) && (j == ProfileData.length - 1)) {
+          idnum = 0;
+        }
+      }
+  
+      WriteStream += ((idnum * 2) + 2).toString() + "\">​ " + this.Entriesdt[i].Stext + "​ ​</s><s p=\"1\">​</s></p>\n";
+  
+      WriteStream += "\t\t<p t=\""
+        + (this.Entriesdt[i].Stime + 1 - this.Entriesdt[0].Stime).toString()
+        + "\" d=\"";
+  
+      if (i == this.Entriesdt.length - 1) {
+        WriteStream += (this.Entriesdt[i].Stime + 3001 - this.Entriesdt[0].Stime).toString() + "\"";
+      } else {
+        WriteStream += (this.Entriesdt[i + 1].Stime + 1 - this.Entriesdt[0].Stime).toString() + "\"";
+      }
+  
+      WriteStream += " wp=\"1\" ws=\"1\"><s p=\"1\">​</s>​<s p=\"";
+  
+      if (this.Entriesdt[i].CC != undefined) {
+        ProfileContainer[0] = this.Entriesdt[i].CC;
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+      if (this.Entriesdt[i].OC != undefined) {
+        ProfileContainer[1] = this.Entriesdt[i].OC;
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+
+      find = false;
+      WriteStream += ((idnum * 2) + 3).toString() + "\">​ " + this.Entriesdt[i].Stext + "​ ​</s><s p=\"1\">​</s></p>\n";
+    }
+    WriteStream += "\t</body>\n</timedtext>";
+  
+    const blob = new Blob([WriteStream], { type: 'text/plain' });
+    saveAs(blob, (new Date()).toISOString().split("T")[0] + ".TTML");
+  }
+  
+  StringifyTime(TimeStamp: number, mode: boolean): string {
+    let Timestring: string = "";
+    let Stime: number = 0;
+    let SString: string = "";
+  
+    Stime = Math.floor(TimeStamp / 3600000);
+    SString = Stime.toString();
+    if (SString.length < 2) {
+      SString = "0" + SString;
+    }
+    Timestring += SString + ":";
+    TimeStamp -= Stime * 3600000;
+  
+    Stime = Math.floor(TimeStamp / 60000);
+    SString = Stime.toString();
+    if (SString.length < 2) {
+      SString = "0" + SString;
+    }
+    Timestring += SString + ":";
+    TimeStamp -= Stime * 60000;
+  
+    Stime = Math.floor(TimeStamp / 1000);
+    SString = Stime.toString();
+    if (SString.length < 2) {
+      SString = "0" + SString;
+    }
+    Timestring += SString;
+    TimeStamp -= Stime * 1000;
+  
+    if (mode) {
+      Timestring += ",";
+    } else {
+      Timestring += ".";
+    }
+    Timestring += TimeStamp.toString();
+  
+    return (Timestring);
+  }
+  //===================================== EXPORT MODULES =====================================
 
 
 
