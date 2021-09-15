@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
+import { decodedTextSpanIntersectsWith } from 'typescript';
 
 @Injectable({
   providedIn: 'root'
@@ -40,6 +41,17 @@ export class TranslatorService {
 
     return (this.httpclient.post(environment.DBConn + '/FetchRaw/', {
       BToken: btoken
+    }, { headers, observe: 'response', responseType: 'text'}));
+  }
+
+  SendSync(token: string, dt: any): Observable<any> {
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+
+    return (this.httpclient.post(environment.DBConn + '/sync/', {
+      UID: token,
+      data: dt
     }, { headers, observe: 'response', responseType: 'text'}));
   }
 }

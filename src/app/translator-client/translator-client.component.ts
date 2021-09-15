@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { environment } from '../../environments/environment';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
 import { faHome, faLock, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -706,6 +707,29 @@ export class TranslatorClientComponent implements OnInit {
         }
       });
 
+      if (this.Synced == true){
+        this.TLService.SendSync(this.SyncToken, {
+          Act: "MChad-LiveSend",
+          UID: this.SyncToken,
+          Text: TempEntry["Stext"]
+        }).subscribe({
+          next: data => {
+            this.EntryPrint({
+              Stext: "(LOCAL) " + TempEntry["Stext"],
+              Stime: Stime2,
+              CC: "",
+              OC: "",
+              key: ""
+            });
+            setTimeout(() => {
+              if (this.cardcontainer){
+                this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+              }
+            }, 100);
+          }
+        });
+      }
+
       this.TLEntry.Stext = "";
       setTimeout(() => {
         this.SpamBlock = false;
@@ -791,7 +815,43 @@ export class TranslatorClientComponent implements OnInit {
 
 
 
-  //-----------------------------------  LIVE LISTENER  -----------------------------------
+  //-----------------------------------  SYNCING  -----------------------------------
+  Synced:boolean = false;
+  ES: EventSource|undefined = undefined;
+  SyncToken:string = "";
+
+  StartSync() {
+    if (this.Synced == true){
+      this.ES?.close();
+    }
+
+    this.ES = new EventSource(environment.DBConn + '/syncmaster/' + encodeURI(this.AppToken));
+
+    this.ES.onmessage = e => {
+      if (e.data != "{}"){
+        const dt = JSON.parse(e.data);
+        this.SyncToken = dt["Token"];
+        this.Synced = true;
+        console.log(this.SyncToken);
+      }
+    }
+
+    this.ES.onerror = e => {
+      this.ES?.close();
+    }
+
+    this.ES.onopen = e => {
+      console.log("START SYNCING");
+    }
+  }
+
+  StopSync() {
+    if (this.Synced == true){
+      this.Synced = false;
+      this.ES?.close();
+    }
+  }
+
   /*
   StartListening(Btoken: string): void {
     const RoomES = new EventSource('http://localhost:33333/TLAPI/?BToken=' + Btoken);
@@ -858,7 +918,7 @@ export class TranslatorClientComponent implements OnInit {
     }, false);
   }
   */
-  //===================================  LIVE LISTENER  ===================================
+  //===================================  SYNCING  ===================================
 
 
 
