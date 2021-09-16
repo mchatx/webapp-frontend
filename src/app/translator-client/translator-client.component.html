@@ -216,6 +216,7 @@
   6 => Save to Archive
   7 => Clear room
   8 => Edit Entry
+  9 => Sync
 -->
 <!---------------------------------------------- MODALS ------------------------------------------------------->
 <div class="modal" [ngClass]="{ 'is-active' : ModalMenu != 0 }">
@@ -421,6 +422,19 @@
           <a class="button is-rounded is-success" (click)="SendEdit()">OK</a>
         </div>
       </div>
+
+      <!--   SYNCED ROOM  -->
+      <div *ngSwitchCase="9">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <label class="label is-size-3">Use code below with MSync web extension for syncing</label>
+          <span class="tag is-black is-large">{{ SyncToken }}</span>
+        </div>
+
+        <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 30px;">
+          <a class="button is-rounded is-success" style="width: 100%;" (click)="ModalMenu = 0">OK</a>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

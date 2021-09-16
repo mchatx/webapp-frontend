@@ -60,7 +60,7 @@ export class TranslatorClientComponent implements OnInit {
   OT:number = 1;
   ChatProxy:HTMLIFrameElement | undefined;
 
-  FFsize:number = 21;
+  FFsize:number = 15;
   FStyle:string = "Ubuntu";
   TxAlign:CanvasTextAlign = "left";
   MaxDisplay = 50;
@@ -121,7 +121,11 @@ export class TranslatorClientComponent implements OnInit {
               e.Stime = new Date(Date.parse('01 Jan 1970 ' + e.Stime.slice(0, e.Stime.lastIndexOf(":")) + ' UTC')).toTimeString().split(" ")[0];
               this.EntryList.push(e);
             });
-          }
+          },
+          error: err => {
+            this.ModalNotif = true;
+            this.NotifText = "ERROR CONNECTION TO SERVER..."
+          }         
         });
 
         this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
@@ -143,6 +147,10 @@ export class TranslatorClientComponent implements OnInit {
               this.cardcontainer.nativeElement.style["height"] = (window.innerHeight - this.footer.nativeElement.offsetHeight - 25).toString() + "px";
               this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
             }
+          },
+          error: err => {
+            this.ModalNotif = true;
+            this.NotifText = "ERROR CONNECTION TO SERVER..."
           }
         });
 
@@ -717,8 +725,8 @@ export class TranslatorClientComponent implements OnInit {
             this.EntryPrint({
               Stext: "(LOCAL) " + TempEntry["Stext"],
               Stime: Stime2,
-              CC: "",
-              OC: "",
+              CC: undefined,
+              OC: undefined,
               key: ""
             });
             setTimeout(() => {
@@ -822,32 +830,59 @@ export class TranslatorClientComponent implements OnInit {
 
   StartSync() {
     if (this.Synced == true){
-      this.ES?.close();
-    }
+      this.SetModalMenu(9);
+    } else {
+      this.ES = new EventSource(environment.DBConn + '/syncmaster?token=' + encodeURI(this.AppToken) + '&role=LTL');
+      
+      const b = this.SyncToken;
+      var i = 0;
+      var a = setInterval(() => {
+        if (b != this.SyncToken){
+          this.SetModalMenu(9);
+          clearInterval(a);
+        } else if (i == 300){
+          clearInterval(a);
+        }
+        i++;
+      },200);
 
-    this.ES = new EventSource(environment.DBConn + '/syncmaster/' + encodeURI(this.AppToken));
-
-    this.ES.onmessage = e => {
-      if (e.data != "{}"){
-        const dt = JSON.parse(e.data);
-        this.SyncToken = dt["Token"];
-        this.Synced = true;
-        console.log(this.SyncToken);
+      this.ES.onmessage = e => {
+        if (e.data != "{}"){
+          const dt = JSON.parse(e.data);
+          if (dt["Token"]){
+            this.SyncToken = dt["Token"];
+            this.Synced = true;
+          }
+        }
       }
-    }
-
-    this.ES.onerror = e => {
-      this.ES?.close();
-    }
-
-    this.ES.onopen = e => {
-      console.log("START SYNCING");
+  
+      this.ES.onerror = e => {
+        this.ES?.close();
+        this.SetModalMenu(0);
+        clearInterval(a);
+      }
+  
+      this.ES.onopen = e => {
+        console.log("START SYNCING");
+      }
     }
   }
 
   StopSync() {
     if (this.Synced == true){
       this.Synced = false;
+      this.EntryPrint({
+        Stext: "(SYSTEM) UNSYNCED",
+        Stime: new Date().toTimeString().split(" ")[0],
+        CC: undefined,
+        OC: undefined,
+        key: ""
+      });
+      setTimeout(() => {
+        if (this.cardcontainer){
+          this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+        }
+      }, 100);
       this.ES?.close();
     }
   }
