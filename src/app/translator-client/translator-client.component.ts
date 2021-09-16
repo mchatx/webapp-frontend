@@ -69,6 +69,8 @@ export class TranslatorClientComponent implements OnInit {
   RoomNick: string = "";
   AppToken: string = "";
 
+  LocalPref: string = "";
+
   //  TL VARIABLES
   TLEntry:FullEntry = ({
     Stext: "",
@@ -719,11 +721,11 @@ export class TranslatorClientComponent implements OnInit {
         this.TLService.SendSync(this.SyncToken, {
           Act: "MChad-LiveSend",
           UID: this.SyncToken,
-          Text: TempEntry["Stext"]
+          Text: this.LocalPref + TempEntry["Stext"]
         }).subscribe({
           next: data => {
             this.EntryPrint({
-              Stext: "(LOCAL) " + TempEntry["Stext"],
+              Stext: "(LOCAL) " + this.LocalPref + TempEntry["Stext"],
               Stime: Stime2,
               CC: undefined,
               OC: undefined,
