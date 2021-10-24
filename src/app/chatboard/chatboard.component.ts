@@ -5,12 +5,25 @@ import { ChatskimmerService } from '../services/chatskimmer.service';
 import { environment } from '../../environments/environment';
 import * as tmi from 'tmi.js';
 
+class MessageEntry {
+  type: string = "";
+  data: any | undefined;
+}
+
 @Component({
   selector: 'app-chatboard',
   templateUrl: './chatboard.component.html',
   styleUrls: ['./chatboard.component.scss']
 })
 export class ChatboardComponent implements OnInit, OnDestroy {
+  @ViewChild('cardcontainer') cardcontainer !: ElementRef; 
+
+  FFsize:number = 15;
+  FStyle:string = "Ubuntu";
+  TxAlign:CanvasTextAlign = "left";
+  MaxDisplay = 200;
+  BGColour:string = "#28282B";
+  OT:number = 1;
 
   ModalMenu:number = 0;
   AddLink:string = "";
@@ -18,11 +31,20 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   ModalNotif:boolean = false;
   NotifText: string = "";
 
+  EntryList: MessageEntry[] = [];
+
   constructor(
     private ChatSkimmer: ChatskimmerService
   ) { }
 
   ngOnInit(): void {
+    this.PushNewEntryList({
+      type: "SYS",
+      data: {
+        author: "SERVER",
+        message: "チャット板にようこそ"
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -139,83 +161,120 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     }
   }
 
-//-----------------------------------  SYNCING  -----------------------------------
-Synced:boolean = false;
-ES: EventSource|undefined = undefined;
-SyncToken:string = "";
+  //-----------------------------------  SYNCING  -----------------------------------
+  Synced:boolean = false;
+  ES: EventSource|undefined = undefined;
+  SyncToken:string = "";
+  WS: WebSocket|undefined = undefined;
+  TMIClient: tmi.Client|undefined = undefined;
 
-StartSync(ESLink: string) {
-  this.ES = new EventSource(ESLink);
+  StartSync(ESLink: string) {
+    this.ES = new EventSource(ESLink);
     
-  this.ES.onmessage = e => {
-    console.log(e);
-  }
-
-  this.ES.onerror = e => {
-    this.ES?.close();
-  }
-
-  this.ES.onopen = e => {
-    console.log("START SYNCING");
-  }
-}
-
-StopSync() {
-}
-
-WS: WebSocket|undefined = undefined;
-StartSyncWS(WSLink: string) {
-  this.WS = new WebSocket(WSLink);
-
-  this.WS.onmessage = e => {
-    console.log(e);
-  }
-
-  this.WS.onerror = e => {
-    this.WS?.close();
-  }
-
-  this.WS.onopen = e => {
-    console.log("START SYNCING WS");
-  }
-}
-
-TMIClient: tmi.Client|undefined = undefined;
-async StartSyncTMI(channel: string){
-  const TMIOptions: tmi.Options = {
-    channels: [channel],
-    connection: {
-      maxReconnectAttempts: 2,
-      maxReconnectInverval: 10,
-      reconnect: true,
-      secure: true
+    this.ES.onmessage = e => {
+      console.log(e);
     }
-  };
 
-  this.TMIClient = tmi.Client(TMIOptions);
+    this.ES.onerror = e => {
+      this.ES?.close();
+    }
 
-  await this.TMIClient.connect();
+    this.ES.onopen = e => {
+      console.log("START SYNCING");
+    }
+  }
 
-  this.TMIClient.on("message", (channel, tags, message, self) => {
-    if (self) return;
+  StopSync() {
+  }
 
-    console.log({
-        author: tags["display-name"],
-        badges: tags.badges,
-        emotes: tags.emotes,
-        message: message,
-    })
-  });
+  StartSyncWS(WSLink: string) {
+    this.WS = new WebSocket(WSLink);
 
-  this.TMIClient.on("connected", (address, port) => {
-    console.log("TMI CONNECTED");
-  });
+    this.WS.onmessage = e => {
+      console.log(e);
+    }
 
-  //this.TMIClient.on("disconnected", reason => {});
-  //this.TMIClient.on("join", (channel, username, self) => {});
-  //this.client.on("logon", () => {});
-}
-//===================================  SYNCING  ===================================
+    this.WS.onerror = e => {
+      this.WS?.close();
+    }
+
+    this.WS.onopen = e => {
+      console.log("START SYNCING WS");
+    }
+  }
+
+  async StartSyncTMI(channel: string){
+    const TMIOptions: tmi.Options = {
+      channels: [channel],
+      connection: {
+        maxReconnectAttempts: 2,
+        maxReconnectInverval: 10,
+        reconnect: true,
+        secure: true
+      }
+    };
+
+    this.TMIClient = tmi.Client(TMIOptions);
+
+    await this.TMIClient.connect();
+
+    this.TMIClient.on("message", (channel, tags, message, self) => {
+      if (self) return;
+
+      if (tags["display-name"]) {
+        this.PushNewEntryList({
+          type: "TW",
+          data: {
+            author: tags["display-name"],
+            badges: tags.badges,
+            emotes: tags.emotes,
+            message: message,
+          }
+        })
+      }
+    });
+
+    this.TMIClient.on("connected", (address, port) => {
+      console.log("TMI CONNECTED");
+    });
+
+    //this.TMIClient.on("disconnected", reason => {});
+    //this.TMIClient.on("join", (channel, username, self) => {});
+    //this.client.on("logon", () => {});
+  }
+  //===================================  SYNCING  ===================================
+
+  AutoScroll:boolean = true;
+
+  ElementScrolled(){
+    const threshold = 50;
+    const position = this.cardcontainer.nativeElement.scrollTop + this.cardcontainer.nativeElement.offsetHeight;
+    const height = this.cardcontainer.nativeElement.scrollHeight;
+    if (position > height - threshold){
+      this.AutoScroll = true;
+    } else {
+      this.AutoScroll = false;
+    }
+  }
+
+  PushNewEntryList(Entry: MessageEntry) {
+    this.EntryList.push(Entry);
+
+    if (this.EntryList.length > this.MaxDisplay){
+      this.EntryList.shift();
+    }
+
+    if (this.AutoScroll) {
+      setTimeout(() => {
+        if (this.cardcontainer){
+          const SaveScroll = this.AutoScroll;
+          this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+          this.AutoScroll = SaveScroll;
+        }
+      }, 100);
+    }
+  }
+
 
   faArrowLeft = faArrowLeft;
   faPlusSquare = faPlusSquare;
