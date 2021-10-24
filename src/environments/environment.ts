@@ -5,7 +5,8 @@
 export const environment = {
   production: false,
   DBConn: 'https://api.mchatx.org',
-  DBConn2: 'https://api.mchatx.org'
+  DBConn2: 'https://api.mchatx.org',
+  DBConn3: 'https://api.mchatx.org'
 };
 
 /*

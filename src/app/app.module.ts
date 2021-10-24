@@ -19,6 +19,7 @@ import { ProxyappComponent } from './proxyapp/proxyapp.component';
 import { ProxyappsetComponent } from './proxyappset/proxyappset.component';
 import { TranslatorClientComponent } from './translator-client/translator-client.component';
 import { ScriptEditorComponent } from './script-editor/script-editor.component';
+import { ChatboardComponent } from './chatboard/chatboard.component';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { ScriptEditorComponent } from './script-editor/script-editor.component';
     ProxyappComponent,
     ProxyappsetComponent,
     TranslatorClientComponent,
-    ScriptEditorComponent
+    ScriptEditorComponent,
+    ChatboardComponent
   ],
   imports: [
     BrowserModule,

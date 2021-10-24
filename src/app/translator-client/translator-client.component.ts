@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, OnDestroy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
@@ -39,7 +39,7 @@ class RoomData {
   templateUrl: './translator-client.component.html',
   styleUrls: ['./translator-client.component.scss']
 })
-export class TranslatorClientComponent implements OnInit {
+export class TranslatorClientComponent implements OnInit, OnDestroy {
   @ViewChild('footer') footer !: ElementRef;
   @ViewChild('cardcontainer') cardcontainer !: ElementRef; 
   @ViewChild('loadstate') loadbutton!: ElementRef;
@@ -97,6 +97,10 @@ export class TranslatorClientComponent implements OnInit {
     private TLService: TranslatorService,
     private router: Router,
   ) { }
+
+  ngOnDestroy(): void {
+    this.ES?.close();
+  }
 
   ngOnInit(): void {
     let test2: string | null = sessionStorage.getItem("MChatAppToken");
