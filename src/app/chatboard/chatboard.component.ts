@@ -53,12 +53,6 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     this.TMIClient?.disconnect();
   }
 
-  @ViewChild('navMenu') navMenu!: ElementRef;
-
-  toggleNavbar() {
-    this.navMenu.nativeElement.classList.toggle('is-active');
-  }
-
   ShortenStreamLink(s : string){
     if (s.indexOf("https://www.youtube.com/watch?v=") != -1){
       s = s.replace("https://www.youtube.com/watch?v=", "YT_");
@@ -191,7 +185,20 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     this.WS = new WebSocket(WSLink);
 
     this.WS.onmessage = e => {
-      console.log(e);
+      if (e.data != "[]"){
+        JSON.parse(e.data).forEach((dt:any) => {
+          if (dt.type == "comment"){
+            console.log(dt);
+            this.PushNewEntryList({
+              type: "TC",
+              data: {
+                author: dt.author.name,
+                message: dt.htmlMessage ? dt.htmlMessage : dt.message
+              }
+            })
+          }
+        });
+      }
     }
 
     this.WS.onerror = e => {
@@ -258,7 +265,91 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   }
 
   PushNewEntryList(Entry: MessageEntry) {
-    this.EntryList.push(Entry);
+    switch (Entry.type) {
+      case "TW":
+        /*
+        Object { 304822010: (2) […], 304822061: (3) […] }
+        */
+        //https://static-cdn.jtvnw.net/emoticons/v1/[emote_id]/2.0
+        //https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_e2c96c0c122e486db7474bee9a35b398/default/light/3.0
+        if (Entry.data.emotes) {
+          var EmoteList: any[] = [];
+  ​        Object.entries(Entry.data.emotes).forEach(([id, positions]: any) => {
+            positions.forEach( (e:string) => {
+              const [start, end] = e.split("-");
+              EmoteList.push({
+                id: id,
+                start: start,
+                end: end
+              });
+            });
+          });
+          EmoteList.sort((a,b) => a.start - b.start);
+
+          var HTMLMessage: any[] = [];
+          for (let i = 0; i < EmoteList.length; i++){
+            if (i == 0){
+              if (EmoteList[i].start != 0){
+                HTMLMessage.push({
+                  type: "S",
+                  content: Entry.data.message.slice(0, EmoteList[i].start)
+                });
+              }
+              if (EmoteList[i].id.indexOf("emotesv2") == 0){
+                HTMLMessage.push({
+                  type: "M",
+                  content: "https://static-cdn.jtvnw.net/emoticons/v2/" + EmoteList[i].id + "/default/light/3.0"
+                });
+              } else {
+                HTMLMessage.push({
+                  type: "M",
+                  content: "https://static-cdn.jtvnw.net/emoticons/v1/" + EmoteList[i].id + "/2.0"
+                });
+              }
+            } else {
+              HTMLMessage.push({
+                type: "S",
+                content: Entry.data.message.slice(EmoteList[i - 1].end + 1, EmoteList[i].end)
+              });
+              if (EmoteList[i].id.indexOf("emotesv2") == 0){
+                HTMLMessage.push({
+                  type: "M",
+                  content: "https://static-cdn.jtvnw.net/emoticons/v2/" + EmoteList[i].id + "/default/light/3.0"
+                });
+              } else {
+                HTMLMessage.push({
+                  type: "M",
+                  content: "https://static-cdn.jtvnw.net/emoticons/v1/" + EmoteList[i].id + "/2.0"
+                });
+              }
+            }
+            
+            if (i == EmoteList.length - 1){
+              if (EmoteList[i].end != Entry.data.message.length - 1){
+                HTMLMessage.push({
+                  type: "S",
+                  content: Entry.data.message.slice(EmoteList[i].end + 1)
+                });
+              }
+            } 
+          }
+
+          delete Entry.data.emotes;
+          Entry.data.message = HTMLMessage;
+          this.EntryList.push(Entry);
+        } else {
+          Entry.data.message = [{
+            type: "S",
+            content: Entry.data.message
+          }]
+          this.EntryList.push(Entry);
+        }
+        break;
+    
+      default:
+        this.EntryList.push(Entry);
+        break;
+    }    
 
     if (this.EntryList.length > this.MaxDisplay){
       this.EntryList.shift();
