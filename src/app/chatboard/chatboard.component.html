@@ -33,8 +33,9 @@
                 <span *ngIf="dt.type == 'S'">
                   {{ dt.content }}
                 </span>
-                <img class="emoticong" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
               </span>
+              <span *ngIf="Entry.data.TL"> (DEEPL : {{ Entry.data.TL }})</span>
             </div>
             <!--   TWITCAST RENDERER  -->
             <div *ngSwitchCase="'TC'">
@@ -43,6 +44,7 @@
                 <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
                 <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
               </span>
+              <span *ngIf="Entry.data.TL"> (DEEPL : {{ Entry.data.TL }})</span>
             </div>
             <!--   YOUTUBE RENDERER  -->
             <div *ngSwitchCase="'YT'">
@@ -51,6 +53,7 @@
                 <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
                 <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
               </span>
+              <span *ngIf="Entry.data.TL"> (DEEPL : {{ Entry.data.TL }})</span>
             </div>
             <!--   SYSTEM RENDERER  -->
             <div *ngSwitchCase="'SYS'">

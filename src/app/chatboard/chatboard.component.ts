@@ -50,6 +50,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.ES?.close();
     this.WS?.close();
+    clearInterval(this.ForceRefresh);
     this.TMIClient?.disconnect();
   }
 
@@ -113,7 +114,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     }
   
     if (query.TL) {
-      TargetURL += "&TL=ok";
+      TargetURL += "&TL=OK";
     }
   
     return (TargetURL);
@@ -121,13 +122,20 @@ export class ChatboardComponent implements OnInit, OnDestroy {
 
   AddChatSkimmer() {
     this.ModalMenu = 0;
-    let URLquery = this.ShortenStreamLink(this.AddLink);
-    
+    let URLquery: any = this.ShortenStreamLink(this.AddLink);
+    URLquery.TL = "OK";
+
     if (!URLquery) {
       this.ModalNotif = true;
       this.NotifText = "UNRECOGNIZED LINK";
     } else {
-      if (URLquery.link){
+      if (URLquery.TL == "OK") {
+        if (URLquery.link){
+          this.StartSync(this.URLConstructor(URLquery), URLquery.link.slice(0, 2));
+        } else {
+          this.StartSync(this.URLConstructor(URLquery), URLquery.channel.slice(0, 2));
+        }
+      } else if (URLquery.link){
         switch (URLquery.link.slice(0, 3)) {
           case "TC_":
             this.ChatSkimmer.SendRequest(URLquery).subscribe({
@@ -144,49 +152,95 @@ export class ChatboardComponent implements OnInit, OnDestroy {
           case "TW_":
             this.StartSyncTMI(URLquery.link.slice(3));
             break;
-        
+
+          case "YT_":
+            this.StartSync(this.URLConstructor(URLquery), "YT");
+            break;  
+
           default:
-            this.StartSync(this.URLConstructor(URLquery))  
+            this.StartSync(this.URLConstructor(URLquery), "SYS")  
             break;
         }
       } else {
-        this.StartSync(this.URLConstructor(URLquery))
+        this.StartSync(this.URLConstructor(URLquery), "SYS")
       }
     }
   }
 
   //-----------------------------------  SYNCING  -----------------------------------
   Synced:boolean = false;
-  ES: EventSource|undefined = undefined;
+  ES: EventSource | undefined = undefined;
   SyncToken:string = "";
-  WS: WebSocket|undefined = undefined;
-  TMIClient: tmi.Client|undefined = undefined;
+  WS: WebSocket | undefined = undefined;
+  TMIClient: tmi.Client | undefined = undefined;
+  ForceRefresh: number | undefined = undefined;
 
-  StartSync(ESLink: string) {
+  StartSync(ESLink: string, Type: string) {
+    if (!this.ForceRefresh){
+      this.ForceRefresh = window.setInterval(() => {
+        this.PushNewEntryList({
+          type: "PING",
+          data: undefined
+        });
+      }, 1000);  
+    }
+
     this.ES = new EventSource(ESLink);
     
-    this.ES.onmessage = (e: any) => {
+    this.ES.onmessage = e => {
       if (e.data == "[]") return;
       
       var parseData = JSON.parse(e.data);
       if (!parseData.flag){
         for (var i = 0; i < parseData.length; i++){
-          this.PushNewEntryList({
-            type: "YT",
-            data: {
-              author: parseData[i].author,
-              authorPhoto: parseData[i].authorPhoto,
-              mod: parseData[i].Mod,
-              badge: parseData[i].badgeContent,
-              message: parseData[i].content
-            }
-          })
+          switch (Type) {
+            case "YT":
+              this.PushNewEntryList({
+                type: Type,
+                data: {
+                  author: parseData[i].author,
+                  authorPhoto: parseData[i].authorPhoto,
+                  mod: parseData[i].Mod,
+                  badge: parseData[i].badgeContent,
+                  message: parseData[i].content,
+                  TL: parseData[i].TL
+                }
+              })                  
+              break;
+            
+            case "TW":
+              this.PushNewEntryList({
+                type: Type,
+                data: {
+                  author: parseData[i].author,
+                  badges: parseData[i].badges,
+                  emotes: parseData[i].emotes,
+                  message: parseData[i].message,
+                  TL: parseData[i].TL
+                }
+              })
+              break;
+            
+            case "TC":
+              this.PushNewEntryList({
+                type: Type,
+                data: {
+                  author: parseData[i].author,
+                  authorPhoto: parseData[i].authorPhoto,
+                  grade: parseData[i].grade,
+                  message: parseData[i].message,
+                  TL: parseData[i].TL
+                }
+              })
+              break;
+          }
         }
       }
     }
 
     this.ES.onerror = e => {
       this.ES?.close();
+      clearInterval(this.ForceRefresh);
     }
 
     this.ES.onopen = e => {
@@ -431,6 +485,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
       }, 100);
     }
   }
+
 
 
   faArrowLeft = faArrowLeft;
