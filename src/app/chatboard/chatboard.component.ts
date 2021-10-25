@@ -123,7 +123,6 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   AddChatSkimmer() {
     this.ModalMenu = 0;
     let URLquery: any = this.ShortenStreamLink(this.AddLink);
-    URLquery.TL = "OK";
 
     if (!URLquery) {
       this.ModalNotif = true;
@@ -203,6 +202,9 @@ export class ChatboardComponent implements OnInit, OnDestroy {
                   mod: parseData[i].Mod,
                   badge: parseData[i].badgeContent,
                   message: parseData[i].content,
+                  type: parseData[i].type,
+                  SC: parseData[i].SC,
+                  BC: parseData[i].BC,
                   TL: parseData[i].TL
                 }
               })                  
@@ -262,6 +264,8 @@ export class ChatboardComponent implements OnInit, OnDestroy {
               type: "TC",
               data: {
                 author: dt.author.name,
+                authorPhoto: dt.author.profileImage,
+                grade: dt.author.grade,
                 message: dt.htmlMessage ? dt.htmlMessage : dt.message
               }
             })
@@ -331,6 +335,30 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     } else {
       this.AutoScroll = false;
     }
+  }
+
+  YTColourScheme(type: number):string {
+    switch (type) {
+      case 1:
+        return("#008013");
+        break;
+      
+      case 2:
+        return("#2832C2");
+        break;
+
+      case 3:
+        return("#FBB917");
+        break;
+
+      default:
+        return("");
+        break;
+    }
+  }
+
+  TwitchBadges(){
+    //https://badges.twitch.tv/v1/badges/channels/39141793/display
   }
 
   PushNewEntryList(Entry: MessageEntry) {

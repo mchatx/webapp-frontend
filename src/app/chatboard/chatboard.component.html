@@ -20,12 +20,13 @@
 
   <!---------------------- ENTRY VIEWER ------------------------>
   <div style="flex: 1; display: flex; flex-direction: row; align-items: stretch; overflow-y: hidden;">
-    <div style="margin: 5px 0px 5px 5px; padding: 15px 10px 15px 10px; background-color: white; border-radius: 15px;" >
+    <div style="margin: 5px 5px 5px 5px; padding: 15px 10px 15px 10px; background-color: white; border-radius: 15px; flex: 1;" >
       <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" [style.font-size]="FFsize + 'px'" [style.text-align]="TxAlign" 
       style="display: flex; flex-direction: column; overflow-y: auto; height: 100%;" (scroll)="ElementScrolled()" #cardcontainer>
         <div style="margin-top: auto;"></div>
         <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft">
           <div [ngSwitch]="Entry.type">
+
             <!--   TWITCH RENDERER  -->
             <div *ngSwitchCase="'TW'">
               <span>{{ Entry.data.author }} : </span>
@@ -37,24 +38,99 @@
               </span>
               <span *ngIf="Entry.data.TL"> (DEEPL : {{ Entry.data.TL }})</span>
             </div>
+
             <!--   TWITCAST RENDERER  -->
             <div *ngSwitchCase="'TC'">
-              <span>{{ Entry.data.author }} : </span>
+              <img class="emoticon" [src]="Entry.data.authorPhoto" style="border-radius: 50%;" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+              <span> {{ Entry.data.author }} </span>
+              <img *ngIf="Entry.data.grade" class="emoticon" [src]="'https://twitcasting.tv/img/icon_premium_star' + Entry.data.grade + '.png'" style="border-radius: 50%;" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+              <span> : </span>
               <span *ngFor="let dt of Entry.data.message">
                 <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
                 <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
               </span>
               <span *ngIf="Entry.data.TL"> (DEEPL : {{ Entry.data.TL }})</span>
             </div>
+
             <!--   YOUTUBE RENDERER  -->
             <div *ngSwitchCase="'YT'">
-              <span>{{ Entry.data.author }} : </span>
-              <span *ngFor="let dt of Entry.data.message">
-                <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
-                <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+              <span [ngSwitch]="Entry.data.type">
+                
+                <div *ngSwitchCase="'DT'" style="display: flex; flex-direction: column; color: white; padding: 15px 15px 15px 15px;" [style.background]="Entry.data.BC">
+                  <div>
+                    <img class="emoticon" [src]="Entry.data.authorPhoto" style="border-radius: 50%;" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                    <span> {{ Entry.data.author }}</span>
+                    <span *ngIf="Entry.data.badge">
+                      <span *ngFor="let dt of Entry.data.badge">
+                        <img class="emoticon" [src]="dt.Thumbnail" [height]="FFsize" [width]="FFsize"/>
+                      </span>
+                    </span>
+                    <span>{{ Entry.data.SC }}</span>
+                  </div>
+                  <div>
+                    <span *ngFor="let dt of Entry.data.message">
+                      <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
+                      <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                    </span>
+                    <span *ngIf="Entry.data.TL"> (DEEPL : {{ Entry.data.TL }})</span>
+                  </div>
+                </div>
+
+                <div *ngSwitchCase="'DS'" style="display: flex; flex-direction: column; color: white; padding: 15px 15px 15px 15px;" [style.background]="Entry.data.BC">
+                  <div>
+                    <img class="emoticon" [src]="Entry.data.authorPhoto" style="border-radius: 50%;" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                    <span> {{ Entry.data.author }}</span>
+                    <span *ngIf="Entry.data.badge">
+                      <span *ngFor="let dt of Entry.data.badge">
+                        <img class="emoticon" [src]="dt.Thumbnail" [height]="FFsize" [width]="FFsize"/>
+                      </span>
+                    </span>
+                    <span>{{ Entry.data.SC }}</span>
+                  </div>
+                  <div>
+                    <span *ngFor="let dt of Entry.data.message">
+                      <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
+                      <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                    </span>
+                  </div>
+                </div>
+
+                <div *ngSwitchCase="'NM'" style="display: flex; flex-direction: column; background-color: green; color: white; padding: 15px 15px 15px 15px;">
+                  <div>
+                    <img class="emoticon" [src]="Entry.data.authorPhoto" style="border-radius: 50%;" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                    <span> {{ Entry.data.author }}</span>
+                    <span *ngIf="Entry.data.badge">
+                      <span *ngFor="let dt of Entry.data.badge">
+                        <img class="emoticon" [src]="dt.Thumbnail" [height]="FFsize" [width]="FFsize"/>
+                      </span>
+                    </span>
+                  </div>
+                  <div>
+                    <span *ngFor="let dt of Entry.data.message">
+                      <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
+                      <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                    </span>
+                  </div>
+                </div>
+
+                <span *ngSwitchDefault>
+                  <img class="emoticon" [src]="Entry.data.authorPhoto" style="border-radius: 50%;" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                  <span [style.color]="YTColourScheme(Entry.data.mod)"> {{ Entry.data.author }}</span>
+                  <span *ngIf="Entry.data.badge">
+                    <span *ngFor="let dt of Entry.data.badge">
+                      <img class="emoticon" [src]="dt.Thumbnail" [height]="FFsize" [width]="FFsize"/>
+                    </span>
+                  </span>
+                  <span> : </span>
+                  <span *ngFor="let dt of Entry.data.message">
+                    <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
+                    <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                  </span>
+                  <span *ngIf="Entry.data.TL"> (DEEPL : {{ Entry.data.TL }})</span>
+                </span>
               </span>
-              <span *ngIf="Entry.data.TL"> (DEEPL : {{ Entry.data.TL }})</span>
             </div>
+
             <!--   SYSTEM RENDERER  -->
             <div *ngSwitchCase="'SYS'">
               <h1>

@@ -10,3 +10,11 @@ img.emoticon {
     display: inline;
     vertical-align: middle;
 }
+
+.grabber{
+    width:10px;
+}
+
+.grabber:hover{
+    cursor:e-resize;
+}
