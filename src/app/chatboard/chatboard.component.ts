@@ -165,8 +165,24 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   StartSync(ESLink: string) {
     this.ES = new EventSource(ESLink);
     
-    this.ES.onmessage = e => {
-      console.log(e);
+    this.ES.onmessage = (e: any) => {
+      if (e.data == "[]") return;
+      
+      var parseData = JSON.parse(e.data);
+      if (!parseData.flag){
+        for (var i = 0; i < parseData.length; i++){
+          this.PushNewEntryList({
+            type: "YT",
+            data: {
+              author: parseData[i].author,
+              authorPhoto: parseData[i].authorPhoto,
+              mod: parseData[i].Mod,
+              badge: parseData[i].badgeContent,
+              message: parseData[i].content
+            }
+          })
+        }
+      }
     }
 
     this.ES.onerror = e => {
@@ -188,7 +204,6 @@ export class ChatboardComponent implements OnInit, OnDestroy {
       if (e.data != "[]"){
         JSON.parse(e.data).forEach((dt:any) => {
           if (dt.type == "comment"){
-            console.log(dt);
             this.PushNewEntryList({
               type: "TC",
               data: {
@@ -346,6 +361,57 @@ export class ChatboardComponent implements OnInit, OnDestroy {
         }
         break;
     
+      case "TC":
+        //https://twitcasting.tv/
+        var TempCont: string = Entry.data.message;
+        Entry.data.message = [];
+
+        while (TempCont.indexOf('<img') != -1){
+          const start = TempCont.indexOf('<img');
+          const end = TempCont.indexOf('/>');
+          if ((start == -1) || (end == -1)) {
+            break;
+          }
+          Entry.data.message.push({
+            type: "S",
+            content: TempCont.slice(0, start)
+          });
+          var ImgHtml = TempCont.slice(start, end + 2);
+          ImgHtml = ImgHtml.slice(ImgHtml.indexOf("src=") + 5);
+          ImgHtml = ImgHtml.slice(0, ImgHtml.indexOf("\""));
+          Entry.data.message.push({
+            type: "M",
+            content: "https://twitcasting.tv" + ImgHtml
+          });
+          TempCont = TempCont.slice(end + 2);
+        }
+        
+        if (TempCont != ""){
+          Entry.data.message.push({
+            type: "S",
+            content: TempCont
+          })
+        }
+        this.EntryList.push(Entry);
+        break;
+
+      case "YT":
+        Entry.data.message = Entry.data.message.map((e:string) => {
+          if (e.indexOf("http") == 0){
+            return({
+              type: "M",
+              content: e
+            })
+          } else {
+            return({
+              type: "S",
+              content: e
+            })
+          }
+        });
+        this.EntryList.push(Entry);
+        break;
+
       default:
         this.EntryList.push(Entry);
         break;

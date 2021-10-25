@@ -26,18 +26,33 @@
         <div style="margin-top: auto;"></div>
         <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft">
           <div [ngSwitch]="Entry.type">
+            <!--   TWITCH RENDERER  -->
             <div *ngSwitchCase="'TW'">
               <span>{{ Entry.data.author }} : </span>
               <span *ngFor="let dt of Entry.data.message">
                 <span *ngIf="dt.type == 'S'">
                   {{ dt.content }}
                 </span>
-                <img *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                <img class="emoticong" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
               </span>
             </div>
+            <!--   TWITCAST RENDERER  -->
             <div *ngSwitchCase="'TC'">
-              <span [innerHTML]="Entry.data.author + ' : ' + Entry.data.message"></span>
+              <span>{{ Entry.data.author }} : </span>
+              <span *ngFor="let dt of Entry.data.message">
+                <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
+                <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+              </span>
             </div>
+            <!--   YOUTUBE RENDERER  -->
+            <div *ngSwitchCase="'YT'">
+              <span>{{ Entry.data.author }} : </span>
+              <span *ngFor="let dt of Entry.data.message">
+                <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
+                <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+              </span>
+            </div>
+            <!--   SYSTEM RENDERER  -->
             <div *ngSwitchCase="'SYS'">
               <h1>
                 {{ Entry.data.author }} : {{ Entry.data.message }} 
