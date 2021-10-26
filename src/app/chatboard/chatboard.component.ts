@@ -149,6 +149,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
             break;
 
           case "TW_":
+            this.GetTwitchBadge(URLquery.link);
             this.StartSyncTMI(URLquery.link.slice(3));
             break;
 
@@ -284,6 +285,10 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   }
 
   async StartSyncTMI(channel: string){
+    if (!this.TwitchBadgeArray){
+      this.GetGlobalTwitchBadge();
+    }
+
     const TMIOptions: tmi.Options = {
       channels: [channel],
       connection: {
@@ -324,6 +329,64 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   }
   //===================================  SYNCING  ===================================
 
+
+
+  //----------------------------  TWITCH BADGE HANDLER  ----------------------------
+  SubscriberArray: any;
+  TwitchBadgeArray: any;
+
+  GetGlobalTwitchBadge(){
+    this.ChatSkimmer.GetTwitchGlobal().subscribe({
+      next: data => {
+        this.TwitchBadgeArray = data.badge_sets;
+      },
+      error: err => {
+        console.log("ERR GET TWITCH DATA")
+      }
+    });
+  }
+
+  GetTwitchBadge(ChannelID : string){
+    this.ChatSkimmer.TwitchID(ChannelID).subscribe({
+      next: data => {
+        this.ChatSkimmer.GetTwitchData(data.ChannelID).subscribe({
+          next: data => {
+            this.SubscriberArray = data.badge_sets;
+          },
+          error: err => {
+            console.log("ERR GET TWITCH DATA")
+          }
+        })
+      },
+      error: err => {
+        console.log("ERR GET TWITCH DATA")
+      }
+    });
+  }
+
+  TwitchURLBadge(dt:any): string{
+    switch (dt.type) {
+      case "subscriber":
+        try {
+          return(this.SubscriberArray[dt.type]["versions"][dt.prop]["image_url_1x"]);
+        } catch (error) {
+          return("");
+        }
+        break;
+   
+      default:
+        try {
+          return(this.TwitchBadgeArray[dt.type]["versions"][dt.prop]["image_url_1x"]);
+        } catch (error) {
+          return("");
+        }
+        break;
+    }
+  }
+  //==============================  TWITCH BADGE HANDLER  =============================
+
+
+
   AutoScroll:boolean = true;
 
   ElementScrolled(){
@@ -357,18 +420,20 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  TwitchBadges(){
-    //https://badges.twitch.tv/v1/badges/channels/39141793/display
-  }
-
   PushNewEntryList(Entry: MessageEntry) {
     switch (Entry.type) {
       case "TW":
-        /*
-        Object { 304822010: (2) […], 304822061: (3) […] }
-        */
-        //https://static-cdn.jtvnw.net/emoticons/v1/[emote_id]/2.0
-        //https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_e2c96c0c122e486db7474bee9a35b398/default/light/3.0
+        if (Entry.data.badges) {
+          const BadgesArr = Entry.data.badges;
+          Entry.data.badges = [];
+          Object.entries(BadgesArr).forEach(([type, prop]: any) => {
+            Entry.data.badges.push({
+              type: type,
+              prop: prop
+            });
+          })
+        }
+
         if (Entry.data.emotes) {
           var EmoteList: any[] = [];
   ​        Object.entries(Entry.data.emotes).forEach(([id, positions]: any) => {

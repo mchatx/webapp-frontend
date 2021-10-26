@@ -35,4 +35,16 @@ export class ChatskimmerService {
 
     return (this.httpclient.get(TargetURL));
   }
+
+  TwitchID(ChannelID: string): Observable<any> {
+    return (this.httpclient.get(environment.DBConn3 + '/AuxData?ChannelID=' + encodeURIComponent(ChannelID)));
+  }
+
+  GetTwitchData(ChannelID: string): Observable<any> {
+    return (this.httpclient.get("https://badges.twitch.tv/v1/badges/channels/" + ChannelID + "/display"));
+  }
+
+  GetTwitchGlobal(): Observable<any> {
+    return (this.httpclient.get("https://badges.twitch.tv/v1/badges/global/display"));
+  }
 }
