@@ -58,6 +58,14 @@ export class ProxyappComponent implements OnInit, OnDestroy {
   OT: number = 1;
   Ani: string = "";
   ChatProxyEle: HTMLIFrameElement | undefined;
+  LoadFont: boolean = false;
+
+  CardBGColour = {
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 0
+  }
 
   scrollend: boolean = true;
   EntryLoader: boolean = false;
@@ -94,7 +102,7 @@ export class ProxyappComponent implements OnInit, OnDestroy {
 
   sanitize(url: string | undefined) {
     if (url != undefined) {
-      return this.Sanitizer.bypassSecurityTrustResourceUrl("https://fonts.googleapis.com/css2?family=" + this.FStyle.replace(/ /g, "+") + "&display=swap");
+      return this.Sanitizer.bypassSecurityTrustResourceUrl("https://fonts.googleapis.com/css2?family=" + this.FStyle[0].replace(/ /g, "+") + "&display=swap");
     } else {
       return ("Error");
     }
@@ -124,6 +132,8 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     if (ParamsList["FSS"]) {
       this.FStyle = ParamsList["FSS"];
     }
+    this.LoadFont = true;
+
     if (ParamsList["TAL"]) {
       this.TxAlign = ParamsList["TAL"];
     }
@@ -152,6 +162,10 @@ export class ProxyappComponent implements OnInit, OnDestroy {
       if (test != null) {
         this.Ani = test;
       }
+    }
+
+    if (ParamsList["CBC"]){
+      this.CardBGColour = ParamsList["CBC"];
     }
 
     if (ParamsList["AuthName"]) {
@@ -201,14 +215,22 @@ export class ProxyappComponent implements OnInit, OnDestroy {
         if (ParamsList["author"]) {
           this.Filter.author = ParamsList["author"];
         }
-      } 
-      this.AddChatSkimmer(ParamsList["lc"] + "_" + ParamsList["vid"]);
+      }
 
+      if (ParamsList["tp"] == false){
+        this.AddChatSkimmer({
+          channel : ParamsList["lc"] + "_" + ParamsList["vid"]
+        });
+      } else {
+        this.AddChatSkimmer({
+          link: ParamsList["lc"] + "_" + ParamsList["vid"]
+        });
+      }
     } else {
       for (let i: number = 0; i < 10; i++) {
         if (i % 2 != 0) {
           this.MEntryAdd({
-            Author: "SYS",
+            Author: "TEST",
             Stext: "TEST" + i.toString() + " asdfkjzx" + " asdfkjzx" + " asdfkjzx" + " asdfkjzx" + " asdfkjzx",
             Stime: 10000,
             CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
@@ -217,7 +239,7 @@ export class ProxyappComponent implements OnInit, OnDestroy {
           })
         } else {
           this.MEntryAdd({
-            Author: "SYS",
+            Author: "TEST",
             Stext: "TEST" + i.toString(),
             Stime: 10000,
             CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
@@ -259,7 +281,7 @@ export class ProxyappComponent implements OnInit, OnDestroy {
       }
 
       this.MEntryAdd({
-        Author: "SYS",
+        Author: "TEST",
         Stime: 0,
         Stext: s,
         CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
@@ -311,14 +333,18 @@ export class ProxyappComponent implements OnInit, OnDestroy {
   }
 
   MEntryAdd(dt: FullEntry): void {
+    if (dt.Stext == ""){
+      return;
+    }
+
     if (this.ChatFilterMode){
-      if (dt.Author){
+      if (dt.Author && (this.Filter.author.length != 0)){
         if (this.Filter.author.indexOf(dt.Author) == -1) {
           return;
         }
       }
 
-      if (dt.Stext){
+      if (dt.Stext && (this.Filter.keyword != "")){
         if (dt.Stext.match(new RegExp(this.Filter.keyword, 'i')) == null) {
           return;
         }
@@ -339,7 +365,12 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     }
     cvs.style.webkitTextStrokeWidth = this.OT.toString() + "px";
 
-    const Stext = dt.Stext;
+    var Stext = dt.Stext;
+
+    if (this.AuthName && dt.Author != "SYS") {
+      Stext = dt.Author + " : " + Stext;
+    }
+
     const CC = dt.CC;
     const OC = dt.OC;
     if (Stext != undefined) {
@@ -360,12 +391,13 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     }
 
     if (this.OverrideCStyle){
-      CCctx = this.OverrideCC;
-      OCctx = this.OverrideOC;
+      CCctx = "#" + this.OverrideCC;
+      OCctx = "#" + this.OverrideOC;
     }
 
     cvs.style.webkitTextFillColor = CCctx;
     cvs.style.webkitTextStrokeColor = OCctx;
+    cvs.style.backgroundColor = "rgba(" + this.CardBGColour.r.toString() + ", " + this.CardBGColour.g.toString() + ", " + this.CardBGColour.b.toString() + ", " + this.CardBGColour.a.toString() + ")";
     cvs.style.fontFamily = this.FStyle;
     cvs.style.fontSize = this.FFsize + "px";
     cvs.style.textAlign = this.TxAlign;
@@ -477,10 +509,10 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     return (TargetURL);
   }
 
-  AddChatSkimmer(link: string) {
-    var URLquery = {
-      link: link
-    };
+  AddChatSkimmer(URLquery: any) {
+    if (!URLquery.link){
+      URLquery.link = URLquery.channel
+    }
 
     switch (URLquery.link.slice(0, 3)) {
       case "TC_":
@@ -506,6 +538,10 @@ export class ProxyappComponent implements OnInit, OnDestroy {
         break;
 
       case "YT_":
+        if (URLquery.channel){
+          delete URLquery.link;
+        }
+
         this.StartSync(this.URLConstructor(URLquery), "YT");
         break;  
 
@@ -532,10 +568,16 @@ export class ProxyappComponent implements OnInit, OnDestroy {
         for (var i = 0; i < parseData.length; i++){
           switch (Type) {
             case "YT":
+              let s = "";
+              parseData[i].content.forEach((dt:string) => {
+                  if (dt.indexOf("https://") == -1){
+                  s += dt + " ";
+                  }
+              });
               this.MEntryAdd({
                 Author: parseData[i].author,
                 Stime: 0,
-                Stext: parseData[i].content,
+                Stext: s,
                 CC: "",
                 OC: "",
                 key: ""
@@ -569,11 +611,26 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     }
 
     this.ES.onerror = e => {
+      this.MEntryAdd({
+        Author: "SYS",
+        Stime: 0,
+        Stext: "DISCONNECTED",
+        OC: "000000",
+        CC: "FFFFFF",
+        key: ""
+      })
       this.ES?.close();
     }
 
     this.ES.onopen = e => {
-      console.log("START SYNCING");
+      this.MEntryAdd({
+        Author: "SYS",
+        Stime: 0,
+        Stext: "CONNECTED",
+        OC: "000000",
+        CC: "FFFFFF",
+        key: ""
+      })
     }
   }
 
@@ -601,11 +658,26 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     }
 
     this.WS.onerror = e => {
+      this.MEntryAdd({
+        Author: "SYS",
+        Stime: 0,
+        Stext: "DISCONNECTED",
+        OC: "000000",
+        CC: "FFFFFF",
+        key: ""
+      })
       this.WS?.close();
     }
 
     this.WS.onopen = e => {
-      console.log("START SYNCING WS");
+      this.MEntryAdd({
+        Author: "SYS",
+        Stime: 0,
+        Stext: "CONNECTED",
+        OC: "000000",
+        CC: "FFFFFF",
+        key: ""
+      })
     }
   }
 
@@ -623,6 +695,14 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     this.TMIClient = tmi.Client(TMIOptions);
 
     await this.TMIClient.connect();
+    this.MEntryAdd({
+      Author: "SYS",
+      Stime: 0,
+      Stext: "CONNECTED",
+      OC: "000000",
+      CC: "FFFFFF",
+      key: ""
+    })
 
     this.TMIClient.on("message", (channel, tags, message, self) => {
       if (self) return;
@@ -638,11 +718,6 @@ export class ProxyappComponent implements OnInit, OnDestroy {
         });
       }
     });
-
-    this.TMIClient.on("connected", (address, port) => {
-      console.log("TMI CONNECTED");
-    });
-
     //this.TMIClient.on("disconnected", reason => {});
     //this.TMIClient.on("join", (channel, username, self) => {});
     //this.client.on("logon", () => {});

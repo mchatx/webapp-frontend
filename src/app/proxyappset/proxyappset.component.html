@@ -60,9 +60,7 @@
           <div *ngIf="ChatMode=='Filter'">
             <!--    Author   -->
             <div class="field">
-              <label class="checkbox">
-                <input type="checkbox" [checked]="AuthFilter==true"
-                  (change)="CheckedChange(0,$event)" /><strong> Author</strong></label>
+              <label><strong> Author</strong></label>
               <div class="control">
                 <div class="wrap" *ngFor="let Author of AuthorList; let i = index">
                   <span class="icon-text">
@@ -87,8 +85,7 @@
 
             <!--    Keywords   -->
             <div class="field">
-              <label class="checkbox"><input type="checkbox" [checked]="KeywordFilter==true"
-                  (change)="CheckedChange(1,$event)" /> <strong> Keyword</strong></label>
+              <label><strong> Keyword</strong></label>
               <div class="control">
                 <div class="wrap" *ngFor="let Keyword of KeywordList; let i = index">
                   <span class="icon-text">

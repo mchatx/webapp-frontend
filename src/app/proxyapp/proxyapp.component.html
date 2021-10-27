@@ -1,5 +1,5 @@
 <!--------------------- GOOGLE FONT LOADER --------------------->
-<div *ngIf="(FStyle != 'sans-serif') && (FStyle != 'cursive') && (FStyle != 'monospace')">
+<div *ngIf="(FStyle != 'sans-serif') && (FStyle != 'cursive') && (FStyle != 'monospace') && (LoadFont)">
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link [href]="sanitize(FStyle)" rel="stylesheet">
 </div>

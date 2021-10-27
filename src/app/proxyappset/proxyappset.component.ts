@@ -52,10 +52,8 @@ export class ProxyappsetComponent implements OnInit {
 
   ChatURL: string = "";
   ChatMode: string = "Filter";
-  AuthFilter: boolean = false;
   AuthorList: string[] = [];
   AuthorInput: string = "";
-  KeywordFilter: boolean = false;
   KeywordList: string[] = [];
   KeywordInput: string = "";
 
@@ -142,14 +140,6 @@ export class ProxyappsetComponent implements OnInit {
     if (this.KeywordInput != "") {
       this.KeywordList.push(this.KeywordInput);
       this.KeywordInput = "";
-    }
-  }
-
-  CheckedChange(idx: number, e: any) {
-    if (idx == 0) {
-      this.AuthFilter = e.target.checked;
-    } else {
-      this.KeywordFilter = e.target.checked;
     }
   }
   //============================== FIRST PAGE HANDLER ==============================
@@ -410,7 +400,7 @@ export class ProxyappsetComponent implements OnInit {
             Linktoken["lc"] = "TW";
             Linktoken["vid"] = TempS;
           } else if (TempS.match(/http(.*)twitcasting.tv\//g)?.length != 0) {
-            TempS = TempS.replace(/http(.*)twitcasting.tv\//g, "TC_");
+            TempS = TempS.replace(/http(.*)twitcasting.tv\//g, "");
             if (TempS.indexOf("?") != -1){
               TempS = TempS.slice(0, TempS.indexOf("?"));
             }
@@ -425,11 +415,11 @@ export class ProxyappsetComponent implements OnInit {
             Linktoken["FilterMode"] = 1;
           }
 
-          if ((this.AuthFilter) && (this.AuthorList.length != 0)) {
+          if (this.AuthorList.length != 0) {
             Linktoken["author"] = this.AuthorList;
           }
 
-          if ((this.KeywordFilter) && (this.KeywordList.length != 0)) {
+          if (this.KeywordList.length != 0) {
             Linktoken["keywords"] = this.KeywordList;
           }
 
@@ -460,6 +450,8 @@ export class ProxyappsetComponent implements OnInit {
         Linktoken["CCC"] = this.OverrideCC.substr(1);
         Linktoken["COC"] = this.OverrideOC.substr(1);
       }
+
+      Linktoken["CBC"] = this.CardBGColour;
 
       TempString += encodeURIComponent(this.TGService.TGEncoding(encodeURI(JSON.stringify(Linktoken))))
       this.ProxyLink = TempString;
