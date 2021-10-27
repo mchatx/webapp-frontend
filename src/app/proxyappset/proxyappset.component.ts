@@ -51,7 +51,7 @@ export class ProxyappsetComponent implements OnInit {
   PasswordProtected: boolean = false;
 
   ChatURL: string = "";
-  ChatMode: string = "Auto-Translation";
+  ChatMode: string = "Filter";
   AuthFilter: boolean = false;
   AuthorList: string[] = [];
   AuthorInput: string = "";
@@ -63,9 +63,7 @@ export class ProxyappsetComponent implements OnInit {
     SECOND PAGE SETTING
     Styling and what's not
   */
-  AuthPP: boolean = true;
   AuthName: boolean = true;
-  AuthBadge: boolean = true;
 
   MaxDisplay: number = 1; //Maximum message card display
   OT: number = 1;          //Outline Thickness in pixel
@@ -87,8 +85,6 @@ export class ProxyappsetComponent implements OnInit {
   OverrideCStyle: boolean = false;
   OverrideCC: string = "#000000"
   OverrideOC: string = "#000000"
-  OverrideCCAuthor: string = "#000000"
-  OverrideOCAuthor: string = "#000000"
 
   /*  
     THIRD PAGE
@@ -169,12 +165,6 @@ export class ProxyappsetComponent implements OnInit {
     this.RepaintEntries();
   }
 
-  RePaintExample():void {
-    if (this.ProxyMode == 0){
-
-    }
-  }
-
   FetchWebFont() {
     if (this.WebFont == "") {
       return this.Sanitizer.bypassSecurityTrustResourceUrl("");
@@ -209,10 +199,37 @@ export class ProxyappsetComponent implements OnInit {
     }
   }
 
-  AddEntry(stext: string): void {
+  AddEntry(): void {
+    var s : string = "";
+    switch (Date.now() % 5) {
+      case 0:
+        s = "the quick brown fox jumps over the lazy dog";
+        break;
+
+      case 1:
+        s = "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG";
+        break;
+
+      case 2:
+        s = "以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須";
+        break;
+
+      case 3:
+        s = "いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす";
+        break;
+
+      case 4:
+        s = "イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス";
+        break;
+    }
+
+    if (this.AuthName){
+      s = "xxx-さん : " + s;
+    }
+
     this.EntryPrint({
       Stime: 0,
-      Stext: "TESTtestテスト猫可愛いい" + stext,
+      Stext: s,
       CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
       OC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
       key: ""
@@ -229,8 +246,15 @@ export class ProxyappsetComponent implements OnInit {
     })
   }
 
+  ResetNumberEntries(): void {
+    while (this.DisplayElem.length > this.MaxDisplay) {
+      this.DisplayElem.shift()?.remove();
+      this.EntryList.shift();
+    }
+  }
+
   EntryPrint(dt: FullEntry): void {
-    if (this.DisplayElem.length == this.MaxDisplay) {
+    while (this.DisplayElem.length >= this.MaxDisplay) {
       this.DisplayElem.shift()?.remove();
       this.EntryList.shift();
     }
@@ -284,18 +308,8 @@ export class ProxyappsetComponent implements OnInit {
     this.DisplayElem.push(cvs);
   }
 
-  CheckedChange2(idx: number, e: any) {
-    switch (idx) {
-      case 0:
-        this.AuthPP = !this.AuthPP;
-        break;
-      case 1:
-        this.AuthName = !this.AuthName;
-        break;
-      case 2:
-        this.AuthBadge = !this.AuthBadge;
-        break;
-    }
+  CheckedChange2() {
+    this.AuthName = !this.AuthName;
   }
   //============================== SECOND PAGE HANDLER ==============================
 
@@ -321,11 +335,7 @@ export class ProxyappsetComponent implements OnInit {
       if (this.ProxyMode == 1) {
         this.TxAlign = 'left';
         this.FFsize = 16;
-        if (this.ChatMode == 'Auto-Translation') {
-          this.MaxDisplay = 100;
-        } else {
-          this.MaxDisplay = 3;
-        }
+        this.MaxDisplay = 3;
         this.CardBGColour = {
           r: 0,
           g: 0,
@@ -410,17 +420,10 @@ export class ProxyappsetComponent implements OnInit {
             Linktoken["keywords"] = this.KeywordList;
           }
 
-          if (!this.AuthPP) {
-            Linktoken["AuthPP"] = 1;
-          }
-
           if (!this.AuthName) {
             Linktoken["AuthName"] = 1;
           }
 
-          if (!this.AuthBadge) {
-            Linktoken["AuthBadge"] = 1;
-          }
           break;
       }
 
@@ -442,11 +445,6 @@ export class ProxyappsetComponent implements OnInit {
         Linktoken["OCS"] = 1;
         Linktoken["CCC"] = this.OverrideCC.substr(1);
         Linktoken["COC"] = this.OverrideOC.substr(1);
-        if (this.ProxyMode == 1){
-          Linktoken["ot"] = this.OT;
-          Linktoken["ACC"] = this.OverrideCCAuthor.substr(1);
-          Linktoken["AOC"] = this.OverrideOCAuthor.substr(1);
-        }
       }
 
       TempString += encodeURIComponent(this.TGService.TGEncoding(encodeURI(JSON.stringify(Linktoken))))
@@ -491,200 +489,14 @@ export class ProxyappsetComponent implements OnInit {
     }
   }
 
-  //-------------------------------- TEST MODULE -----------------------------------
   initTestMChad() {
     this.Timer = timer(1000, 1000).subscribe((t) => {
-      this.AddEntry(t.toString());
+      this.AddEntry();
     });  
   }
 
-  ClassSeparator(type: number | undefined): string {
-    if (!type) {
-      return "";
-    } else {
-      switch (type) {
-        case 1:
-          return "NormalMessage";
-
-        case 2:
-          return "ModMessage";
-
-        default:
-          return "OwnerMessage";
-      }
-    }
-  }
-
-  initTestChatYT() {
-    this.Timer = timer(999, 999).subscribe((t) => {
-      if (this.EntryList.length == this.MaxDisplay) {
-        this.EntryList.shift();
-      }
-      //https://via.placeholder.com/150?text=Visit+WhoIsHostingThis.com+Buyers+Guide
-
-      var s: any = {};
-      s["authorPhoto"] = "https://via.placeholder.com/48?text=AUTHOR";
-
-      switch (t % 10) {
-        //  SC STICKER
-        case 0:
-          s["author"] = "test SC STICKER";
-          s["type"] = "SCS";
-          s["SC"] = "XXX $";
-          s["content"] = ["https://via.placeholder.com/96?text=PAID+STICKER"]
-          s["BC"] = "#" + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16);
-          break;
-
-        //  SC MESSAGE
-        case 1:
-          s["author"] = "test SC";
-          if ((Date.now() % 2) == 0) {
-            s["TL"] = "AUTO TRANSLATED TEXT";
-          }
-
-          switch (Date.now() % 5) {
-            case 0:
-              s["content"] = ["the quick brown fox jumps over the lazy dog"];
-              break;
-
-            case 1:
-              s["content"] = ["THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"];
-              break;
-
-            case 2:
-              s["content"] = ["以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須"];
-              break;
-
-            case 3:
-              s["content"] = ["いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす"];
-              break;
-
-            case 4:
-              s["content"] = ["イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス"];
-              break;
-          }
-          s["type"] = "SC";
-          s["SC"] = "XXX $$";
-          s["BC"] = "#" + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16);
-          break;
-
-        //  MEMBER
-        case 2:
-          s["author"] = "test NEW MEMBER WELCOME";
-          s["content"] = ["WELCOME TO XXXXXXXXXXX"];
-          s["type"] = "MEMBER";
-          break;
-
-        //  MESSAGE OWNER
-        case 3:
-          s["author"] = "test OWNER MESSAGE";
-          if ((Date.now() % 2) == 0) {
-            s["TL"] = "AUTO TRANSLATED TEXT";
-          }
-
-          switch (Date.now() % 5) {
-            case 0:
-              s["content"] = ["the quick brown fox jumps over the lazy dog"];
-              break;
-
-            case 1:
-              s["content"] = ["THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"];
-              break;
-
-            case 2:
-              s["content"] = ["以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須"];
-              break;
-
-            case 3:
-              s["content"] = ["いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす"];
-              break;
-
-            case 4:
-              s["content"] = ["イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス"];
-              break;
-          }
-          s["Mod"] = 3; //  OWNER
-          break;
-
-        //  MESSAGE MOD
-        case 4:
-          s["author"] = "test MOD MESSAGE";
-          if ((Date.now() % 2) == 0) {
-            s["TL"] = "AUTO TRANSLATED TEXT";
-          }
-
-          switch (Date.now() % 5) {
-            case 0:
-              s["content"] = ["the quick brown fox jumps over the lazy dog"];
-              break;
-
-            case 1:
-              s["content"] = ["THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"];
-              break;
-
-            case 2:
-              s["content"] = ["以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須"];
-              break;
-
-            case 3:
-              s["content"] = ["いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす"];
-              break;
-
-            case 4:
-              s["content"] = ["イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス"];
-              break;
-          }
-          s["Mod"] = 2; //  MOD
-          break;
-
-        //  MESSAGE NORMAL
-        default:
-          if ((Date.now() % 2) == 0) {
-            s["author"] = "test MEMBER";
-            s["Mod"] = 1; //  MEMBER
-            s["badgeContent"] = [{ Thumbnail: "https://via.placeholder.com/48?text=BADGE" }];
-          } else {
-            s["author"] = "test NON MEMBER";
-          }
-
-          if ((Date.now() % 2) == 0) {
-            s["TL"] = "AUTO TRANSLATED TEXT";
-          }
-
-          switch (Date.now() % 5) {
-            case 0:
-              s["content"] = ["the quick brown fox jumps over the lazy dog"];
-              break;
-
-            case 1:
-              s["content"] = ["THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"];
-              break;
-
-            case 2:
-              s["content"] = ["以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須"];
-              break;
-
-            case 3:
-              s["content"] = ["いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす"];
-              break;
-
-            case 4:
-              s["content"] = ["イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス"];
-              break;
-          }
-          break;
-      }
-
-      this.EntryList.push(s);
-    });
-  }
-
   initTestLoop() {
-    if (this.ProxyMode == 0){
-      this.initTestMChad();
-    } else {
-      this.initTestChatYT();
-    }
+    this.initTestMChad();
   }
 
   faPlus = faPlus;

@@ -53,8 +53,6 @@
                   <div class="control">
                     <div class="select is-normal">
                       <select [(ngModel)]="ChatMode">
-                        <option [value]="'Auto-Translation'" [selected]="ChatMode=='Auto-Translation'">Auto-Translation
-                        </option>
                         <option [value]="'Filter'" [selected]="ChatMode=='Filter'">Filter</option>
                       </select>
                     </div>
@@ -67,7 +65,7 @@
                   <div class="field">
                     <label class="checkbox">
                       <input type="checkbox" [checked]="AuthFilter==true"
-                        (change)="CheckedChange(0,$event)" /><strong>Author</strong></label>
+                        (change)="CheckedChange(0,$event)" /><strong> Author</strong></label>
                     <div class="control">
                       <div class="wrap" *ngFor="let Author of AuthorList; let i = index">
                         <span class="icon-text">
@@ -93,7 +91,7 @@
                   <!--    Keywords   -->
                   <div class="field">
                     <label class="checkbox"><input type="checkbox" [checked]="KeywordFilter==true"
-                        (change)="CheckedChange(1,$event)" /> <strong>Keyword</strong></label>
+                        (change)="CheckedChange(1,$event)" /> <strong> Keyword</strong></label>
                     <div class="control">
                       <div class="wrap" *ngFor="let Keyword of KeywordList; let i = index">
                         <span class="icon-text">
@@ -130,41 +128,25 @@
               <!-- Options -->
               <div class="column is-5">
                 <!--        Chat author     -->
-                <div *ngIf="ProxyMode==1">
-                  <div class="divider is-left is-black"></div>
-                  <div class="field">
-                    <div class="control">
-                      <label class="checkbox"><input type="checkbox" [checked]="AuthPP==true"
-                          (change)="CheckedChange2(0,$event)" /> <strong>Author
-                          Picture</strong></label><br>
-                      <label class="checkbox"><input type="checkbox" [checked]="AuthName==true"
-                          (change)="CheckedChange2(1,$event)" /> <strong>Author
-                          Name</strong></label><br>
-                      <label class="checkbox"><input type="checkbox" [checked]="AuthBadge==true"
-                          (change)="CheckedChange2(2,$event)" /> <strong>Author
-                          Badge</strong></label>
-                    </div>
-                  </div>
-                </div>
+                <label class="checkbox"><input type="checkbox" [checked]="AuthName==true"
+                  (change)="CheckedChange2()" /> <strong>Author Name</strong></label><br>
 
                 <!--        Card Number     -->
                 <div class="divider is-left is-black" data-content="# max cards"></div>
                 <label class="label">Max message card # </label>
-                <input class="input" type="number" min="0" [(ngModel)]="MaxDisplay" />
+                <input class="input" type="number" min="0" [(ngModel)]="MaxDisplay" (ngModelChange)="ResetNumberEntries()" />
 
                 <!--        Text Alignment     -->
-                <div *ngIf="(ProxyMode!=1)">
-                  <div class="divider is-left is-black" data-content="Text Align"></div>
-                  <div class="field">
-                    <label class="label">Text Alignment </label>
-                    <div class="control">
-                      <div class="select">
-                        <select [(ngModel)]="TxAlign" (ngModelChange)="RepaintEntries()">
-                          <option [value]="'left'" [selected]="TxAlign=='left'">Left</option>
-                          <option [value]="'center'" [selected]="TxAlign=='center'">Center</option>
-                          <option [value]="'right'" [selected]="TxAlign=='right'">Right</option>
-                        </select>
-                      </div>
+                <div class="divider is-left is-black" data-content="Text Align"></div>
+                <div class="field">
+                  <label class="label">Text Alignment </label>
+                  <div class="control">
+                    <div class="select">
+                      <select [(ngModel)]="TxAlign" (ngModelChange)="RepaintEntries()">
+                        <option [value]="'left'" [selected]="TxAlign=='left'">Left</option>
+                        <option [value]="'center'" [selected]="TxAlign=='center'">Center</option>
+                        <option [value]="'right'" [selected]="TxAlign=='right'">Right</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -216,7 +198,7 @@
 
 
                 <!--        Outline Thickness     -->
-                <div *ngIf="(ProxyMode != 1)">
+                <div>
                   <!-- <div class="divider is-left is-black" data-content="Outline Thickness"></div> -->
                   <label class="label">Outline Thickness </label>
                   <input class="input" type="number" min="0" [(ngModel)]="OT" (ngModelChange)="RepaintEntries()" />
@@ -225,22 +207,16 @@
                 <!--      FONT STYLE OVERRIDE      -->
                 <input type="checkbox" [(ngModel)]="OverrideCStyle"><span>Override Font Colour</span>
                 <div *ngIf="OverrideCStyle">
-                  <div *ngIf="(ProxyMode == 1)">
-                    <label class="label">Outline Thickness </label>
-                    <input class="input" type="number" min="0" [(ngModel)]="OT" (ngModelChange)="RepaintEntries()" />
-                    <label class="label">Character Colour (Author) </label>
-                    <input class="input" type="color" [(ngModel)]="OverrideCCAuthor"/>
-                    <label class="label">Outline Colour (Author) </label>
-                    <input class="input" type="color" [(ngModel)]="OverrideOCAuthor"/>
-                  </div>
+                  <label class="label">Outline Thickness </label>
+                  <input class="input" type="number" min="0" [(ngModel)]="OT" (ngModelChange)="RepaintEntries()" />
                   <label class="label">Character Colour </label>
-                  <input class="input" type="color" [(ngModel)]="OverrideCC" (ngModelChange)="RePaintExample()" />
+                  <input class="input" type="color" [(ngModel)]="OverrideCC" (ngModelChange)="RepaintEntries()" />
                   <label class="label">Outline Colour </label>
-                  <input class="input" type="color" [(ngModel)]="OverrideOC" (ngModelChange)="RePaintExample()" />
+                  <input class="input" type="color" [(ngModel)]="OverrideOC" (ngModelChange)="RepaintEntries()" />
                 </div>
 
                 <!--        Card Colour     -->
-                <div *ngIf="(this.ProxyMode == 0) || (this.ChatMode == 'Filter')">
+                <div>
                   <div class="divider is-left is-black" data-content="Card Colour"></div>
                   <label class="label">Card BG Colour </label>
                   <input class="input" type="color" [(ngModel)]="BGcolour" (ngModelChange)="ReRenderExample()" />
@@ -292,140 +268,16 @@
               <div class="divider is-vertical is-left"></div>
 
               <!-- Preview -->
-              <div class="column">
+              <div style="display: flex; flex-direction: column; width: 100%;">
                 <div class="is-flex">
                   <span><strong>Preview</strong></span>
                   <button class="button is-dark is-small" style="margin-left: auto;" (click)="Backgroundchange()"
                     #BGSwitchButton>Black</button>
                 </div>
-                <div
-                  style="display: flex; flex-direction: column-reverse; height: 500px; background-color: white; padding: 15px; margin-top: 10px; overflow: auto;" #previewcontainer>
-                  <div #cardcontainer></div>
-                    <div *ngIf="ProxyMode == 1" #ChatContainer>
-                      <div class="mt-2" [style.font-family]="FFamily[0]" [style.font-size]="FFsize + 'px'"
-                        [style.animation-duration]="'250ms'" [class]="'animate__animated animate__' + AniType + AniDir"
-                        *ngFor="let Entry of EntryList" #Entry>
-
-                      <div *ngIf="ChatMode == 'Auto-Translation'">
-                        <div [ngSwitch]="Entry.type">
-                          <!----------------------------------------- SC ENTRY ----------------------------------------->
-                          <div *ngSwitchCase="'SC'">
-                            <div id="BoxShape" [style.background]="Entry.BC">
-                              <!------- AUTHOR HEAD -------->
-                              <span *ngIf="AuthPP || AuthName || AuthBadge">
-                                <ng-container [ngTemplateOutlet]="AuthorHeadRenderer"
-                                  [ngTemplateOutletContext]="{PURL:Entry.authorPhoto, Name:Entry.author, ABadge:Entry.badgeContent, AType:Entry.Mod}">
-                                </ng-container>
-                              </span>
-
-                              <!-- SC VALUE -->
-                              <span class="has-text-weight-bold is-size-3">
-                                [SC : {{ Entry.SC }} ]<br>
-                              </span>
-
-                              <!------- MSG Content ------->
-                              <ng-container [ngTemplateOutlet]="MessageRenderer"
-                                [ngTemplateOutletContext]="{Content:Entry.content, TLContent:Entry.TL}">
-                              </ng-container>
-                              <br>
-
-                            </div>
-                          </div>
-                          <!--======================================= SC ENTRY =======================================-->
-
-                          <!----------------------------------------- SC STICKER ----------------------------------------->
-                          <div *ngSwitchCase="'SCS'">
-                            <div id="BoxShape" [style.background]="Entry.BC">
-                              <!------- AUTHOR HEAD -------->
-                              <span *ngIf="AuthPP || AuthName || AuthBadge">
-                                <ng-container [ngTemplateOutlet]="AuthorHeadRenderer"
-                                  [ngTemplateOutletContext]="{PURL:Entry.authorPhoto, Name:Entry.author, ABadge:Entry.badgeContent, AType:Entry.Mod}">
-                                </ng-container>
-                              </span>
-
-                              <!-- SC VALUE -->
-                              <span class="has-text-weight-bold is-size-3">
-                                [SC : {{ Entry.SC }} ]<br>
-                              </span>
-
-                              <!------- STICKER ------->
-                              <span *ngFor="let e of Entry.content">
-                                <img *ngIf="e.indexOf('https://') != -1" src={{e}} [style.height]="FFsize*5 + 'px'"
-                                  [style.width]="FFsize*5 + 'px'" />
-                              </span>
-                              <br>
-                            </div>
-                          </div>
-                          <!--======================================= SC STICKER =======================================-->
-
-                          <!----------------------------------------- NEW MEMBER ----------------------------------------->
-                          <div *ngSwitchCase="'MEMBER'">
-                            <div id="BoxShape" class="WelcomeMember">
-                              <!------- AUTHOR HEAD -------->
-                              <span *ngIf="AuthPP || AuthName || AuthBadge">
-                                <ng-container [ngTemplateOutlet]="AuthorHeadRenderer"
-                                  [ngTemplateOutletContext]="{PURL:Entry.authorPhoto, Name:Entry.author, ABadge:Entry.badgeContent, AType:Entry.Mod}">
-                                </ng-container>
-                              </span>
-
-                              <!----- NEW MEMBER NOTIFICATION ----->
-                              <span class="has-text-weight-bold is-size-3">
-                                [NEW MEMBER]
-                                <br>
-                              </span>
-
-                              <!------- MSG Content ------->
-                              <ng-container [ngTemplateOutlet]="MessageRenderer"
-                                [ngTemplateOutletContext]="{Content:Entry.content, TLContent:Entry.TL}">
-                              </ng-container>
-                              <br>
-                            </div>
-                          </div>
-                          <!--======================================= NEW MEMBER =======================================-->
-
-                          <!----------------------------------------- NORMAL MESSAGE ----------------------------------------->
-                          <div *ngSwitchDefault>
-                            <div id="BoxShape" [ngClass]="ClassSeparator(Entry.Mod)">
-                              <!------- AUTHOR HEAD -------->
-                              <span *ngIf="AuthPP || AuthName || AuthBadge">
-                                <ng-container [ngTemplateOutlet]="AuthorHeadRenderer"
-                                  [ngTemplateOutletContext]="{PURL:Entry.authorPhoto, Name:Entry.author, ABadge:Entry.badgeContent, AType:Entry.Mod}">
-                                </ng-container>
-                              </span>
-
-                              <!------- MSG Content ------->
-                              <ng-container [ngTemplateOutlet]="MessageRenderer"
-                                [ngTemplateOutletContext]="{Content:Entry.content, TLContent:Entry.TL}">
-                              </ng-container>
-                              <br>
-
-                            </div>
-                          </div>
-                          <!--======================================= NORMAL MESSAGE =======================================-->
-                        
-                        </div>
-                      </div>
-                      <!--=========================================== AUTO TRANSLATION MODE ===========================================-->
-
-                      <!------------------------------------- FILTER MODE ------------------------------------->
-                      <div id="BoxShape" *ngIf="ChatMode == 'Filter'">
-                        <!------- AUTHOR HEAD -------->
-                        <span *ngIf="AuthPP || AuthName || AuthBadge">
-                          <ng-container [ngTemplateOutlet]="AuthorHeadRenderer"
-                            [ngTemplateOutletContext]="{PURL:Entry.authorPhoto, Name:Entry.author, ABadge:Entry.badgeContent, AType:Entry.Mod}">
-                          </ng-container>
-                        </span>
-
-                        <!------- MSG Content ------->
-                        <ng-container [ngTemplateOutlet]="MessageRenderer" 
-                          [ngTemplateOutletContext]="{Content:Entry.content, TLContent:Entry.TL}">
-                        </ng-container>
-                        <br>
-                      </div>
-                      <!--=================================== FILTER MODE ===================================-->
-                    </div>
-                   </div>
-                  <!--=============================================     CHAT PROXY MODE     =============================================-->
+                <div style="flex: 1; display: flex; flex-direction: row; align-items: stretch; overflow-y: hidden;">
+                  <div style="display: flex; flex-direction: column-reverse; height: 500px; background-color: white; padding: 15px; margin-top: 10px; overflow: auto; flex: 1;" #previewcontainer>
+                    <div #cardcontainer></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -455,47 +307,3 @@
     </div>
   </article>
 </div>
-
-
-<!------------ AUTHOR HEAD TEMPLATE ------------>
-<ng-template #AuthorHeadRenderer let-PictureURL='PURL' let-AuthorName='Name' let-AuthorBadge='ABadge'
-  let-AuthorType='AType'>
-  <!-- AUTHOR PICTURE -->
-  <img *ngIf="AuthPP" src={{PictureURL}} style="border-radius: 50%;" [style.height]="FFsize + 'px'"
-    [style.width]="FFsize + 'px'" />
-
-  <!-- AUTHOR NAME -->
-  <span *ngIf="AuthName" class="has-text-weight-bold"
-    [style.-webkit-text-stroke-width]="OverrideCStyle && OT + 'px'" [style.-webkit-text-stroke-color]="OverrideCStyle && OverrideOCAuthor" 
-    [style.-webkit-text-fill-color]="AuthorType == 1 ? '#0f9d58' : OverrideCStyle && OverrideCCAuthor">{{ AuthorName }}</span>
-
-  <!-- AUTHOR BADGE -->
-  <span *ngIf="AuthBadge">
-    <img *ngFor="let e of AuthorBadge" src={{e.Thumbnail}} [style.height]="FFsize + 'px'"
-      [style.width]="FFsize + 'px'" />
-  </span>
-
-  <span class="has-text-weight-bold"> : </span>
-</ng-template>
-<!--========== AUTHOR HEAD TEMPLATE ==========-->
-
-<!------------ MESSAGE PARSER TEMPLATE ------------>
-<ng-template #MessageRenderer let-Content='Content' let-TLContent='TLContent'>
-  <span *ngFor="let e of Content">
-
-    <!--        EMOJI     -->
-    <img *ngIf="e.indexOf('https://') != -1" src={{e}} [style.height]="FFsize + 'px'" [style.width]="FFsize + 'px'" />
-
-    <!--        LETTER MESSAGE     -->
-    <span *ngIf="e.indexOf('https://') == -1" [style.-webkit-text-stroke-width]="OverrideCStyle && OT + 'px'" 
-    [style.-webkit-text-stroke-color]="OverrideCStyle && OverrideOC" [style.-webkit-text-fill-color]="OverrideCStyle && OverrideCC">{{ e }}</span>
-
-  </span>
-
-  <!--        AUTO TL MSG     -->
-  <span *ngIf="TLContent" [style.-webkit-text-stroke-width]="OverrideCStyle && OT + 'px'" 
-    [style.-webkit-text-stroke-color]="OverrideCStyle && OverrideOC" [style.-webkit-text-fill-color]="OverrideCStyle && OverrideCC">
-    (Auto TL: {{ TLContent }} )
-  </span>
-</ng-template>
-<!--========== MESSAGE PARSER TEMPLATE ==========-->
