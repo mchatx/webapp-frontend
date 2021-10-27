@@ -332,18 +332,14 @@ export class ProxyappsetComponent implements OnInit {
         this.WebFontTemp = this.FFamily;
       }
 
-      if (this.ProxyMode == 1) {
-        this.TxAlign = 'left';
-        this.FFsize = 16;
-        this.MaxDisplay = 3;
-        this.CardBGColour = {
-          r: 0,
-          g: 0,
-          b: 0,
-          a: 0
-        }
-      } else {
-        this.TxAlign = "center"
+      this.TxAlign = "center"
+      this.FFsize = 16;
+      this.MaxDisplay = 3;
+      this.CardBGColour = {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 0
       }
     } else if (this.CurrentPage == 2) {
       var TempString = "";
@@ -406,6 +402,23 @@ export class ProxyappsetComponent implements OnInit {
               Linktoken["lc"] = "TW";
               Linktoken["vid"] = TempS;
             }
+          } else if (TempS.indexOf("https://www.twitch.tv/") != -1) {
+            TempS = TempS.replace("https://www.twitch.tv/", "");
+            if (TempS.indexOf("?") != -1) {
+              TempS = TempS.substring(0, TempS.indexOf("?"));
+            }
+            Linktoken["lc"] = "TW";
+            Linktoken["vid"] = TempS;
+          } else if (TempS.match(/http(.*)twitcasting.tv\//g)?.length != 0) {
+            TempS = TempS.replace(/http(.*)twitcasting.tv\//g, "TC_");
+            if (TempS.indexOf("?") != -1){
+              TempS = TempS.slice(0, TempS.indexOf("?"));
+            }
+            if (TempS.indexOf("/") != -1){
+              TempS = TempS.slice(0, TempS.indexOf("/"));
+            }
+            Linktoken["lc"] = "TC";
+            Linktoken["vid"] = TempS;
           }
 
           if (this.ChatMode == "Filter") {
@@ -420,11 +433,12 @@ export class ProxyappsetComponent implements OnInit {
             Linktoken["keywords"] = this.KeywordList;
           }
 
-          if (!this.AuthName) {
-            Linktoken["AuthName"] = 1;
-          }
-
           break;
+      }
+
+
+      if (!this.AuthName) {
+        Linktoken["AuthName"] = 1;
       }
 
       Linktoken["max"] = this.MaxDisplay;

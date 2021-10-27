@@ -1,10 +1,12 @@
-import { Component, OnInit, Renderer2, AfterViewInit, ViewChild, ViewChildren, QueryList, ElementRef } from '@angular/core';
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { Component, OnInit, Renderer2, ViewChild, ViewChildren, QueryList, ElementRef, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { SHA256, enc } from 'crypto-js';
-import { filter } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
-import { Subscription, timer } from 'rxjs';
+import { timer } from 'rxjs';
+import { ChatskimmerService } from '../services/chatskimmer.service';
+import { environment } from '../../environments/environment';
+import * as tmi from 'tmi.js';
 
 /*
   Params
@@ -24,6 +26,7 @@ import { Subscription, timer } from 'rxjs';
 */
 
 class FullEntry {
+  Author: string | undefined;
   Stext: string | undefined;
   Stime: number = 0;
   CC: string | undefined;
@@ -38,7 +41,7 @@ class FullEntry {
 })
 
 
-export class ProxyappComponent implements OnInit, AfterViewInit {
+export class ProxyappComponent implements OnInit, OnDestroy {
   @ViewChild('cardcontainer', { static: false }) cardcontainer !: ElementRef;
   @ViewChild('ChatContainer', { static: false }) ChatContainer !: ElementRef;
   @ViewChildren('item') itemElements!: QueryList<any>;
@@ -56,7 +59,6 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
   Ani: string = "";
   ChatProxyEle: HTMLIFrameElement | undefined;
 
-  ChatProxy: boolean = false;
   scrollend: boolean = true;
   EntryLoader: boolean = false;
   ChatFilterMode: boolean = false;
@@ -64,68 +66,30 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
     author: [""],
     keyword: ""
   }
-  AuthPP: boolean = true;
   AuthName: boolean = true;
-  AuthBadge: boolean = true;
-  AuthHead: boolean = true;
   AniDuration: number = 300;
 
   OverrideCStyle: boolean = false;
   OverrideCC: string = "#000000"
   OverrideOC: string = "#000000"
-  OverrideCCAuthor: string = "#000000"
-  OverrideOCAuthor: string = "#000000"
 
   constructor(
     private Renderer: Renderer2,
     private TGEnc: TsugeGushiService,
     private route: ActivatedRoute,
-    private Sanitizer: DomSanitizer
+    private Sanitizer: DomSanitizer,
+    private ChatSkimmer: ChatskimmerService
   ) { }
+
+  ngOnDestroy(): void {
+    this.ES?.close();
+    this.WS?.close();
+    this.TMIClient?.disconnect();
+  }
+
 
   ngOnInit(): void {
     this.ParamParse(this.route.snapshot.paramMap.get('token'));
-  }
-
-  ngAfterViewInit(): void {
-    this.scrollContainer = this.cardcontainer.nativeElement;
-    this.itemElements.changes.subscribe(() => { this.onItemElementsChanged(); });
-
-    if (this.ChatProxy) {
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.addedNodes.length != 0) {
-            setTimeout(() => {
-              this.StartYTCprint();
-            }, this.AniDuration);
-          }
-        });
-      });
-
-      observer.observe(this.ChatContainer.nativeElement, {
-        childList: true,
-      });
-    }
-  }
-
-  onScrollView(): void {
-    this.scrollend = this.isNearBottom();
-  }
-
-  onItemElementsChanged(): void {
-    if (this.scrollend) {
-      this.scrollContainer.scroll({
-        top: this.scrollContainer.scrollHeight,
-        left: 0
-      });
-    }
-  }
-
-  isNearBottom(): boolean {
-    const threshold = 150;
-    const position = this.scrollContainer.scrollTop + this.scrollContainer.offsetHeight;
-    const height = this.scrollContainer.scrollHeight;
-    return position > height - threshold;
   }
 
   sanitize(url: string | undefined) {
@@ -169,19 +133,11 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
     }
 
     if (ParamsList["CCC"]) {
-      this.OverrideCC = "#" + ParamsList["CCC"];
+      this.OverrideCC = ParamsList["CCC"];
     }
 
     if (ParamsList["COC"]) {
-      this.OverrideOC = "#" + ParamsList["COC"];
-    }
-
-    if (ParamsList["ACC"]) {
-      this.OverrideCCAuthor = "#" + ParamsList["ACC"];
-    }
-
-    if (ParamsList["AOC"]) {
-      this.OverrideOCAuthor = "#" + ParamsList["AOC"];
+      this.OverrideOC = ParamsList["COC"];
     }
 
     if (ParamsList["ot"]) {
@@ -198,6 +154,18 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
       }
     }
 
+    if (ParamsList["AuthName"]) {
+      this.AuthName = false;
+    } else {
+      this.AuthName = true;
+    }
+
+    if (ParamsList["FilterMode"]) {
+      this.ChatFilterMode = true;
+    } else {
+      this.ChatFilterMode = false;
+    }
+
     if (ParamsList["room"]) {
       if (ParamsList["room"] == "TEST") {
         this.RoomTest();
@@ -210,31 +178,16 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
           Act: 'Listen',
           Room: ParamsList["room"].toString(),
           Pass: SHA256(test).toString(enc.Hex).toLowerCase()
-        })));
+        })), ParamsList["room"].toString());
       } else {
         this.StartListening(this.TGEnc.TGEncoding(JSON.stringify({
           Act: 'Listen',
           Room: ParamsList["room"].toString()
-        })));
+        })), ParamsList["room"].toString());
       }
     } else if (ParamsList["lc"] && ParamsList["vid"]) {
-      this.ChatProxy = true;
-      if (ParamsList["AuthPP"]) {
-        this.AuthPP = false;
-      }
-      if (ParamsList["AuthName"]) {
-        this.AuthName = false;
-      }
-      if (ParamsList["AuthBadge"]) {
-        this.AuthBadge = false;
-      }
-      if (!this.AuthPP && !this.AuthName && !this.AuthBadge) {
-        this.AuthHead = false;
-      }
-
       if (ParamsList["FilterMode"]) {
         this.Filter.author = [];
-        this.ChatFilterMode = true;
         if (ParamsList["keywords"]) {
           this.Filter.keyword = "";
           ParamsList["keywords"].forEach((e: string) => {
@@ -248,23 +201,14 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
         if (ParamsList["author"]) {
           this.Filter.author = ParamsList["author"];
         }
+      } 
+      this.AddChatSkimmer(ParamsList["lc"] + "_" + ParamsList["vid"]);
 
-        if (ParamsList["vid"] == "TEST") {
-          this.ChatProxyTest();
-        } else {
-          this.StartChatProxy(ParamsList["lc"], ParamsList["vid"], true, ParamsList["tp"]);
-        }
-      } else {
-        if (ParamsList["vid"] == "TEST") {
-          this.ChatProxyTest();
-        } else {
-          this.StartChatProxy(ParamsList["lc"], ParamsList["vid"], false, ParamsList["tp"]);
-        }
-      }
     } else {
       for (let i: number = 0; i < 10; i++) {
         if (i % 2 != 0) {
           this.MEntryAdd({
+            Author: "SYS",
             Stext: "TEST" + i.toString() + " asdfkjzx" + " asdfkjzx" + " asdfkjzx" + " asdfkjzx" + " asdfkjzx",
             Stime: 10000,
             CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
@@ -273,6 +217,7 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
           })
         } else {
           this.MEntryAdd({
+            Author: "SYS",
             Stext: "TEST" + i.toString(),
             Stime: 10000,
             CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
@@ -287,80 +232,47 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
 
 
 
-  //--------------------------------------------- MCHAD ROOM MODE ---------------------------------------------
-  StartListening(Btoken: string): void {
-    this.Status = Btoken;
-    const RoomES = new EventSource('https://repo.mchatx.org/FetchRaw/?BToken=' + Btoken);
+  //----------------------------------------------  TESTING MODULE  ----------------------------------------------
+  RoomTest() {
+    timer(999, 999).subscribe((t) => {
+      var s = "";
+      switch (t % 5) {
+        case 0:
+          s = "the quick brown fox jumps over the lazy dog";
+          break;
 
-    this.Status = "1";
+        case 1:
+          s = "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG";
+          break;
 
-    RoomES.onmessage = e => {
-      if (e.data == '{ "flag":"Connect", "content":"CONNECTED TO SECURE SERVER"}') {
-      } else if (e.data != '{}') {
-        var DecodedString = this.TGEnc.TGDecoding(e.data);
-        if (DecodedString == '{ "flag":"Timeout", "content":"Translator side time out" }') {
-          RoomES.close();
-        } else {
-          var dt = JSON.parse(DecodedString);
-          var tempFE: FullEntry = {
-            Stext: dt["content"]["Stext"],
-            key: dt["content"]["key"],
-            Stime: 0,
-            CC: "",
-            OC: ""
-          };
+        case 2:
+          s = "以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須";
+          break;
 
-          if (!dt["content"]["CC"]) {
-            tempFE.CC = "FFFFFF";
-          } else {
-            tempFE.CC = dt["content"]["CC"];
-          }
-          if (!dt["content"]["OC"]) {
-            tempFE.OC = "000000";
-          } else {
-            tempFE.OC = dt["content"]["OC"];
-          }
+        case 3:
+          s = "いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす";
+          break;
 
-          if (dt["flag"] == "insert") {
-            this.MEntryAdd(tempFE);
-          } else if (dt["flag"] == "update") {
-            this.MEntryReplace(tempFE);
-          }
-        }
+        case 4:
+          s = "イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス";
+          break;
       }
-    }
 
-    RoomES.onerror = e => {
       this.MEntryAdd({
+        Author: "SYS",
         Stime: 0,
-        Stext: "CONNECTION ERROR",
-        OC: "000000",
-        CC: "FFFFFF",
+        Stext: s,
+        CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
+        OC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
         key: ""
-      })
-    }
-
-    RoomES.onopen = e => {
-      this.MEntryAdd({
-        Stime: 0,
-        Stext: "CONNECTED",
-        OC: "000000",
-        CC: "FFFFFF",
-        key: ""
-      })
-    }
-
-    RoomES.addEventListener('open', function (e) {
-    }, false);
-
-    RoomES.addEventListener('message', function (e) {
-    }, false);
-
-    RoomES.addEventListener('error', function (e) {
-    }, false);
-
+      });
+    });
   }
+  //==============================================  TESTING MODULE  ==============================================
 
+
+
+  //--------------------------------------------- ENTRY DISPLAY ---------------------------------------------
   MEntryReplace(dt: FullEntry): void {
     for (let i: number = 0; i < this.EntryList.length; i++) {
       if (this.EntryList[i].key == dt.key) {
@@ -399,6 +311,20 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
   }
 
   MEntryAdd(dt: FullEntry): void {
+    if (this.ChatFilterMode){
+      if (dt.Author){
+        if (this.Filter.author.indexOf(dt.Author) == -1) {
+          return;
+        }
+      }
+
+      if (dt.Stext){
+        if (dt.Stext.match(new RegExp(this.Filter.keyword, 'i')) == null) {
+          return;
+        }
+      }
+    }
+
     if (this.DisplayElem.length == this.MaxDisplay) {
       this.DisplayElem.shift()?.remove();
       this.EntryList.shift();
@@ -452,365 +378,274 @@ export class ProxyappComponent implements OnInit, AfterViewInit {
       top: this.cardcontainer.nativeElement.scrollHeight,
       left: 0
     });
+  }
+  //============================================= ENTRY DISPLAY =============================================
+
+
+
+  //--------------------------------------------- MCHAD ROOM MODE ---------------------------------------------
+  StartListening(Btoken: string, room: string): void {
+    this.Status = Btoken;
+    const RoomES = new EventSource('https://repo.mchatx.org/FetchRaw/?BToken=' + Btoken);
+
+    this.Status = "1";
+
+    RoomES.onmessage = e => {
+      if (e.data == '{ "flag":"Connect", "content":"CONNECTED TO SECURE SERVER"}') {
+      } else if (e.data != '{}') {
+        var DecodedString = this.TGEnc.TGDecoding(e.data);
+        if (DecodedString == '{ "flag":"Timeout", "content":"Translator side time out" }') {
+          RoomES.close();
+        } else {
+          var dt = JSON.parse(DecodedString);
+          var tempFE: FullEntry = {
+            Author: room,
+            Stext: dt["content"]["Stext"],
+            key: dt["content"]["key"],
+            Stime: 0,
+            CC: "",
+            OC: ""
+          };
+
+          if (dt["content"]["CC"]) {
+            tempFE.CC = dt["content"]["CC"]
+          } 
+
+          if (dt["content"]["OC"]) {
+            tempFE.OC = dt["content"]["OC"];
+          } 
+
+          if (dt["flag"] == "insert") {
+            this.MEntryAdd(tempFE);
+          } else if (dt["flag"] == "update") {
+            this.MEntryReplace(tempFE);
+          }
+        }
+      }
+    }
+
+    RoomES.onerror = e => {
+      this.MEntryAdd({
+        Author: "SYS",
+        Stime: 0,
+        Stext: "CONNECTION ERROR",
+        OC: "000000",
+        CC: "FFFFFF",
+        key: ""
+      })
+    }
+
+    RoomES.onopen = e => {
+      this.MEntryAdd({
+        Author: "SYS",
+        Stime: 0,
+        Stext: "CONNECTED",
+        OC: "000000",
+        CC: "FFFFFF",
+        key: ""
+      })
+    }
+
+    RoomES.addEventListener('open', function (e) {
+    }, false);
+
+    RoomES.addEventListener('message', function (e) {
+    }, false);
+
+    RoomES.addEventListener('error', function (e) {
+    }, false);
 
   }
   //============================================= MCHAD ROOM MODE =============================================
 
 
 
-  //--------------------------------------------- CHAT PROXY MODE ---------------------------------------------
-  StartChatProxy(ChatType: string, ID: string, filter: boolean, Vid: boolean) {
-    switch (ChatType) {
-      case "YT":
-        var RoomES;
-        var QueryS = ID;
-        if (Vid){
-          QueryS = "VidID=" + QueryS;
-        } else {
-          QueryS = "ChannelID=" + QueryS;
-        }
+  //-----------------------------------  SYNCING  -----------------------------------
+  URLConstructor(query: any) : string {
+    let TargetURL: string = environment.DBConn3 + '/ChatProxy?';
+  
+    if (query.link) {
+      TargetURL += "link=" + encodeURIComponent(query.link);
+    } else if (query.channel) {
+      TargetURL += "channel=" + encodeURIComponent(query.channel);
+    }
+  
+    if (query.TL) {
+      TargetURL += "&TL=OK";
+    }
+  
+    return (TargetURL);
+  }
 
-        if (filter) {
-          RoomES = new EventSource('http://localhost:31023/PureProxy?' + QueryS);
-        } else {
-          RoomES = new EventSource('http://localhost:31023/AutoTL?' + QueryS);
-        }
+  AddChatSkimmer(link: string) {
+    var URLquery = {
+      link: link
+    };
 
-        this.Status = "1";
+    switch (URLquery.link.slice(0, 3)) {
+      case "TC_":
+        this.ChatSkimmer.SendRequest(URLquery).subscribe({
+          error: error => {
+            this.MEntryAdd({
+              Author: "SYS",
+              Stime: 0,
+              Stext: "ERROR CONNECTION",
+              CC: "",
+              OC: "",
+              key: ""
+            });
+          },
+          next: data => {
+            this.StartSyncWS(data.url);
+          }
+        });
+        break;
 
-        RoomES.onmessage = e => {
-          if (e.data == '{ "flag":"Connect", "content":"CONNECTED TO SERVER"}') {
-          } else if (e.data.indexOf('{ \"flag\":\"DELETE\"') != -1) {
-            var dt = JSON.parse(e.data);
-            if (dt.Nick) {
-              this.EntryContainer = this.EntryContainer.filter(e => e.author != dt.Nick);
-              this.EntryList = this.EntryList.filter(e => e.author != dt.Nick);
-            }
-          } else if (e.data != '{}') {
+      case "TW_":
+        this.StartSyncTMI(URLquery.link.slice(3));
+        break;
 
-            if (this.EntryContainer.length > 80) {
-              this.AniDuration = 25;
-            } else if (this.EntryContainer.length > 40) {
-              this.AniDuration = 50;
-            } else if (this.EntryContainer.length > 20) {
-              this.AniDuration = 100;
-            } else if (this.EntryContainer.length > 10) {
-              this.AniDuration = 200;
-            } else {
-              this.AniDuration = 300;
-            }
+      case "YT_":
+        this.StartSync(this.URLConstructor(URLquery), "YT");
+        break;  
 
-            if (this.ChatFilterMode) {
-              if ((this.Filter.author.length != 0) && (this.Filter.keyword != "")) {
-                JSON.parse(e.data).forEach((dt: any) => {
-                  if (this.Filter.author.indexOf(dt.author) != -1) {
-                    for (let i = 0; i < dt.content.length; i++) {
-                      if (dt.content[i].indexOf('https://') != -1) {
-                        return;
-                      } else if (dt.content[i].match(new RegExp(this.Filter.keyword, 'i')) != null) {
-                        this.EntryContainer.push(dt);
-                        break;
-                      }
-                    }
-                  }
-                });
-              } else if (this.Filter.author.length != 0) {
-                JSON.parse(e.data).forEach((dt: any) => {
-                  if (this.Filter.author.indexOf(dt.author) != -1) {
-                    this.EntryContainer.push(dt);
-                  }
-                });
-              } else if (this.Filter.keyword != "") {
-                JSON.parse(e.data).forEach((dt: any) => {
-                  for (let i = 0; i < dt.content.length; i++) {
-                    if (dt.content[i].indexOf('https://') != -1) {
-                      return;
-                    } else if (dt.content[i].match(new RegExp(this.Filter.keyword, 'i')) != null) {
-                      this.EntryContainer.push(dt);
-                      break;
-                    }
-                  }
-                });
-              } else {
-                JSON.parse(e.data).forEach((dt: any) => {
-                  this.EntryContainer.push(dt);
-                });
-              }
-            } else {
-              JSON.parse(e.data).forEach((dt: any) => {
-                this.EntryContainer.push(dt);
+      default:
+        this.StartSync(this.URLConstructor(URLquery), "SYS")  
+        break;
+    }
+  }
+
+  Synced:boolean = false;
+  ES: EventSource | undefined = undefined;
+  SyncToken:string = "";
+  WS: WebSocket | undefined = undefined;
+  TMIClient: tmi.Client | undefined = undefined;
+
+  StartSync(ESLink: string, Type: string) {
+    this.ES = new EventSource(ESLink);
+    
+    this.ES.onmessage = e => {
+      if (e.data == "[]") return;
+      
+      var parseData = JSON.parse(e.data);
+      if (!parseData.flag){
+        for (var i = 0; i < parseData.length; i++){
+          switch (Type) {
+            case "YT":
+              this.MEntryAdd({
+                Author: parseData[i].author,
+                Stime: 0,
+                Stext: parseData[i].content,
+                CC: "",
+                OC: "",
+                key: ""
               });
-            }
-            if (!this.EntryLoader) {
-              this.EntryLoader = true;
-              this.StartYTCprint();
-            }
+              break;
+            
+            case "TW":
+              this.MEntryAdd({
+                Author: parseData[i].author,
+                Stime: 0,
+                Stext: parseData[i].message,
+                CC: "",
+                OC: "",
+                key: ""
+              });
+              break;
+            
+            case "TC":
+              this.MEntryAdd({
+                Author: parseData[i].author,
+                Stime: 0,
+                Stext: parseData[i].message,
+                CC: "",
+                OC: "",
+                key: ""
+              });
+              break;
           }
         }
-
-        RoomES.onerror = e => {
-        }
-
-        RoomES.onopen = e => {
-        }
-
-        RoomES.addEventListener('open', function (e) {
-        }, false);
-
-        RoomES.addEventListener('message', function (e) {
-        }, false);
-
-        RoomES.addEventListener('error', function (e) {
-        }, false);
-
-        break;
-
-      case "TW":
-        this.ChatProxyEle = this.Renderer.createElement("iframe");
-        if (this.ChatProxyEle) {
-          this.ChatProxyEle.src = "https://www.twitch.tv/embed/" + ID + "/chat?parent=" + window.location.hostname;
-          this.ChatProxyEle.style.height = "100%";
-          this.ChatProxyEle.frameBorder = "0";
-          this.Renderer.appendChild(this.cardcontainer.nativeElement.parentNode, this.ChatProxyEle);
-          this.cardcontainer.nativeElement.remove();
-        }
-        break;
-    }
-  }
-
-  StartYTCprint() {
-    if (this.EntryContainer.length == 0) {
-      this.EntryLoader = false;
-      return;
-    }
-
-    if (this.EntryList.length == this.MaxDisplay) {
-      this.EntryList.splice(0, 1);
-    }
-
-    let dt = this.EntryContainer.shift();
-
-    this.EntryList.push(dt);
-  }
-
-  ClassSeparator(type: number | undefined): string {
-    if (!type) {
-      return "";
-    } else {
-      switch (type) {
-        case 1:
-          return "NormalMessage";
-
-        case 2:
-          return "ModMessage";
-
-        default:
-          return "OwnerMessage";
       }
     }
+
+    this.ES.onerror = e => {
+      this.ES?.close();
+    }
+
+    this.ES.onopen = e => {
+      console.log("START SYNCING");
+    }
   }
-  //============================================= CHAT PROXY MODE =============================================
 
+  StopSync() {
+  }
 
+  StartSyncWS(WSLink: string) {
+    this.WS = new WebSocket(WSLink);
 
-  //----------------------------------------------  TESTING MODULE  ----------------------------------------------
-  RoomTest() {
-    timer(999, 999).subscribe((t) => {
-      var s = "";
-      switch (t % 5) {
-        case 0:
-          s = "the quick brown fox jumps over the lazy dog";
-          break;
-
-        case 1:
-          s = "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG";
-          break;
-
-        case 2:
-          s = "以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須";
-          break;
-
-        case 3:
-          s = "いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす";
-          break;
-
-        case 4:
-          s = "イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス";
-          break;
+    this.WS.onmessage = e => {
+      if (e.data != "[]"){
+        JSON.parse(e.data).forEach((dt:any) => {
+          if (dt.type == "comment"){
+            this.MEntryAdd({
+              Author: dt.author.name,
+              Stime: 0,
+              Stext: dt.message,
+              CC: "",
+              OC: "",
+              key: ""
+            });
+          }
+        });
       }
+    }
 
-      this.MEntryAdd({
-        Stime: 0,
-        Stext: s,
-        CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
-        OC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
-        key: ""
-      });
+    this.WS.onerror = e => {
+      this.WS?.close();
+    }
+
+    this.WS.onopen = e => {
+      console.log("START SYNCING WS");
+    }
+  }
+
+  async StartSyncTMI(channel: string){
+    const TMIOptions: tmi.Options = {
+      channels: [channel],
+      connection: {
+        maxReconnectAttempts: 2,
+        maxReconnectInverval: 10,
+        reconnect: true,
+        secure: true
+      }
+    };
+
+    this.TMIClient = tmi.Client(TMIOptions);
+
+    await this.TMIClient.connect();
+
+    this.TMIClient.on("message", (channel, tags, message, self) => {
+      if (self) return;
+
+      if (tags["display-name"]) {
+        this.MEntryAdd({
+          Author: tags["display-name"],
+          Stime: 0,
+          Stext: message,
+          CC: "",
+          OC: "",
+          key: ""
+        });
+      }
     });
-  }
 
-  ChatProxyTest() {
-    timer(999, 999).subscribe((t) => {
-      //https://via.placeholder.com/150?text=Visit+WhoIsHostingThis.com+Buyers+Guide
-
-      var s: any = {};
-      s["authorPhoto"] = "https://via.placeholder.com/48?text=AUTHOR";
-
-      switch (t % 10) {
-        //  SC STICKER
-        case 0:
-          s["author"] = "test SC STICKER";
-          s["type"] = "SCS";
-          s["SC"] = "XXX $";
-          s["content"] = ["https://via.placeholder.com/96?text=PAID+STICKER"]
-          s["BC"] = "#" + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16);
-          break;
-
-        //  SC MESSAGE
-        case 1:
-          s["author"] = "test SC";
-          if ((Date.now() % 2) == 0) {
-            s["TL"] = "AUTO TRANSLATED TEXT";
-          }
-
-          switch (Date.now() % 5) {
-            case 0:
-              s["content"] = ["the quick brown fox jumps over the lazy dog"];
-              break;
-
-            case 1:
-              s["content"] = ["THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"];
-              break;
-
-            case 2:
-              s["content"] = ["以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須"];
-              break;
-
-            case 3:
-              s["content"] = ["いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす"];
-              break;
-
-            case 4:
-              s["content"] = ["イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス"];
-              break;
-          }
-          s["type"] = "SC";
-          s["SC"] = "XXX $$";
-          s["BC"] = "#" + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16);
-          break;
-
-        //  MEMBER
-        case 2:
-          s["author"] = "test NEW MEMBER WELCOME";
-          s["content"] = ["WELCOME TO XXXXXXXXXXX"];
-          s["type"] = "MEMBER";
-          break;
-
-        //  MESSAGE OWNER
-        case 3:
-          s["author"] = "test OWNER MESSAGE";
-          if ((Date.now() % 2) == 0) {
-            s["TL"] = "AUTO TRANSLATED TEXT";
-          }
-
-          switch (Date.now() % 5) {
-            case 0:
-              s["content"] = ["the quick brown fox jumps over the lazy dog"];
-              break;
-
-            case 1:
-              s["content"] = ["THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"];
-              break;
-
-            case 2:
-              s["content"] = ["以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須"];
-              break;
-
-            case 3:
-              s["content"] = ["いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす"];
-              break;
-
-            case 4:
-              s["content"] = ["イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス"];
-              break;
-          }
-          s["Mod"] = 3; //  OWNER
-          break;
-
-        //  MESSAGE MOD
-        case 4:
-          s["author"] = "test MOD MESSAGE";
-          if ((Date.now() % 2) == 0) {
-            s["TL"] = "AUTO TRANSLATED TEXT";
-          }
-
-          switch (Date.now() % 5) {
-            case 0:
-              s["content"] = ["the quick brown fox jumps over the lazy dog"];
-              break;
-
-            case 1:
-              s["content"] = ["THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"];
-              break;
-
-            case 2:
-              s["content"] = ["以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須"];
-              break;
-
-            case 3:
-              s["content"] = ["いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす"];
-              break;
-
-            case 4:
-              s["content"] = ["イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス"];
-              break;
-          }
-          s["Mod"] = 2; //  MOD
-          break;
-
-        //  MESSAGE NORMAL
-        default:
-          if ((Date.now() % 2) == 0) {
-            s["author"] = "test MEMBER";
-            s["Mod"] = 1; //  MEMBER
-            s["badgeContent"] = [{ Thumbnail: "https://via.placeholder.com/48?text=BADGE" }];
-          } else {
-            s["author"] = "test NON MEMBER";
-          }
-
-          if ((Date.now() % 2) == 0) {
-            s["TL"] = "AUTO TRANSLATED TEXT";
-          }
-
-          switch (Date.now() % 5) {
-            case 0:
-              s["content"] = ["the quick brown fox jumps over the lazy dog"];
-              break;
-
-            case 1:
-              s["content"] = ["THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG"];
-              break;
-
-            case 2:
-              s["content"] = ["以呂波耳本部止 千利奴流乎和加 餘多連曽津祢那 良牟有為能於久 耶万計不己衣天 阿佐伎喩女美之 恵比毛勢須"];
-              break;
-
-            case 3:
-              s["content"] = ["いろはにほへと　ちりぬるを　わかよたれそ　つねならむ　うゐのおくやま　けふこえて　あさきゆめみし　ゑひもせす"];
-              break;
-
-            case 4:
-              s["content"] = ["イロハニホヘト　チリヌルヲ　ワカヨタレソ　ツネナラム　ウヰノオクヤマ　ケフコエテ　アサキユメミシ　ヱヒモセス"];
-              break;
-          }
-          break;
-      }
-
-      this.EntryContainer.push(s);
-      this.StartYTCprint();
+    this.TMIClient.on("connected", (address, port) => {
+      console.log("TMI CONNECTED");
     });
+
+    //this.TMIClient.on("disconnected", reason => {});
+    //this.TMIClient.on("join", (channel, username, self) => {});
+    //this.client.on("logon", () => {});
   }
-
-  //==============================================  TESTING MODULE  ==============================================
-
+  //===================================  SYNCING  ===================================
 }

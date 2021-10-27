@@ -1,309 +1,301 @@
-<div class="menucard">
-  <article class="box media has-background-light">
-    <div class="media-content">
-      <div class="content">
-        <div [ngSwitch]="CurrentPage">
-          <!------------------------------- First Page  ------------------------------->
-          <div *ngSwitchCase="0">
+<div class="content" style="margin: 20px; padding: 10px; border-radius: 5%;">
+  <div [ngSwitch]="CurrentPage">
+    <!------------------------------- First Page  ------------------------------->
+    <div *ngSwitchCase="0">
+      <div class="field">
+        <label class="label">Mode</label>
+        <div class="control">
+          <div class="select">
+            <select [(ngModel)]="ProxyMode">
+              <option [value]="0" [selected]="ProxyMode==0">MChad Room</option>
+              <option [value]="1" [selected]="ProxyMode==1">Live Chat</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div [ngSwitch]="ProxyMode">
+        <div *ngSwitchCase="0">
+          <div class="field">
+            <label class="label">Choose Room</label>
+            <div class="control">
+              <input class="input" list="Rooms" name="Select a Room" [(ngModel)]="RoomNick"
+                (ngModelChange)="CheckPass()" />
+              <datalist id="Rooms">
+                <option *ngFor="let dt of RoomList" [value]="dt.Nick">{{dt.Nick}}</option>
+              </datalist>
+            </div>
+          </div>
+
+          <div *ngIf="PasswordProtected">
             <div class="field">
-              <label class="label">Mode</label>
+              <label class="label">Password</label>
+              <div class="control">
+                <input class="input" type="text" [(ngModel)]="RoomPass" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngSwitchCase="1">
+          <div class="field">
+            <label class="label">Stream URL</label>
+            <div class="control">
+              <input class="input" placeholder="Enter URL.." type="text" [(ngModel)]="ChatURL" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Mode</label>
+            <div class="control">
+              <div class="select is-normal">
+                <select [(ngModel)]="ChatMode">
+                  <option [value]="'Filter'" [selected]="ChatMode=='Filter'">Filter</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+
+          <div *ngIf="ChatMode=='Filter'">
+            <!--    Author   -->
+            <div class="field">
+              <label class="checkbox">
+                <input type="checkbox" [checked]="AuthFilter==true"
+                  (change)="CheckedChange(0,$event)" /><strong> Author</strong></label>
+              <div class="control">
+                <div class="wrap" *ngFor="let Author of AuthorList; let i = index">
+                  <span class="icon-text">
+                    <span>{{ Author }}</span>
+                  </span>
+                  <button class="delete is-dark" (click)="DeleteAuthList(i)"></button>
+                </div>
+              </div>
+              <div class="mt-2 control has-icons-left">
+                <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="AuthorInput"
+                  placeholder="Author name...">
+                <span class="icon is-left is-small">
+                  <fa-icon [icon]="faPlus"></fa-icon>
+                </span>
+              </div>
+            </div>
+            <div class="field">
+              <p class="control">
+                <button class="button is-dark" (click)="AddAuthor()">Add</button>
+              </p>
+            </div>
+
+            <!--    Keywords   -->
+            <div class="field">
+              <label class="checkbox"><input type="checkbox" [checked]="KeywordFilter==true"
+                  (change)="CheckedChange(1,$event)" /> <strong> Keyword</strong></label>
+              <div class="control">
+                <div class="wrap" *ngFor="let Keyword of KeywordList; let i = index">
+                  <span class="icon-text">
+                    <span>{{ Keyword }}</span>
+                  </span>
+                  <button class="delete is-dark" (click)="DeleteKeywordList(i)"></button>
+                </div>
+              </div>
+              <div class="mt-2 control has-icons-left">
+                <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="KeywordInput"
+                  placeholder="Keyword...">
+                <span class="icon is-left is-small">
+                  <fa-icon [icon]="faPlus"></fa-icon>
+                </span>
+              </div>
+            </div>
+            <div class="field">
+              <p class="control">
+                <button class="button is-dark" (click)="AddKeyword()">Add</button>
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="is-flex is-justify-content-flex-end"><button class="mt-2 button is-dark"
+          (click)="NextButtonClick()">Next</button></div>
+    </div>
+    <!--============================= First Page  =============================-->
+
+    <!------------------------------- Second Page  ------------------------------->
+    <div class="columns" *ngSwitchCase="1">
+      <div class="column is-two-thirds" style="display: flex; flex-direction: column;">
+        <div class="columns">
+          <!-- Options -->
+          <div class="column">
+            <label class="label">Card setting</label>
+            <!--        Chat author     -->
+            <label class="checkbox"><input type="checkbox" [checked]="AuthName==true"
+              (change)="CheckedChange2()" /> Author Name</label><br>
+  
+            <!--        Card Number     -->
+            <label>Max message card # </label>
+            <input class="input" type="number" min="0" [(ngModel)]="MaxDisplay" (ngModelChange)="ResetNumberEntries()" />
+  
+            <!--        Card Colour     -->
+            <div>
+              <label>Card BG Colour </label>
+              <input class="input" type="color" [(ngModel)]="BGcolour" (ngModelChange)="ReRenderExample()" />
+              <label>Transparency </label>
+              <p>{{ 100 - CardBGColour.a*100 }}%</p>
+              <input type="range" min="0" max="1" step="0.01" [(ngModel)]="CardBGColour.a"
+                (ngModelChange)="RepaintEntries()" />
+            </div>
+  
+            <!--        Card Animation     -->
+            <div class="field">
+              <label>Animation Type </label>
               <div class="control">
                 <div class="select">
-                  <select [(ngModel)]="ProxyMode">
-                    <option [value]="0" [selected]="ProxyMode==0">MChad Room</option>
-                    <option [value]="1" [selected]="ProxyMode==1">Live Chat</option>
+                  <select [(ngModel)]="AniType">
+                    <option [value]="'fadeIn'" [selected]="AniType=='fadeIn'">Fade In</option>
+                    <option [value]="'backIn'" [selected]="AniType=='backIn'">Back In</option>
+                    <option [value]="'bounceIn'" [selected]="AniType=='bounceIn'">Bounce In</option>
+                    <option [value]="'slideIn'" [selected]="AniType=='slideIn'">Slide In</option>
+                    <option [value]="'zoomIn'" [selected]="AniType=='zoomIn'">Zoom In</option>
+                    <option [value]="'None'" [selected]="AniType=='None'">None</option>
                   </select>
                 </div>
               </div>
             </div>
-
-            <div [ngSwitch]="ProxyMode">
-              <div *ngSwitchCase="0">
-                <div class="field">
-                  <label class="label">Choose Room</label>
-                  <div class="control">
-                    <input class="input" list="Rooms" name="Select a Room" [(ngModel)]="RoomNick"
-                      (ngModelChange)="CheckPass()" />
-                    <datalist id="Rooms">
-                      <option *ngFor="let dt of RoomList" [value]="dt.Nick">{{dt.Nick}}</option>
-                    </datalist>
-                  </div>
-                </div>
-
-                <div *ngIf="PasswordProtected">
-                  <div class="field">
-                    <label class="label">Password</label>
-                    <div class="control">
-                      <input class="input" type="text" [(ngModel)]="RoomPass" />
-                    </div>
-                  </div>
-                </div>
+            <label>Animation Direction </label>
+            <div class="control">
+              <div class="select">
+                <select [(ngModel)]="AniDir">
+                  <option [value]="'Up'" [selected]="AniDir=='Up'">Up</option>
+                  <option [value]="'Left'" [selected]="AniDir=='Left'">Left</option>
+                  <option [value]="'Right'" [selected]="AniDir=='Right'">Right</option>
+                  <option [value]="'Down'" [selected]="AniDir=='Down'">Down</option>
+                </select>
               </div>
-
-              <div *ngSwitchCase="1">
-                <div class="field">
-                  <label class="label">Stream URL</label>
-                  <div class="control">
-                    <input class="input" placeholder="Enter URL.." type="text" [(ngModel)]="ChatURL" />
-                  </div>
-                </div>
-
-                <div class="field">
-                  <label class="label">Mode</label>
-                  <div class="control">
-                    <div class="select is-normal">
-                      <select [(ngModel)]="ChatMode">
-                        <option [value]="'Filter'" [selected]="ChatMode=='Filter'">Filter</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-
-                <div *ngIf="ChatMode=='Filter'">
-                  <!--    Author   -->
-                  <div class="field">
-                    <label class="checkbox">
-                      <input type="checkbox" [checked]="AuthFilter==true"
-                        (change)="CheckedChange(0,$event)" /><strong> Author</strong></label>
-                    <div class="control">
-                      <div class="wrap" *ngFor="let Author of AuthorList; let i = index">
-                        <span class="icon-text">
-                          <span>{{ Author }}</span>
-                        </span>
-                        <button class="delete is-dark" (click)="DeleteAuthList(i)"></button>
-                      </div>
-                    </div>
-                    <div class="mt-2 control has-icons-left">
-                      <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="AuthorInput"
-                        placeholder="Author name...">
-                      <span class="icon is-left is-small">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="field">
-                    <p class="control">
-                      <button class="button is-dark" (click)="AddAuthor()">Add</button>
-                    </p>
-                  </div>
-
-                  <!--    Keywords   -->
-                  <div class="field">
-                    <label class="checkbox"><input type="checkbox" [checked]="KeywordFilter==true"
-                        (change)="CheckedChange(1,$event)" /> <strong> Keyword</strong></label>
-                    <div class="control">
-                      <div class="wrap" *ngFor="let Keyword of KeywordList; let i = index">
-                        <span class="icon-text">
-                          <span>{{ Keyword }}</span>
-                        </span>
-                        <button class="delete is-dark" (click)="DeleteKeywordList(i)"></button>
-                      </div>
-                    </div>
-                    <div class="mt-2 control has-icons-left">
-                      <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="KeywordInput"
-                        placeholder="Keyword...">
-                      <span class="icon is-left is-small">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="field">
-                    <p class="control">
-                      <button class="button is-dark" (click)="AddKeyword()">Add</button>
-                    </p>
-                  </div>
-                </div>
-
-              </div>
+  
             </div>
-            <div class="is-flex is-justify-content-flex-end"><button class="mt-2 button is-dark"
-                (click)="NextButtonClick()">Next</button></div>
           </div>
-          <!--============================= First Page  =============================-->
-
-          <!------------------------------- Second Page  ------------------------------->
-          <div *ngSwitchCase="1">
-            <div class="columns">
-              <!-- Options -->
-              <div class="column is-5">
-                <!--        Chat author     -->
-                <label class="checkbox"><input type="checkbox" [checked]="AuthName==true"
-                  (change)="CheckedChange2()" /> <strong>Author Name</strong></label><br>
-
-                <!--        Card Number     -->
-                <div class="divider is-left is-black" data-content="# max cards"></div>
-                <label class="label">Max message card # </label>
-                <input class="input" type="number" min="0" [(ngModel)]="MaxDisplay" (ngModelChange)="ResetNumberEntries()" />
-
-                <!--        Text Alignment     -->
-                <div class="divider is-left is-black" data-content="Text Align"></div>
-                <div class="field">
-                  <label class="label">Text Alignment </label>
-                  <div class="control">
-                    <div class="select">
-                      <select [(ngModel)]="TxAlign" (ngModelChange)="RepaintEntries()">
-                        <option [value]="'left'" [selected]="TxAlign=='left'">Left</option>
-                        <option [value]="'center'" [selected]="TxAlign=='center'">Center</option>
-                        <option [value]="'right'" [selected]="TxAlign=='right'">Right</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!--        Font     -->
-                <div class="divider is-left is-black" data-content="Font"></div>
-                <div class="field">
-                  <label class="label">Font Family </label>
-                  <div class="control">
-                    <div class="select is-multiple">
-                      <select multiple size="5" [(ngModel)]="FFamily" (ngModelChange)="FFSelectChange()">
-                        <optgroup label="日本語フォント">
-                          <option [value]="'Noto Sans JP'" [selected]="FFamily=='Noto Sans JP'">Noto Sans</option>
-                          <option [value]="'Kosugi Maru'" [selected]="FFamily=='Kosugi Maru'">Kosugi Maru</option>
-                          <option [value]="'Hachi Maru Pop'" [selected]="FFamily=='Hachi Maru Pop'">Hachi Maru Pop</option>
-                          <option [value]="'Stick'" [selected]="FFamily=='Stick'">Stick</option>
-                          <option [value]="'Sawarabi Gothic'" [selected]="FFamily=='Sawarabi Gothic'">Sawarabi Gothic</option>
-                        </optgroup>
-                        <optgroup label="英字フォント">
-                          <option [value]="'Asap'" [selected]="FFamily=='Asap'">Asap</option>
-                          <option [value]="'Patrick Hand'" [selected]="FFamily=='Patrick Hand'">Patrick Hand</option>
-                          <option [value]="'Kalam'" [selected]="FFamily=='Kalam'">Kalam</option>
-                          <option [value]="'Signika'" [selected]="FFamily=='Signika'">Signika</option>
-                          <option [value]="'Acme'" [selected]="FFamily=='Acme'">Acme</option>
-                        </optgroup>
-                        <optgroup label="一般フォント">
-                          <option [value]="'sans-serif'" [selected]="FFamily=='sans-serif'">Sans-serif</option>
-                          <option [value]="'cursive'" [selected]="FFamily=='cursive'">Cursive</option>
-                          <option [value]="'monospace'" [selected]="FFamily=='monospace'">Monospace</option>
-                        </optgroup>
-                      </select>
-                    </div>
-                  </div>
-                  <!--    LOAD ANY GOOGLE FONT 
-                                  <label>Or load Google web font
-                                      (<a href="https://fonts.google.com/" target="_blank" >browse font</a>)
-                                  </label>
-                                  <br>
-                                  <label>Font name </label>
-                                  <input type="text" [(ngModel)]="WebFontTemp"/>
-                                  <br>
-                                  <button (click)="LoadWebFont()">Load Web Font</button>
-                              -->
-                  <link [href]="FetchWebFont()" rel="stylesheet">
-
-                  <label class="label">Font Size </label>
-                  <input class="input" type="number" min="0" [(ngModel)]="FFsize" (ngModelChange)="RepaintEntries()" />
-                </div>
-
-
-                <!--        Outline Thickness     -->
-                <div>
-                  <!-- <div class="divider is-left is-black" data-content="Outline Thickness"></div> -->
-                  <label class="label">Outline Thickness </label>
-                  <input class="input" type="number" min="0" [(ngModel)]="OT" (ngModelChange)="RepaintEntries()" />
-                </div>
-
-                <!--      FONT STYLE OVERRIDE      -->
-                <input type="checkbox" [(ngModel)]="OverrideCStyle"><span>Override Font Colour</span>
-                <div *ngIf="OverrideCStyle">
-                  <label class="label">Outline Thickness </label>
-                  <input class="input" type="number" min="0" [(ngModel)]="OT" (ngModelChange)="RepaintEntries()" />
-                  <label class="label">Character Colour </label>
-                  <input class="input" type="color" [(ngModel)]="OverrideCC" (ngModelChange)="RepaintEntries()" />
-                  <label class="label">Outline Colour </label>
-                  <input class="input" type="color" [(ngModel)]="OverrideOC" (ngModelChange)="RepaintEntries()" />
-                </div>
-
-                <!--        Card Colour     -->
-                <div>
-                  <div class="divider is-left is-black" data-content="Card Colour"></div>
-                  <label class="label">Card BG Colour </label>
-                  <input class="input" type="color" [(ngModel)]="BGcolour" (ngModelChange)="ReRenderExample()" />
-                  <label class="label">Transparency </label>
-                  <p>{{ 100 - CardBGColour.a*100 }}%</p>
-                  <input type="range" min="0" max="1" step="0.01" [(ngModel)]="CardBGColour.a"
-                    (ngModelChange)="RepaintEntries()" />
-                </div>
-
-                <!--        Card Animation     -->
-                <div class="divider is-left is-black" data-content="Card Animation"></div>
-                <div class="field">
-                  <label class="label">Animation Type </label>
-                  <div class="control">
-                    <div class="select">
-                      <select [(ngModel)]="AniType">
-                        <option [value]="'fadeIn'" [selected]="AniType=='fadeIn'">Fade In</option>
-                        <option [value]="'backIn'" [selected]="AniType=='backIn'">Back In</option>
-                        <option [value]="'bounceIn'" [selected]="AniType=='bounceIn'">Bounce In</option>
-                        <option [value]="'slideIn'" [selected]="AniType=='slideIn'">Slide In</option>
-                        <option [value]="'zoomIn'" [selected]="AniType=='zoomIn'">Zoom In</option>
-                        <option [value]="'None'" [selected]="AniType=='None'">None</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                <label class="label">Animation Direction </label>
-                <div class="control">
-                  <div class="select">
-                    <select [(ngModel)]="AniDir">
-                      <option [value]="'Up'" [selected]="AniDir=='Up'">Up</option>
-                      <option [value]="'Left'" [selected]="AniDir=='Left'">Left</option>
-                      <option [value]="'Right'" [selected]="AniDir=='Right'">Right</option>
-                      <option [value]="'Down'" [selected]="AniDir=='Down'">Down</option>
-                    </select>
-                  </div>
-
-                </div>
-                <div class="mt-2">
-                  <button class="button is-dark" (click)="PrevButtonClick()" style="float: left;">Prev</button>
-                  <button class="button is-dark" (click)="NextButtonClick()" style="float: right;">Next</button>
-                </div>
-                <!--  <div class="pt-2 buttons has-addons is-right">
-
-
-                </div> -->
-
-              </div>
-              <div class="divider is-vertical is-left"></div>
-
-              <!-- Preview -->
-              <div style="display: flex; flex-direction: column; width: 100%;">
-                <div class="is-flex">
-                  <span><strong>Preview</strong></span>
-                  <button class="button is-dark is-small" style="margin-left: auto;" (click)="Backgroundchange()"
-                    #BGSwitchButton>Black</button>
-                </div>
-                <div style="flex: 1; display: flex; flex-direction: row; align-items: stretch; overflow-y: hidden;">
-                  <div style="display: flex; flex-direction: column-reverse; height: 500px; background-color: white; padding: 15px; margin-top: 10px; overflow: auto; flex: 1;" #previewcontainer>
-                    <div #cardcontainer></div>
-                  </div>
+  
+          <div class="column">
+            <label class="label">Text setting</label>
+            <!--        Text Alignment     -->
+            <div class="field">
+              <label>Text Alignment </label>
+              <div class="control">
+                <div class="select">
+                  <select [(ngModel)]="TxAlign" (ngModelChange)="RepaintEntries()">
+                    <option [value]="'left'" [selected]="TxAlign=='left'">Left</option>
+                    <option [value]="'center'" [selected]="TxAlign=='center'">Center</option>
+                    <option [value]="'right'" [selected]="TxAlign=='right'">Right</option>
+                  </select>
                 </div>
               </div>
             </div>
+  
+            <!--        Outline Thickness     -->
+            <div>
+              <!-- <div class="divider is-left is-black" data-content="Outline Thickness"></div> -->
+              <label>Outline Thickness </label>
+              <input class="input" type="number" min="0" [(ngModel)]="OT" (ngModelChange)="RepaintEntries()" />
+            </div>
+  
+            <!--      FONT STYLE OVERRIDE      -->
+            <input type="checkbox" [(ngModel)]="OverrideCStyle"><span>Override Font Colour</span>
+            <div *ngIf="OverrideCStyle">
+              <label>Character Colour </label>
+              <input class="input" type="color" [(ngModel)]="OverrideCC" (ngModelChange)="RepaintEntries()" />
+              <label>Outline Colour </label>
+              <input class="input" type="color" [(ngModel)]="OverrideOC" (ngModelChange)="RepaintEntries()" />
+            </div>
           </div>
-          <!--============================= Second Page  =============================-->
-
-          <!------------------------------- Third Page  ------------------------------->
-          <div *ngSwitchCase="2">
-            <strong>In OBS, add "browser" source, use URL below</strong>
-            <p>URL
-              <button class="button is-small is-white is-focused" (click)="CopyBtnClick(true)">Copy</button>
-            </p>
-            <textarea class="textarea" placeholder="Generating Link..." readonly [(ngModel)]="ProxyLink"
-              #LinkTextArea></textarea>
-
-            <strong>and custom CSS below</strong>
-            <p>Custom CSS
-              <button class="button is-small is-white is-focused" (click)="CopyBtnClick(false)">Copy</button>
-            </p>
-            <textarea class="textarea" placeholder="Generating CSS..." readonly [(ngModel)]="ProxyCss"
-              #CSSTextArea></textarea>
-            <button class="mt-2 button is-dark" (click)="PrevButtonClick()">Prev</button>
+  
+          <div class="column">
+            <!--        Font     -->
+            <label class="label">Font Setting </label>
+            <input class="input" type="number" min="0" [(ngModel)]="FFsize" (ngModelChange)="RepaintEntries()" />
+  
+            <div class="field">
+              <label>Font Family </label>
+              <div class="control">
+                <div class="select is-multiple">
+                  <select multiple size="5" [(ngModel)]="FFamily" (ngModelChange)="FFSelectChange()">
+                    <optgroup label="日本語フォント">
+                      <option [value]="'Noto Sans JP'" [selected]="FFamily=='Noto Sans JP'">Noto Sans</option>
+                      <option [value]="'Kosugi Maru'" [selected]="FFamily=='Kosugi Maru'">Kosugi Maru</option>
+                      <option [value]="'Hachi Maru Pop'" [selected]="FFamily=='Hachi Maru Pop'">Hachi Maru Pop</option>
+                      <option [value]="'Stick'" [selected]="FFamily=='Stick'">Stick</option>
+                      <option [value]="'Sawarabi Gothic'" [selected]="FFamily=='Sawarabi Gothic'">Sawarabi Gothic</option>
+                    </optgroup>
+                    <optgroup label="英字フォント">
+                      <option [value]="'Asap'" [selected]="FFamily=='Asap'">Asap</option>
+                      <option [value]="'Patrick Hand'" [selected]="FFamily=='Patrick Hand'">Patrick Hand</option>
+                      <option [value]="'Kalam'" [selected]="FFamily=='Kalam'">Kalam</option>
+                      <option [value]="'Signika'" [selected]="FFamily=='Signika'">Signika</option>
+                      <option [value]="'Acme'" [selected]="FFamily=='Acme'">Acme</option>
+                    </optgroup>
+                    <optgroup label="一般フォント">
+                      <option [value]="'sans-serif'" [selected]="FFamily=='sans-serif'">Sans-serif</option>
+                      <option [value]="'cursive'" [selected]="FFamily=='cursive'">Cursive</option>
+                      <option [value]="'monospace'" [selected]="FFamily=='monospace'">Monospace</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+              <!--    LOAD ANY GOOGLE FONT 
+                              <label>Or load Google web font
+                                  (<a href="https://fonts.google.com/" target="_blank" >browse font</a>)
+                              </label>
+                              <br>
+                              <label>Font name </label>
+                              <input type="text" [(ngModel)]="WebFontTemp"/>
+                              <br>
+                              <button (click)="LoadWebFont()">Load Web Font</button>
+                          -->
+              <link [href]="FetchWebFont()" rel="stylesheet">
+            </div>
           </div>
-          <!--============================= Third Page  =============================-->
+        </div>
+
+        <div>
+          <button class="button is-dark" (click)="PrevButtonClick()" style="float: left;">Prev</button>
+          <button class="button is-dark" (click)="NextButtonClick()" style="float: right;">Next</button>
+        </div>
+      </div>
+      <div class="divider is-vertical is-left"></div>
+
+      <!-- Preview -->
+      <div class="column">
+        <div style="display: flex; flex-direction: column; width: 100%;">
+          <div class="is-flex">
+            <span><strong>Preview</strong></span>
+            <button class="button is-dark is-small" style="margin-left: auto;" (click)="Backgroundchange()"
+              #BGSwitchButton>Black</button>
+          </div>
+          <div style="flex: 1; display: flex; flex-direction: row; align-items: stretch; overflow-y: hidden;">
+            <div style="display: flex; flex-direction: column-reverse; height: 500px; background-color: white; padding: 15px; margin-top: 10px; overflow: auto; flex: 1;" #previewcontainer>
+              <div #cardcontainer></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </article>
+    <!--============================= Second Page  =============================-->
+
+    <!------------------------------- Third Page  ------------------------------->
+    <div *ngSwitchCase="2">
+      <strong>In OBS, add "browser" source, use URL below</strong>
+      <p>URL
+        <button class="button is-small is-white is-focused" (click)="CopyBtnClick(true)">Copy</button>
+      </p>
+      <textarea class="textarea" placeholder="Generating Link..." readonly [(ngModel)]="ProxyLink"
+        #LinkTextArea></textarea>
+
+      <strong>and custom CSS below</strong>
+      <p>Custom CSS
+        <button class="button is-small is-white is-focused" (click)="CopyBtnClick(false)">Copy</button>
+      </p>
+      <textarea class="textarea" placeholder="Generating CSS..." readonly [(ngModel)]="ProxyCss"
+        #CSSTextArea></textarea>
+      <button class="mt-2 button is-dark" (click)="PrevButtonClick()">Prev</button>
+    </div>
+    <!--============================= Third Page  =============================-->
+  </div>
 </div>
