@@ -239,25 +239,25 @@ export class ChatboardComponent implements OnInit, OnDestroy {
       e.config.TL = !e.config.TL;
       e.Connected = false;
       return e;
-    }).forEach(e => {
+    }).forEach(async (e) => {
       if (e.config.TL){
         if (e.WS){
-          e.WS.close();
+          await e.WS.close();
           delete e.WS;
           this.StartSync(e, e.config.type);
         }
         if (e.TMIC){
-          e.TMIC.disconnect();
+          await e.TMIC.disconnect();
           delete e.TMIC;
           this.StartSync(e, e.config.type);
         }
         if (e.ES){
-          e.ES.close();
+          await e.ES.close();
           delete e.ES;
           this.StartSync(e, e.config.type);
         }
       } else {
-        e.ES?.close();
+        await e.ES?.close();
         delete e.ES;
         switch (e.config.type) {
           case "YT":
