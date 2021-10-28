@@ -165,6 +165,19 @@ export class ChatboardComponent implements OnInit, OnDestroy {
 
   AddChatSkimmer() {
     let URLquery: any = this.ShortenStreamLink(this.AddLink);
+    const ID = Date.now().toString();
+   
+    var Source:Listener = {
+      id: ID,
+      config: URLquery,
+      Connected: false,
+      WS: undefined,
+      ES: undefined,
+      TMIC: undefined,
+      AuxData : undefined
+    };
+
+    this.ChatSource.push(Source);
 
     if (!URLquery) {
       this.ModalNotif = true;
@@ -172,30 +185,30 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     } else {
       if (URLquery.TL == "OK") {
         if (URLquery.link){
-          this.StartSync(this.URLConstructor(URLquery), URLquery.link.slice(0, 2));
+          this.StartSync(Source, URLquery.link.slice(0, 2));
         } else {
-          this.StartSync(this.URLConstructor(URLquery), URLquery.channel.slice(0, 2));
+          this.StartSync(Source, URLquery.channel.slice(0, 2));
         }
       } else if (URLquery.link){
         switch (URLquery.link.slice(0, 3)) {
           case "TC_":
-            this.StartSyncWS(URLquery);
+            this.StartSyncWS(Source);
             break;
 
           case "TW_":
-            this.StartSyncTMI(URLquery);
+            this.StartSyncTMI(Source);
             break;
 
           case "YT_":
-            this.StartSync(URLquery, "YT");
+            this.StartSync(Source, "YT");
             break;  
 
           default:
-            this.StartSync(URLquery, "SYS");  
+            this.StartSync(Source, "SYS");  
             break;
         }
       } else {
-        this.StartSync(URLquery, "SYS")
+        this.StartSync(Source, "SYS")
       }
     }
 
@@ -224,23 +237,47 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   TLSwitch(UID: string) {
     this.ChatSource.filter(e => e.id == UID).map(e => {
       e.config.TL = !e.config.TL;
+      e.Connected = false;
       return e;
+    }).forEach(e => {
+      if (e.config.TL){
+        if (e.WS){
+          e.WS.close();
+          delete e.WS;
+          this.StartSync(e, e.config.type);
+        }
+        if (e.TMIC){
+          e.TMIC.disconnect();
+          delete e.TMIC;
+          this.StartSync(e, e.config.type);
+        }
+        if (e.ES){
+          e.ES.close();
+          delete e.ES;
+          this.StartSync(e, e.config.type);
+        }
+      } else {
+        e.ES?.close();
+        delete e.ES;
+        switch (e.config.type) {
+          case "YT":
+            this.StartSync(e, "YT");
+            break;
+        
+          case "TW":
+            this.StartSyncTMI(e);
+            break;
+
+          case "TC":
+            this.StartSyncWS(e);
+            break;
+        }
+      }
     });
   }
 
-  StartSync(URLquery:any, Type: string) {
-    const ID = Date.now().toString();
-    var ESLink: string = this.URLConstructor(URLquery);
-    
-    this.ChatSource.push({
-      id: ID,
-      config: URLquery,
-      Connected: false,
-      WS: undefined,
-      ES: undefined,
-      TMIC: undefined,
-      AuxData : undefined
-    });
+  StartSync(Target: Listener, Type: string) {
+    var ESLink: string = this.URLConstructor(Target.config);
 
     if (!this.ForceRefresh){
       this.ForceRefresh = window.setInterval(() => {
@@ -252,10 +289,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     }
 
     var ES = new EventSource(ESLink);
-    this.ChatSource.filter(e => e.id == ID).map(e => {
-      e.ES = ES;
-      return e;
-    });
+    Target.ES = ES;
 
     ES.onmessage = e => {
       if (e.data == "[]") return;
@@ -313,7 +347,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
 
     ES.onerror = e => {
       ES.close();
-      this.ChatSource.filter(e => e.id == ID).map(e => {
+      this.ChatSource.filter(e => e.id == Target.id).map(e => {
         e.Connected = false;
         return e;
       });
@@ -321,28 +355,14 @@ export class ChatboardComponent implements OnInit, OnDestroy {
 
     ES.onopen = e => {
       console.log("START SYNCING");
-      this.ChatSource.filter(e => e.id == ID).map(e => {
-        e.Connected = true;
-        return e;
-      });
+      Target.Connected = true;
     }
   }
 
-  StartSyncWS(URLquery: any) {
-    const ID = Date.now().toString();    
-    this.ChatSource.push({
-      id: ID,
-      config: URLquery,
-      Connected: false,
-      WS: undefined,
-      ES: undefined,
-      TMIC: undefined,
-      AuxData: undefined
-    });
-
-    this.ChatSkimmer.SendRequest(URLquery).subscribe({
+  StartSyncWS(Target: Listener) {
+    this.ChatSkimmer.SendRequest(Target.config).subscribe({
       error: error => {
-        this.ChatSource.filter(e => e.id == ID).map(e => {
+        this.ChatSource.filter(e => e.id == Target.id).map(e => {
           e.Connected = false;
           return e;
         });
@@ -370,42 +390,27 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     
         WS.onerror = e => {
           WS.close();
-          this.ChatSource.filter(e => e.id == ID).map(e => {
+          this.ChatSource.filter(e => e.id == Target.id).map(e => {
             e.Connected = false;
             return e;
           });
         }
     
         WS.onopen = e => {
-          this.ChatSource.filter(e => e.id == ID).map(e => {
-            e.Connected = true;
-            return e;
-          });
+          Target.Connected = true;
         }
 
-        this.ChatSource.filter(e => e.id == ID).map(e => {
-          e.WS = WS;
-          return e;
-        });
+        Target.WS = WS;
       }
     });
   }
 
-  async StartSyncTMI(URLquery: any){
-    var channel: string = URLquery.link.slice(3);
-
-    const ID = Date.now().toString();    
-    this.GetTwitchBadge(URLquery.link, ID);
-
-    this.ChatSource.push({
-      id: ID,
-      config: URLquery,
-      Connected: false,
-      WS: undefined,
-      ES: undefined,
-      TMIC: undefined,
-      AuxData: undefined
-    });
+  async StartSyncTMI(Target: Listener){
+    var channel: string = "";
+    if (Target.config.link){
+      channel = Target.config.link.slice(3);
+      this.GetTwitchBadge(Target.config.link, Target.id);
+    }
     
     if (!this.TwitchBadgeArray){
       this.GetGlobalTwitchBadge();
@@ -424,18 +429,15 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     var TMIClient: tmi.Client = tmi.Client(TMIOptions);
 
     await TMIClient.connect();
-    this.ChatSource.filter(e => e.id == ID).map(e => {
-      e.Connected = true;
-      e.TMIC = TMIClient;
-      return e;
-    });
+    Target.Connected = true;
+    Target.TMIC = TMIClient;
 
     TMIClient.on("message", (channel, tags, message, self) => {
       if (self) return;
 
       if (tags["display-name"]) {
         this.PushNewEntryList({
-          type: "TW " + ID,
+          type: "TW " + Target.id,
           data: {
             author: tags["display-name"],
             badges: tags.badges,
@@ -448,7 +450,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
 
 
     TMIClient.on("disconnected", reason => {
-      this.ChatSource.filter(e => e.id == ID).map(e => {
+      this.ChatSource.filter(e => e.id == Target.id).map(e => {
         e.Connected = false;
         return e;
       });

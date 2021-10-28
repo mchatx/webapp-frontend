@@ -36,7 +36,7 @@
                 </span>
                 <span> </span>
               </span>
-              <span>{{ Entry.data.author }}</span>
+              <span> {{ Entry.data.author }}</span>
               <span> : </span>
               <span *ngFor="let dt of Entry.data.message">
                 <span *ngIf="dt.type == 'S'">
@@ -73,7 +73,7 @@
                         <img class="emoticon" [src]="dt.Thumbnail" [height]="FFsize" [width]="FFsize"/>
                       </span>
                     </span>
-                    <span>{{ Entry.data.SC }}</span>
+                    <span style="font-weight: bold;"> [{{ Entry.data.SC }}]</span>
                   </div>
                   <div>
                     <span *ngFor="let dt of Entry.data.message">
@@ -93,7 +93,7 @@
                         <img class="emoticon" [src]="dt.Thumbnail" [height]="FFsize" [width]="FFsize"/>
                       </span>
                     </span>
-                    <span>{{ Entry.data.SC }}</span>
+                    <span style="font-weight: bold;"> [{{ Entry.data.SC }}]</span>
                   </div>
                   <div>
                     <span *ngFor="let dt of Entry.data.message">
@@ -176,17 +176,17 @@
             <tbody *ngFor="let dt of ChatSource">
               <tr>
                 <td [ngSwitch]="dt.config.type">
-                  <fa-icon *ngSwitchCase="'YT'" [icon]="faYoutube"></fa-icon>
-                  <fa-icon *ngSwitchCase="'TW'" [icon]="faTwitch"></fa-icon>
+                  <fa-icon *ngSwitchCase="'YT'" [icon]="faYoutube" style="font-size: 32px;"></fa-icon>
+                  <fa-icon *ngSwitchCase="'TW'" [icon]="faTwitch" style="font-size: 32px;"></fa-icon>
                   <img *ngSwitchCase="'TC'" src="assets/img/Twitcast_Smol.png" width="32" height="32"/>
-                  <fa-icon *ngSwitchDefault [icon]="faQuestionCircle"></fa-icon>
+                  <fa-icon *ngSwitchDefault [icon]="faQuestionCircle" style="font-size: 32px;"></fa-icon>
                 </td>
                 <td>{{ dt.config.title }}</td>
                 <td>
-                  <fa-icon [icon]="dt.Connected ? faBeaming : faFrown"></fa-icon>
+                  <fa-icon [icon]="dt.Connected ? faBeaming : faFrown" style="font-size: 32px;"></fa-icon>
                 </td>
                 <td>
-                  <fa-icon [icon]="faLanguage" [style.color]="dt.config.TL ? '#21185CFF' : '#21185C40'" (click)="TLSwitch(dt.id)" style="cursor:pointer;"></fa-icon>
+                  <fa-icon [icon]="faLanguage" [style.color]="dt.config.TL ? '#21185CFF' : '#21185C40'" (click)="TLSwitch(dt.id)" style="cursor:pointer; font-size: 32px;"></fa-icon>
                 </td>
                 <td>
                   <a class="button" (click)="DeSync(dt.id)">
@@ -204,7 +204,7 @@
             </div>
           </div>
           <div style="display: flex; flex-direction: row; justify-content: space-between;">
-            <a class="button is-rounded is-danger" (click)="ModalMenu = 0">Cancel</a>
+            <a class="button is-rounded is-danger" (click)="ModalMenu = 0">Close</a>
             <a class="button is-rounded is-success" (click)="AddChatSkimmer()">Add</a>
           </div>
         </div>
