@@ -29,12 +29,13 @@
 
             <!--   TWITCH RENDERER  -->
             <div *ngSwitchCase="'TW'">
-              <span>{{ Entry.data.author }}</span>
               <span *ngIf="Entry.data.badges">
                 <span *ngFor="let dt of Entry.data.badges">
                   <img *ngIf="TwitchURLBadge(dt) != ''" class="emoticon" [src]="TwitchURLBadge(dt)" [height]="FFsize" [width]="FFsize"/>
                 </span>
+                <span> </span>
               </span>
+              <span>{{ Entry.data.author }}</span>
               <span> : </span>
               <span *ngFor="let dt of Entry.data.message">
                 <span *ngIf="dt.type == 'S'">

@@ -10,6 +10,24 @@ class MessageEntry {
   data: any | undefined;
 }
 
+class Listener {
+  id: string = "";
+  config: {
+    link: string | undefined;
+    channel: string | undefined;
+    TL: boolean;
+  } = { 
+    link: undefined,
+    channel: undefined,
+    TL: false
+  };
+  WS: WebSocket | undefined;
+  ES: EventSource | undefined;
+  TMIC : tmi.Client | undefined;
+  Connected: boolean = false;
+  AuxData: any;
+}
+
 @Component({
   selector: 'app-chatboard',
   templateUrl: './chatboard.component.html',
@@ -48,10 +66,20 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.ES?.close();
-    this.WS?.close();
-    clearInterval(this.ForceRefresh);
-    this.TMIClient?.disconnect();
+    this.ChatSource.forEach(e => {
+      if (e.ES) {
+        e.ES.close();
+      }
+      if (e.WS) {
+        e.WS.close();
+      }
+      if (e.TMIC) {
+        e.TMIC.disconnect();
+      }
+    })
+    if (this.ForceRefresh){
+      clearInterval(this.ForceRefresh);
+    }
   }
 
   ShortenStreamLink(s : string){
@@ -137,45 +165,45 @@ export class ChatboardComponent implements OnInit, OnDestroy {
       } else if (URLquery.link){
         switch (URLquery.link.slice(0, 3)) {
           case "TC_":
-            this.ChatSkimmer.SendRequest(URLquery).subscribe({
-              error: error => {
-                this.ModalNotif = true;
-                this.NotifText = "ERROR FETCHING DATA";
-              },
-              next: data => {
-                this.StartSyncWS(data.url);
-              }
-            });
+            this.StartSyncWS(URLquery);
             break;
 
           case "TW_":
-            this.GetTwitchBadge(URLquery.link);
-            this.StartSyncTMI(URLquery.link.slice(3));
+            this.StartSyncTMI(URLquery);
             break;
 
           case "YT_":
-            this.StartSync(this.URLConstructor(URLquery), "YT");
+            this.StartSync(URLquery, "YT");
             break;  
 
           default:
-            this.StartSync(this.URLConstructor(URLquery), "SYS")  
+            this.StartSync(URLquery, "SYS");  
             break;
         }
       } else {
-        this.StartSync(this.URLConstructor(URLquery), "SYS")
+        this.StartSync(URLquery, "SYS")
       }
     }
   }
 
   //-----------------------------------  SYNCING  -----------------------------------
-  Synced:boolean = false;
-  ES: EventSource | undefined = undefined;
-  SyncToken:string = "";
-  WS: WebSocket | undefined = undefined;
-  TMIClient: tmi.Client | undefined = undefined;
   ForceRefresh: number | undefined = undefined;
+  ChatSource: Listener[] = [];
 
-  StartSync(ESLink: string, Type: string) {
+  StartSync(URLquery:any, Type: string) {
+    const ID = Date.now().toString();
+    var ESLink: string = this.URLConstructor(URLquery);
+    
+    this.ChatSource.push({
+      id: ID,
+      config: URLquery,
+      Connected: false,
+      WS: undefined,
+      ES: undefined,
+      TMIC: undefined,
+      AuxData : undefined
+    });
+
     if (!this.ForceRefresh){
       this.ForceRefresh = window.setInterval(() => {
         this.PushNewEntryList({
@@ -185,9 +213,13 @@ export class ChatboardComponent implements OnInit, OnDestroy {
       }, 1000);  
     }
 
-    this.ES = new EventSource(ESLink);
-    
-    this.ES.onmessage = e => {
+    var ES = new EventSource(ESLink);
+    this.ChatSource.filter(e => e.id == ID).map(e => {
+      e.ES = ES;
+      return e;
+    });
+
+    ES.onmessage = e => {
       if (e.data == "[]") return;
       
       var parseData = JSON.parse(e.data);
@@ -241,50 +273,102 @@ export class ChatboardComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.ES.onerror = e => {
-      this.ES?.close();
-      clearInterval(this.ForceRefresh);
+    ES.onerror = e => {
+      ES.close();
+      this.ChatSource.filter(e => e.id == ID).map(e => {
+        e.Connected = false;
+        return e;
+      });
     }
 
-    this.ES.onopen = e => {
+    ES.onopen = e => {
       console.log("START SYNCING");
+      this.ChatSource.filter(e => e.id == ID).map(e => {
+        e.Connected = true;
+        return e;
+      });
     }
   }
 
-  StopSync() {
-  }
+  StartSyncWS(URLquery: any) {
+    const ID = Date.now().toString();    
+    this.ChatSource.push({
+      id: ID,
+      config: URLquery,
+      Connected: false,
+      WS: undefined,
+      ES: undefined,
+      TMIC: undefined,
+      AuxData: undefined
+    });
 
-  StartSyncWS(WSLink: string) {
-    this.WS = new WebSocket(WSLink);
+    this.ChatSkimmer.SendRequest(URLquery).subscribe({
+      error: error => {
+        this.ChatSource.filter(e => e.id == ID).map(e => {
+          e.Connected = false;
+          return e;
+        });
+      },
+      next: data => {
+        var WS = new WebSocket(data.url);
 
-    this.WS.onmessage = e => {
-      if (e.data != "[]"){
-        JSON.parse(e.data).forEach((dt:any) => {
-          if (dt.type == "comment"){
-            this.PushNewEntryList({
-              type: "TC",
-              data: {
-                author: dt.author.name,
-                authorPhoto: dt.author.profileImage,
-                grade: dt.author.grade,
-                message: dt.htmlMessage ? dt.htmlMessage : dt.message
+        WS.onmessage = e => {
+          if (e.data != "[]"){
+            JSON.parse(e.data).forEach((dt:any) => {
+              if (dt.type == "comment"){
+                this.PushNewEntryList({
+                  type: "TC",
+                  data: {
+                    author: dt.author.name,
+                    authorPhoto: dt.author.profileImage,
+                    grade: dt.author.grade,
+                    message: dt.htmlMessage ? dt.htmlMessage : dt.message
+                  }
+                })
               }
-            })
+            });
           }
+        }
+    
+        WS.onerror = e => {
+          WS.close();
+          this.ChatSource.filter(e => e.id == ID).map(e => {
+            e.Connected = false;
+            return e;
+          });
+        }
+    
+        WS.onopen = e => {
+          this.ChatSource.filter(e => e.id == ID).map(e => {
+            e.Connected = true;
+            return e;
+          });
+        }
+
+        this.ChatSource.filter(e => e.id == ID).map(e => {
+          e.WS = WS;
+          return e;
         });
       }
-    }
-
-    this.WS.onerror = e => {
-      this.WS?.close();
-    }
-
-    this.WS.onopen = e => {
-      console.log("START SYNCING WS");
-    }
+    });
   }
 
-  async StartSyncTMI(channel: string){
+  async StartSyncTMI(URLquery: any){
+    var channel: string = URLquery.link.slice(3);
+
+    const ID = Date.now().toString();    
+    this.GetTwitchBadge(URLquery.link, ID);
+
+    this.ChatSource.push({
+      id: ID,
+      config: URLquery,
+      Connected: false,
+      WS: undefined,
+      ES: undefined,
+      TMIC: undefined,
+      AuxData: undefined
+    });
+    
     if (!this.TwitchBadgeArray){
       this.GetGlobalTwitchBadge();
     }
@@ -299,16 +383,21 @@ export class ChatboardComponent implements OnInit, OnDestroy {
       }
     };
 
-    this.TMIClient = tmi.Client(TMIOptions);
+    var TMIClient: tmi.Client = tmi.Client(TMIOptions);
 
-    await this.TMIClient.connect();
+    await TMIClient.connect();
+    this.ChatSource.filter(e => e.id == ID).map(e => {
+      e.Connected = true;
+      e.TMIC = TMIClient;
+      return e;
+    });
 
-    this.TMIClient.on("message", (channel, tags, message, self) => {
+    TMIClient.on("message", (channel, tags, message, self) => {
       if (self) return;
 
       if (tags["display-name"]) {
         this.PushNewEntryList({
-          type: "TW",
+          type: "TW " + ID,
           data: {
             author: tags["display-name"],
             badges: tags.badges,
@@ -319,11 +408,13 @@ export class ChatboardComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.TMIClient.on("connected", (address, port) => {
-      console.log("TMI CONNECTED");
-    });
 
-    //this.TMIClient.on("disconnected", reason => {});
+    TMIClient.on("disconnected", reason => {
+      this.ChatSource.filter(e => e.id == ID).map(e => {
+        e.Connected = false;
+        return e;
+      });
+    });
     //this.TMIClient.on("join", (channel, username, self) => {});
     //this.client.on("logon", () => {});
   }
@@ -332,7 +423,6 @@ export class ChatboardComponent implements OnInit, OnDestroy {
 
 
   //----------------------------  TWITCH BADGE HANDLER  ----------------------------
-  SubscriberArray: any;
   TwitchBadgeArray: any;
 
   GetGlobalTwitchBadge(){
@@ -346,12 +436,15 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  GetTwitchBadge(ChannelID : string){
+  GetTwitchBadge(ChannelID : string, UID: string){
     this.ChatSkimmer.TwitchID(ChannelID).subscribe({
       next: data => {
         this.ChatSkimmer.GetTwitchData(data.ChannelID).subscribe({
           next: data => {
-            this.SubscriberArray = data.badge_sets;
+            this.ChatSource.filter(e => e.id == UID).map(e => {
+              e.AuxData = data.badge_sets;
+              return e;
+            });
           },
           error: err => {
             console.log("ERR GET TWITCH DATA")
@@ -368,7 +461,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     switch (dt.type) {
       case "subscriber":
         try {
-          return(this.SubscriberArray[dt.type]["versions"][dt.prop]["image_url_1x"]);
+          return(this.ChatSource.filter(e => e.id == dt.ID)[0].AuxData[dt.type]["versions"][dt.prop]["image_url_1x"]);
         } catch (error) {
           return("");
         }
@@ -421,15 +514,18 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   }
 
   PushNewEntryList(Entry: MessageEntry) {
-    switch (Entry.type) {
+    switch (Entry.type.slice(0, 2)) {
       case "TW":
+        const ID = Entry.type.split(" ")[1];
+        Entry.type = Entry.type.slice(0, 2);
         if (Entry.data.badges) {
           const BadgesArr = Entry.data.badges;
           Entry.data.badges = [];
           Object.entries(BadgesArr).forEach(([type, prop]: any) => {
             Entry.data.badges.push({
               type: type,
-              prop: prop
+              prop: prop,
+              ID: ID
             });
           })
         }

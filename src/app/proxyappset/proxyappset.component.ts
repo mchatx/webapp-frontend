@@ -3,7 +3,7 @@ import { WPproxyService } from '../services/wpproxy.service';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { Subscription, timer } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faUser, faCommentDots, faCircle } from '@fortawesome/free-solid-svg-icons';
 
 class RoomData {
   Nick: string | undefined;
@@ -506,4 +506,6 @@ export class ProxyappsetComponent implements OnInit {
   }
 
   faPlus = faPlus;
+  faUser = faUser;
+  faComment = faCommentDots;
 }

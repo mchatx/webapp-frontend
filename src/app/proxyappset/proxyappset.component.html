@@ -1,5 +1,5 @@
 <div class="content" style="margin: 20px; padding: 10px; border-radius: 5%;">
-  <div [ngSwitch]="CurrentPage">
+  <div class="box" [ngSwitch]="CurrentPage">
     <!------------------------------- First Page  ------------------------------->
     <div *ngSwitchCase="0">
       <div class="field">
@@ -60,18 +60,20 @@
           <div *ngIf="ChatMode=='Filter'">
             <!--    Author   -->
             <div class="field">
-              <label><strong> Author</strong></label>
+              <label><fa-icon [icon]="faUser"></fa-icon><strong> Author</strong></label>
               <div class="control">
-                <div class="wrap" *ngFor="let Author of AuthorList; let i = index">
-                  <span class="icon-text">
-                    <span>{{ Author }}</span>
-                  </span>
-                  <button class="delete is-dark" (click)="DeleteAuthList(i)"></button>
-                </div>
+                <ul class="wrap" *ngFor="let Author of AuthorList; let i = index">
+                  <li class="icon-text">
+                    <span>
+                      • {{ Author }}
+                     <button style="display: inline; vertical-align: middle;" class="delete is-dark" (click)="DeleteAuthList(i)"></button>
+                    </span>
+                  </li>
+                </ul>
               </div>
               <div class="mt-2 control has-icons-left">
                 <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="AuthorInput"
-                  placeholder="Author name...">
+                  placeholder="Author name..." (keydown.enter)="AddAuthor()">
                 <span class="icon is-left is-small">
                   <fa-icon [icon]="faPlus"></fa-icon>
                 </span>
@@ -85,18 +87,20 @@
 
             <!--    Keywords   -->
             <div class="field">
-              <label><strong> Keyword</strong></label>
+              <label><fa-icon [icon]="faComment"></fa-icon><strong> Keyword</strong></label>
               <div class="control">
-                <div class="wrap" *ngFor="let Keyword of KeywordList; let i = index">
-                  <span class="icon-text">
-                    <span>{{ Keyword }}</span>
-                  </span>
-                  <button class="delete is-dark" (click)="DeleteKeywordList(i)"></button>
-                </div>
+                <ul class="wrap" *ngFor="let Keyword of KeywordList; let i = index">
+                  <li class="icon-text">
+                    <span>
+                      • {{ Keyword }}
+                      <button style="display: inline; vertical-align: middle;" class="delete is-dark" (click)="DeleteKeywordList(i)"></button>
+                    </span>
+                  </li>
+                </ul>
               </div>
               <div class="mt-2 control has-icons-left">
                 <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="KeywordInput"
-                  placeholder="Keyword...">
+                  placeholder="Keyword..." (keydown.enter)="AddKeyword()">
                 <span class="icon is-left is-small">
                   <fa-icon [icon]="faPlus"></fa-icon>
                 </span>
