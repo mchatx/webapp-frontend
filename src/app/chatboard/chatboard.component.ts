@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { faPlusSquare } from '@fortawesome/free-regular-svg-icons';
+import { faArrowLeft, faLaughBeam, faFrownOpen, faLanguage, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faPlusSquare, faMinusSquare } from '@fortawesome/free-regular-svg-icons';
+import { faTwitch, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import { ChatskimmerService } from '../services/chatskimmer.service';
 import { environment } from '../../environments/environment';
 import * as tmi from 'tmi.js';
@@ -13,10 +14,14 @@ class MessageEntry {
 class Listener {
   id: string = "";
   config: {
+    title: string;
+    type: string;
     link: string | undefined;
     channel: string | undefined;
     TL: boolean;
   } = { 
+    title: "",
+    type: "",
     link: undefined,
     channel: undefined,
     TL: false
@@ -83,6 +88,8 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   }
 
   ShortenStreamLink(s : string){
+    const os = s;
+
     if (s.indexOf("https://www.youtube.com/watch?v=") != -1){
       s = s.replace("https://www.youtube.com/watch?v=", "YT_");
       if (s.indexOf("?") != -1){
@@ -92,6 +99,8 @@ export class ChatboardComponent implements OnInit, OnDestroy {
         s = s.slice(0, s.indexOf("/"));
       }
       return ({
+        title: os,
+        type: "YT",
         link: s
       });
     } else if (s.indexOf("https://www.youtube.com/channel/") != -1) {
@@ -103,6 +112,8 @@ export class ChatboardComponent implements OnInit, OnDestroy {
         s = s.slice(0, s.indexOf("/"));
       }
       return ({
+        title: os,
+        type: "YT",
         channel: s
       });
     } else if (s.indexOf("https://www.twitch.tv/") != -1) {
@@ -114,6 +125,8 @@ export class ChatboardComponent implements OnInit, OnDestroy {
         s = s.slice(0, s.indexOf("/"));
       }
       return ({
+        title: os,
+        type: "TW",
         link: s
       });
     } else if (s.match(/http(.*)twitcasting.tv\//g)?.length != 0) {
@@ -125,6 +138,8 @@ export class ChatboardComponent implements OnInit, OnDestroy {
         s = s.slice(0, s.indexOf("/"));
       }
       return ({
+        title: os,
+        type: "TC",
         link: s
       });
     } else {
@@ -149,7 +164,6 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   }
 
   AddChatSkimmer() {
-    this.ModalMenu = 0;
     let URLquery: any = this.ShortenStreamLink(this.AddLink);
 
     if (!URLquery) {
@@ -184,11 +198,35 @@ export class ChatboardComponent implements OnInit, OnDestroy {
         this.StartSync(URLquery, "SYS")
       }
     }
+
+    this.AddLink = "";
   }
 
   //-----------------------------------  SYNCING  -----------------------------------
   ForceRefresh: number | undefined = undefined;
   ChatSource: Listener[] = [];
+
+  DeSync(UID: string) {
+    this.ChatSource.filter(e => e.id == UID).forEach(e => {
+      if (e.ES){
+        e.ES.close();
+      }
+      if (e.WS) {
+        e.WS.close();
+      }
+      if (e.TMIC) {
+        e.TMIC.disconnect();
+      }
+    });
+    this.ChatSource = this.ChatSource.filter(e => e.id != UID);
+  }
+
+  TLSwitch(UID: string) {
+    this.ChatSource.filter(e => e.id == UID).map(e => {
+      e.config.TL = !e.config.TL;
+      return e;
+    });
+  }
 
   StartSync(URLquery:any, Type: string) {
     const ID = Date.now().toString();
@@ -675,8 +713,13 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     }
   }
 
-
-
+  faFrown = faFrownOpen;
+  faBeaming = faLaughBeam;
   faArrowLeft = faArrowLeft;
   faPlusSquare = faPlusSquare;
+  faMinusSquare = faMinusSquare;
+  faLanguage = faLanguage;
+  faTwitch = faTwitch;
+  faYoutube = faYoutube;
+  faQuestionCircle = faQuestionCircle;
 }

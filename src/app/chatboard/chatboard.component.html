@@ -13,6 +13,7 @@
       </div>
     </div>
 
+    
     <a class="button" (click)="ModalMenu = 1; AddLink = ''">
         <fa-icon [icon]="faPlusSquare"></fa-icon>
     </a>
@@ -159,8 +160,43 @@
     <div class="modal-background" (click)="ModalMenu = 0"></div>
     <div class="modal-content" [ngSwitch]="ModalMenu">
       <div class="box">
-        <!--  ADD NEW SKIMMER  -->
+        <!--  SKIMMER LIST  -->
         <div *ngSwitchCase="1">
+          <label class="label">Listener List</label>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Link</th>
+                <th>Status</th>
+                <th>Auto-TL</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody *ngFor="let dt of ChatSource">
+              <tr>
+                <td [ngSwitch]="dt.config.type">
+                  <fa-icon *ngSwitchCase="'YT'" [icon]="faYoutube"></fa-icon>
+                  <fa-icon *ngSwitchCase="'TW'" [icon]="faTwitch"></fa-icon>
+                  <img *ngSwitchCase="'TC'" src="assets/img/Twitcast_Smol.png" width="32" height="32"/>
+                  <fa-icon *ngSwitchDefault [icon]="faQuestionCircle"></fa-icon>
+                </td>
+                <td>{{ dt.config.title }}</td>
+                <td>
+                  <fa-icon [icon]="dt.Connected ? faBeaming : faFrown"></fa-icon>
+                </td>
+                <td>
+                  <fa-icon [icon]="faLanguage" [style.color]="dt.config.TL ? '#21185CFF' : '#21185C40'" (click)="TLSwitch(dt.id)" style="cursor:pointer;"></fa-icon>
+                </td>
+                <td>
+                  <a class="button" (click)="DeSync(dt.id)">
+                    <fa-icon [icon]="faMinusSquare"></fa-icon>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <hr>
           <div class="field">
             <label class="label">Channel / Stream Link</label>
             <div class="control">
