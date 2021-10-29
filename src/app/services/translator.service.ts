@@ -27,7 +27,7 @@ export class TranslatorService {
   Login(token: string): Observable<any> {
     const headers = {'Content-Type': 'application/json'};
 
-    return (this.httpclient.post(environment.DBConn + '/Login/', {
+    return (this.httpclient.post(environment.DBConn2 + '/Login/', {
       BToken: token
     }, { headers, observe: 'response', responseType: 'text'}));
   }
@@ -38,7 +38,7 @@ export class TranslatorService {
       'Authorization': 'Bearer ' + token
     };
 
-    return (this.httpclient.post(environment.DBConn + '/FetchRaw/', {
+    return (this.httpclient.post(environment.DBConn2 + '/FetchRaw/', {
       BToken: btoken
     }, { headers, observe: 'response', responseType: 'text'}));
   }
@@ -48,7 +48,7 @@ export class TranslatorService {
       'Content-Type': 'application/json'
     };
 
-    return (this.httpclient.post(environment.DBConn + '/sync/', {
+    return (this.httpclient.post(environment.DBConn2 + '/sync/', {
       UID: token,
       data: dt
     }, { headers, observe: 'response', responseType: 'text'}));
