@@ -337,7 +337,7 @@ export class ProxyappsetComponent implements OnInit {
       //-------------------- LINK GENERATOR --------------------
       this.ProxyLink = TempString;
 
-      TempString = "http://localhost:4200/streamtool/app/";
+      TempString = "https://app.mchatx.org/streamtool/app/";
 
       var Linktoken: any = {};
       switch (Number(this.ProxyMode)) {
