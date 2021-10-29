@@ -44,7 +44,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   FFsize:number = 15;
   FStyle:string = "Ubuntu";
   TxAlign:CanvasTextAlign = "left";
-  MaxDisplay = 200;
+  MaxDisplay = 300;
   BGColour:string = "#28282B";
   OT:number = 1;
 
@@ -54,6 +54,8 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   ModalNotif:boolean = false;
   NotifText: string = "";
 
+  EntryLoader: boolean = false;
+  TempEntryContainer: MessageEntry[] = [];
   EntryList: MessageEntry[] = [];
 
   constructor(
@@ -634,13 +636,13 @@ export class ChatboardComponent implements OnInit, OnDestroy {
 
           delete Entry.data.emotes;
           Entry.data.message = HTMLMessage;
-          this.EntryList.push(Entry);
+          this.TempEntryContainer.push(Entry);
         } else {
           Entry.data.message = [{
             type: "S",
             content: Entry.data.message
           }]
-          this.EntryList.push(Entry);
+          this.TempEntryContainer.push(Entry);
         }
         break;
     
@@ -675,7 +677,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
             content: TempCont
           })
         }
-        this.EntryList.push(Entry);
+        this.TempEntryContainer.push(Entry);
         break;
 
       case "YT":
@@ -692,26 +694,50 @@ export class ChatboardComponent implements OnInit, OnDestroy {
             })
           }
         });
-        this.EntryList.push(Entry);
+        this.TempEntryContainer.push(Entry);
         break;
 
       default:
-        this.EntryList.push(Entry);
+        this.TempEntryContainer.push(Entry);
         break;
     }    
 
-    if (this.EntryList.length > this.MaxDisplay){
-      this.EntryList.shift();
+    if (!this.EntryLoader){
+      this.EntryLoader = true;
+      this.StartLoader();
     }
+  }
 
-    if (this.AutoScroll) {
-      setTimeout(() => {
-        if (this.cardcontainer){
-          const SaveScroll = this.AutoScroll;
-          this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
-          this.AutoScroll = SaveScroll;
-        }
-      }, 100);
+  StartLoader(): void {
+    const EntryTemp = this.TempEntryContainer.shift();
+    if (EntryTemp != undefined){
+      this.EntryList.push(EntryTemp);
+
+      if (this.EntryList.length > this.MaxDisplay){
+        this.EntryList.shift();
+      }
+  
+      if (this.AutoScroll) {
+        setTimeout(() => {
+          if (this.cardcontainer){
+            const SaveScroll = this.AutoScroll;
+            this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+            this.AutoScroll = SaveScroll;
+          }
+        }, 50);
+      }
+      
+      if (this.TempEntryContainer.length > 50){
+        setTimeout(() => {
+          this.StartLoader();
+        }, 100);
+      } else {
+        setTimeout(() => {
+          this.StartLoader();
+        }, 200);
+      }
+    } else {
+      this.EntryLoader = false;
     }
   }
 

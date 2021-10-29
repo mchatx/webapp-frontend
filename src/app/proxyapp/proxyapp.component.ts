@@ -48,7 +48,9 @@ export class ProxyappComponent implements OnInit, OnDestroy {
   scrollContainer: any;
 
   Status: string | undefined = "";
-  EntryList: any[] = [];
+  EntryLoader: boolean = false;
+  TempEntryContainer: FullEntry[] = [];
+  EntryList: FullEntry[] = [];
   EntryContainer: any[] = [];
   DisplayElem: HTMLHeadingElement[] = [];
   FFsize: number = 40;
@@ -68,7 +70,6 @@ export class ProxyappComponent implements OnInit, OnDestroy {
   }
 
   scrollend: boolean = true;
-  EntryLoader: boolean = false;
   ChatFilterMode: boolean = false;
   Filter = {
     author: [""],
@@ -291,127 +292,6 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     });
   }
   //==============================================  TESTING MODULE  ==============================================
-
-
-
-  //--------------------------------------------- ENTRY DISPLAY ---------------------------------------------
-  MEntryReplace(dt: FullEntry): void {
-    for (let i: number = 0; i < this.EntryList.length; i++) {
-      if (this.EntryList[i].key == dt.key) {
-        const Stext = dt.Stext;
-        const CC = dt.CC;
-        const OC = dt.OC;
-        if (Stext != undefined) {
-          this.DisplayElem[i].textContent = Stext;
-        }
-
-        var CCctx = "#";
-        if (CC != undefined) {
-          CCctx += CC;
-        } else {
-          CCctx += "000000"
-        }
-        var OCctx = "#";
-        if (OC != undefined) {
-          OCctx += OC;
-        } else {
-          OCctx += "000000"
-        }
-
-        if (this.OverrideCStyle){
-          CCctx = this.OverrideCC;
-          OCctx = this.OverrideOC;
-        }
-
-        this.DisplayElem[i].style.webkitTextFillColor = CCctx;
-        this.DisplayElem[i].style.webkitTextStrokeColor = OCctx;
-
-        this.EntryList[i] = dt;
-        break;
-      }
-    }
-  }
-
-  MEntryAdd(dt: FullEntry): void {
-    if (dt.Stext == ""){
-      return;
-    }
-
-    if (this.ChatFilterMode){
-      if (dt.Author && (this.Filter.author.length != 0)){
-        if (this.Filter.author.indexOf(dt.Author) == -1) {
-          return;
-        }
-      }
-
-      if (dt.Stext && (this.Filter.keyword != "")){
-        if (dt.Stext.match(new RegExp(this.Filter.keyword, 'i')) == null) {
-          return;
-        }
-      }
-    }
-
-    if (this.DisplayElem.length == this.MaxDisplay) {
-      this.DisplayElem.shift()?.remove();
-      this.EntryList.shift();
-    }
-
-    const cvs: HTMLHeadingElement = this.Renderer.createElement('h1');
-    cvs.style.marginTop = "5px";
-    cvs.id = "BoxShape";
-
-    if (this.Ani != "") {
-      cvs.className = "animate__animated animate__" + this.Ani;
-    }
-    cvs.style.webkitTextStrokeWidth = this.OT.toString() + "px";
-
-    var Stext = dt.Stext;
-
-    if (this.AuthName && dt.Author != "SYS") {
-      Stext = dt.Author + " : " + Stext;
-    }
-
-    const CC = dt.CC;
-    const OC = dt.OC;
-    if (Stext != undefined) {
-      cvs.textContent = Stext;
-    }
-
-    var CCctx = "#";
-    if (CC != undefined) {
-      CCctx += CC;
-    } else {
-      CCctx += "000000"
-    }
-    var OCctx = "#";
-    if (OC != undefined) {
-      OCctx += OC;
-    } else {
-      OCctx += "000000"
-    }
-
-    if (this.OverrideCStyle){
-      CCctx = "#" + this.OverrideCC;
-      OCctx = "#" + this.OverrideOC;
-    }
-
-    cvs.style.webkitTextFillColor = CCctx;
-    cvs.style.webkitTextStrokeColor = OCctx;
-    cvs.style.backgroundColor = "rgba(" + this.CardBGColour.r.toString() + ", " + this.CardBGColour.g.toString() + ", " + this.CardBGColour.b.toString() + ", " + this.CardBGColour.a.toString() + ")";
-    cvs.style.fontFamily = this.FStyle;
-    cvs.style.fontSize = this.FFsize + "px";
-    cvs.style.textAlign = this.TxAlign;
-    this.Renderer.appendChild(this.cardcontainer.nativeElement, cvs);
-
-    this.EntryList.push(dt);
-    this.DisplayElem.push(cvs);
-
-    this.cardcontainer.nativeElement.scroll({
-      top: this.cardcontainer.nativeElement.scrollHeight,
-      left: 0
-    });
-  }
-  //============================================= ENTRY DISPLAY =============================================
 
 
 
@@ -723,4 +603,154 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     //this.client.on("logon", () => {});
   }
   //===================================  SYNCING  ===================================
+
+
+
+  //--------------------------------------------- ENTRY DISPLAY ---------------------------------------------
+  MEntryReplace(dt: FullEntry): void {
+    for (let i: number = 0; i < this.EntryList.length; i++) {
+      if (this.EntryList[i].key == dt.key) {
+        const Stext = dt.Stext;
+        const CC = dt.CC;
+        const OC = dt.OC;
+        if (Stext != undefined) {
+          this.DisplayElem[i].textContent = Stext;
+        }
+
+        var CCctx = "#";
+        if (CC != undefined) {
+          CCctx += CC;
+        } else {
+          CCctx += "000000"
+        }
+        var OCctx = "#";
+        if (OC != undefined) {
+          OCctx += OC;
+        } else {
+          OCctx += "000000"
+        }
+
+        if (this.OverrideCStyle){
+          CCctx = this.OverrideCC;
+          OCctx = this.OverrideOC;
+        }
+
+        this.DisplayElem[i].style.webkitTextFillColor = CCctx;
+        this.DisplayElem[i].style.webkitTextStrokeColor = OCctx;
+
+        this.EntryList[i] = dt;
+        break;
+      }
+    }
+  }
+
+  MEntryAdd(dt: FullEntry): void {
+    if (dt.Stext == ""){
+      return;
+    }
+
+    if (this.ChatFilterMode){
+      if (dt.Author && (this.Filter.author.length != 0)){
+        if (this.Filter.author.indexOf(dt.Author) == -1) {
+          return;
+        }
+      }
+
+      if (dt.Stext && (this.Filter.keyword != "")){
+        if (dt.Stext.match(new RegExp(this.Filter.keyword, 'i')) == null) {
+          return;
+        }
+      }
+    }
+
+    this.TempEntryContainer.push(dt);
+    if (!this.EntryLoader){
+      this.EntryLoader = true;
+      this.StartLoader();
+    }
+  }
+
+  StartLoader(): void {
+    const EntryTemp = this.TempEntryContainer.shift();
+    if (EntryTemp != undefined){
+      this.EntryList.push(EntryTemp);
+
+      if (this.EntryList.length > this.MaxDisplay){
+        this.EntryList.shift();
+      }
+  
+      if (this.DisplayElem.length == this.MaxDisplay) {
+        this.DisplayElem.shift()?.remove();
+        this.EntryList.shift();
+      }
+  
+      const cvs: HTMLHeadingElement = this.Renderer.createElement('h1');
+      cvs.style.marginTop = "5px";
+      cvs.id = "BoxShape";
+  
+      if (this.Ani != "") {
+        cvs.className = "animate__animated animate__" + this.Ani;
+      }
+      cvs.style.webkitTextStrokeWidth = this.OT.toString() + "px";
+  
+      var Stext = EntryTemp.Stext;
+  
+      if (this.AuthName && EntryTemp.Author != "SYS") {
+        Stext = EntryTemp.Author + " : " + Stext;
+      }
+  
+      const CC = EntryTemp.CC;
+      const OC = EntryTemp.OC;
+      if (Stext != undefined) {
+        cvs.textContent = Stext;
+      }
+  
+      var CCctx = "#";
+      if (CC != undefined) {
+        CCctx += CC;
+      } else {
+        CCctx += "000000"
+      }
+      var OCctx = "#";
+      if (OC != undefined) {
+        OCctx += OC;
+      } else {
+        OCctx += "000000"
+      }
+  
+      if (this.OverrideCStyle){
+        CCctx = "#" + this.OverrideCC;
+        OCctx = "#" + this.OverrideOC;
+      }
+  
+      cvs.style.webkitTextFillColor = CCctx;
+      cvs.style.webkitTextStrokeColor = OCctx;
+      cvs.style.backgroundColor = "rgba(" + this.CardBGColour.r.toString() + ", " + this.CardBGColour.g.toString() + ", " + this.CardBGColour.b.toString() + ", " + this.CardBGColour.a.toString() + ")";
+      cvs.style.fontFamily = this.FStyle;
+      cvs.style.fontSize = this.FFsize + "px";
+      cvs.style.textAlign = this.TxAlign;
+      this.Renderer.appendChild(this.cardcontainer.nativeElement, cvs);
+  
+      this.EntryList.push(EntryTemp);
+      this.DisplayElem.push(cvs);
+  
+      this.cardcontainer.nativeElement.scroll({
+        top: this.cardcontainer.nativeElement.scrollHeight,
+        left: 0
+      });
+      
+      if (this.TempEntryContainer.length > 50){
+        setTimeout(() => {
+          this.StartLoader();
+        }, 100);
+      } else {
+        setTimeout(() => {
+          this.StartLoader();
+        }, 200);
+      }
+    } else {
+      this.EntryLoader = false;
+    }
+  }
+  //============================================= ENTRY DISPLAY =============================================
 }
