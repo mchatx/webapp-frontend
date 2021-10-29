@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
-import { faArrowLeft, faLaughBeam, faFrownOpen, faLanguage, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faLaughBeam, faFrownOpen, faLanguage, faQuestionCircle, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faPlusSquare, faMinusSquare } from '@fortawesome/free-regular-svg-icons';
 import { faTwitch, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import { ChatskimmerService } from '../services/chatskimmer.service';
@@ -750,4 +750,5 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   faTwitch = faTwitch;
   faYoutube = faYoutube;
   faQuestionCircle = faQuestionCircle;
+  faWrench = faWrench;
 }
