@@ -1,122 +1,162 @@
 <div class="content" style="margin: 20px; padding: 10px; border-radius: 5%;">
   <div class="box" [ngSwitch]="CurrentPage">
     <!------------------------------- First Page  ------------------------------->
-    <div *ngSwitchCase="0">
-      <div class="field">
-        <label class="label">Mode</label>
-        <div class="control">
-          <div class="select">
-            <select [(ngModel)]="ProxyMode">
-              <option [value]="0" [selected]="ProxyMode==0">MChad Room</option>
-              <option [value]="1" [selected]="ProxyMode==1">Live Chat</option>
-            </select>
+    <div *ngSwitchCase="0" style="display: flex; flex-direction: column;">
+      <div>
+        <label class="label">ファイルからロードする</label>
+        <div class="field">
+          <div class="file has-name is-small" id="wrap">
+            <label class="file-label">
+              <input class="file-input" type="file" accept=".txt" name="resume"
+                (change)="FileChange($event)">
+              <span class="file-cta">
+                <span class="file-icon">
+                  <fa-icon [icon]="faFileImport"></fa-icon>
+                </span>
+                <span class="file-label">
+                  MCHAD字幕レイヤー設定ファイル
+                </span>
+              </span>
+              <span class="file-name">
+                {{ filename }}
+              </span>
+            </label>
+          </div>
+        </div>
+
+
+        <hr>
+        <div class="field">
+          <label class="label">モード</label>
+          <div class="control">
+            <div class="select">
+              <select [(ngModel)]="ProxyMode">
+                <option [value]="0" [selected]="ProxyMode==0">MChadの部屋</option>
+                <option [value]="1" [selected]="ProxyMode==1">チャットから拾う</option>
+              </select>
+            </div>
+          </div>
+        </div>
+  
+        <div [ngSwitch]="ProxyMode">
+          <div *ngSwitchCase="0">
+            <div class="field">
+              <label class="label">MChad部屋</label>
+              <div class="control">
+                <input class="input" list="Rooms" name="Select a Room" [(ngModel)]="RoomNick"
+                  (ngModelChange)="CheckPass()" />
+                <datalist id="Rooms">
+                  <option *ngFor="let dt of RoomList" [value]="dt.Nick">{{dt.Nick}}</option>
+                </datalist>
+              </div>
+            </div>
+  
+            <div *ngIf="PasswordProtected">
+              <div class="field">
+                <label class="label">パスワード</label>
+                <div class="control">
+                  <input class="input" type="text" [(ngModel)]="RoomPass" />
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <div *ngSwitchCase="1">
+            <div class="field">
+              <label class="label">配信URL</label>
+              <div class="control">
+                <input class="input" placeholder="Enter URL.." type="text" [(ngModel)]="ChatURL" />
+              </div>
+              <ul style="margin-top: 10px;">
+                対応しているURL :
+                <li><fa-icon [icon]="faYoutube" style="font-size: 16px;"></fa-icon> https://www.youtube.com/channel/xxx （自動的にチャンネルのライブ配信枠のチャット欄から拾う）</li>
+                <li><fa-icon [icon]="faYoutube" style="font-size: 16px;"></fa-icon> https://www.youtube.com/watch?v=xxx</li>
+                <li><img src="assets/img/Twitcast_Smol.png" width="16" height="16"/> https://twitcasting.tv/xxx</li>
+                <li><fa-icon [icon]="faTwitch" style="font-size: 16px;"></fa-icon> https://www.twitch.tv/xxx</li>
+              </ul>
+            </div>
+            
+            <hr>
+            <!--
+            <div class="field">
+              <label class="label">モード</label>
+              <div class="control">
+                <div class="select is-normal">
+                  <select [(ngModel)]="ChatMode">
+                    <option [value]="'Filter'" [selected]="ChatMode=='Filter'">フィルタ</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            -->  
+  
+            <div *ngIf="ChatMode=='Filter'">
+              <p><strong>フィルター</strong></p>
+              <!--    Author   -->
+              <div class="field">
+                <label><fa-icon [icon]="faUser"></fa-icon><strong> ユーザ名</strong></label>
+                <div class="control">
+                  <ul class="wrap" *ngFor="let Author of AuthorList; let i = index">
+                    <li class="icon-text">
+                      <span>
+                        • {{ Author }}
+                       <button style="display: inline; vertical-align: middle;" class="delete is-dark" (click)="DeleteAuthList(i)"></button>
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="mt-2 control has-icons-left">
+                  <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="AuthorInput"
+                    placeholder="Author name..." (keydown.enter)="AddAuthor()">
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                  </span>
+                </div>
+              </div>
+              <div class="field">
+                <p class="control">
+                  <button class="button is-dark" (click)="AddAuthor()">加える</button>
+                </p>
+              </div>
+  
+              <!--    Keywords   -->
+              <div class="field">
+                <label><fa-icon [icon]="faComment"></fa-icon><strong> キーワード</strong></label>
+                <div class="control">
+                  <ul class="wrap" *ngFor="let Keyword of KeywordList; let i = index">
+                    <li class="icon-text">
+                      <span>
+                        • {{ Keyword }}
+                        <button style="display: inline; vertical-align: middle;" class="delete is-dark" (click)="DeleteKeywordList(i)"></button>
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="mt-2 control has-icons-left">
+                  <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="KeywordInput"
+                    placeholder="Keyword..." (keydown.enter)="AddKeyword()">
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                  </span>
+                </div>
+              </div>
+              <div class="field">
+                <p class="control">
+                  <button class="button is-dark" (click)="AddKeyword()">加える</button>
+                </p>
+              </div>
+            </div>
+  
           </div>
         </div>
       </div>
 
-      <div [ngSwitch]="ProxyMode">
-        <div *ngSwitchCase="0">
-          <div class="field">
-            <label class="label">Choose Room</label>
-            <div class="control">
-              <input class="input" list="Rooms" name="Select a Room" [(ngModel)]="RoomNick"
-                (ngModelChange)="CheckPass()" />
-              <datalist id="Rooms">
-                <option *ngFor="let dt of RoomList" [value]="dt.Nick">{{dt.Nick}}</option>
-              </datalist>
-            </div>
-          </div>
-
-          <div *ngIf="PasswordProtected">
-            <div class="field">
-              <label class="label">Password</label>
-              <div class="control">
-                <input class="input" type="text" [(ngModel)]="RoomPass" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div *ngSwitchCase="1">
-          <div class="field">
-            <label class="label">Stream URL</label>
-            <div class="control">
-              <input class="input" placeholder="Enter URL.." type="text" [(ngModel)]="ChatURL" />
-            </div>
-          </div>
-
-          <div class="field">
-            <label class="label">Mode</label>
-            <div class="control">
-              <div class="select is-normal">
-                <select [(ngModel)]="ChatMode">
-                  <option [value]="'Filter'" [selected]="ChatMode=='Filter'">Filter</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-
-          <div *ngIf="ChatMode=='Filter'">
-            <!--    Author   -->
-            <div class="field">
-              <label><fa-icon [icon]="faUser"></fa-icon><strong> Author</strong></label>
-              <div class="control">
-                <ul class="wrap" *ngFor="let Author of AuthorList; let i = index">
-                  <li class="icon-text">
-                    <span>
-                      • {{ Author }}
-                     <button style="display: inline; vertical-align: middle;" class="delete is-dark" (click)="DeleteAuthList(i)"></button>
-                    </span>
-                  </li>
-                </ul>
-              </div>
-              <div class="mt-2 control has-icons-left">
-                <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="AuthorInput"
-                  placeholder="Author name..." (keydown.enter)="AddAuthor()">
-                <span class="icon is-left is-small">
-                  <fa-icon [icon]="faPlus"></fa-icon>
-                </span>
-              </div>
-            </div>
-            <div class="field">
-              <p class="control">
-                <button class="button is-dark" (click)="AddAuthor()">Add</button>
-              </p>
-            </div>
-
-            <!--    Keywords   -->
-            <div class="field">
-              <label><fa-icon [icon]="faComment"></fa-icon><strong> Keyword</strong></label>
-              <div class="control">
-                <ul class="wrap" *ngFor="let Keyword of KeywordList; let i = index">
-                  <li class="icon-text">
-                    <span>
-                      • {{ Keyword }}
-                      <button style="display: inline; vertical-align: middle;" class="delete is-dark" (click)="DeleteKeywordList(i)"></button>
-                    </span>
-                  </li>
-                </ul>
-              </div>
-              <div class="mt-2 control has-icons-left">
-                <input class="input is-rounded" type="text" maxlength="100" [(ngModel)]="KeywordInput"
-                  placeholder="Keyword..." (keydown.enter)="AddKeyword()">
-                <span class="icon is-left is-small">
-                  <fa-icon [icon]="faPlus"></fa-icon>
-                </span>
-              </div>
-            </div>
-            <div class="field">
-              <p class="control">
-                <button class="button is-dark" (click)="AddKeyword()">Add</button>
-              </p>
-            </div>
-          </div>
-
-        </div>
+      <hr>
+      <div style="display: flex; flex-direction: row; justify-content: space-between;">
+        <button class="mt-2 button is-dark" routerLink="/" [routerLinkActive]="['is-active']"
+        [routerLinkActiveOptions]="{exact:true}"><fa-icon [icon]="faHome"></fa-icon> ホームに戻る</button>
+        <button class="mt-2 button is-dark" style="margin-left: auto;" (click)="NextButtonClick()">次へ <fa-icon [icon]="faArrowRight"></fa-icon></button>
       </div>
-      <div class="is-flex is-justify-content-flex-end"><button class="mt-2 button is-dark"
-          (click)="NextButtonClick()">Next</button></div>
     </div>
     <!--============================= First Page  =============================-->
 
@@ -126,20 +166,20 @@
         <div class="columns">
           <!-- Options -->
           <div class="column">
-            <label class="label">Card setting</label>
+            <label class="label">字幕設定</label>
             <!--        Chat author     -->
-            <label class="checkbox"><input type="checkbox" [checked]="AuthName==true"
-              (change)="CheckedChange2()" /> Author Name</label><br>
+            <label class="checkbox"><input type="checkbox" [checked]="AuthName==false"
+              (change)="CheckedChange2()" /> ユーザ名を隠す</label><br>
   
             <!--        Card Number     -->
-            <label>Max message card # </label>
+            <label>字幕のライン </label>
             <input class="input" type="number" min="0" [(ngModel)]="MaxDisplay" (ngModelChange)="ResetNumberEntries()" />
   
             <!--        Card Colour     -->
             <div>
-              <label>Card BG Colour </label>
+              <label>字幕カードの背景色 </label>
               <input class="input" type="color" [(ngModel)]="BGcolour" (ngModelChange)="ReRenderExample()" />
-              <label>Transparency </label>
+              <label>透明度 </label>
               <p>{{ 100 - CardBGColour.a*100 }}%</p>
               <input type="range" min="0" max="1" step="0.01" [(ngModel)]="CardBGColour.a"
                 (ngModelChange)="RepaintEntries()" />
@@ -147,28 +187,28 @@
   
             <!--        Card Animation     -->
             <div class="field">
-              <label>Animation Type </label>
+              <label>アニメーション </label>
               <div class="control">
                 <div class="select">
                   <select [(ngModel)]="AniType">
-                    <option [value]="'fadeIn'" [selected]="AniType=='fadeIn'">Fade In</option>
-                    <option [value]="'backIn'" [selected]="AniType=='backIn'">Back In</option>
-                    <option [value]="'bounceIn'" [selected]="AniType=='bounceIn'">Bounce In</option>
-                    <option [value]="'slideIn'" [selected]="AniType=='slideIn'">Slide In</option>
-                    <option [value]="'zoomIn'" [selected]="AniType=='zoomIn'">Zoom In</option>
-                    <option [value]="'None'" [selected]="AniType=='None'">None</option>
+                    <option [value]="'fadeIn'" [selected]="AniType=='fadeIn'">フェードイン</option>
+                    <option [value]="'backIn'" [selected]="AniType=='backIn'">バックイン</option>
+                    <option [value]="'bounceIn'" [selected]="AniType=='bounceIn'">バウンスイン</option>
+                    <option [value]="'slideIn'" [selected]="AniType=='slideIn'">スライドイン</option>
+                    <option [value]="'zoomIn'" [selected]="AniType=='zoomIn'">ズームイン</option>
+                    <option [value]="'None'" [selected]="AniType=='None'">無し</option>
                   </select>
                 </div>
               </div>
             </div>
-            <label>Animation Direction </label>
+            <label>アニメーションの方向 </label>
             <div class="control">
               <div class="select">
                 <select [(ngModel)]="AniDir">
-                  <option [value]="'Up'" [selected]="AniDir=='Up'">Up</option>
-                  <option [value]="'Left'" [selected]="AniDir=='Left'">Left</option>
-                  <option [value]="'Right'" [selected]="AniDir=='Right'">Right</option>
-                  <option [value]="'Down'" [selected]="AniDir=='Down'">Down</option>
+                  <option [value]="'Up'" [selected]="AniDir=='Up'">上</option>
+                  <option [value]="'Left'" [selected]="AniDir=='Left'">左</option>
+                  <option [value]="'Right'" [selected]="AniDir=='Right'">右</option>
+                  <option [value]="'Down'" [selected]="AniDir=='Down'">下</option>
                 </select>
               </div>
   
@@ -176,16 +216,16 @@
           </div>
   
           <div class="column">
-            <label class="label">Text setting</label>
+            <label class="label">テキストの設定</label>
             <!--        Text Alignment     -->
             <div class="field">
-              <label>Text Alignment </label>
+              <label>配置 </label>
               <div class="control">
                 <div class="select">
                   <select [(ngModel)]="TxAlign" (ngModelChange)="RepaintEntries()">
-                    <option [value]="'left'" [selected]="TxAlign=='left'">Left</option>
-                    <option [value]="'center'" [selected]="TxAlign=='center'">Center</option>
-                    <option [value]="'right'" [selected]="TxAlign=='right'">Right</option>
+                    <option [value]="'left'" [selected]="TxAlign=='left'">左</option>
+                    <option [value]="'center'" [selected]="TxAlign=='center'">中央</option>
+                    <option [value]="'right'" [selected]="TxAlign=='right'">右</option>
                   </select>
                 </div>
               </div>
@@ -194,27 +234,27 @@
             <!--        Outline Thickness     -->
             <div>
               <!-- <div class="divider is-left is-black" data-content="Outline Thickness"></div> -->
-              <label>Outline Thickness </label>
+              <label>線の太さ  </label>
               <input class="input" type="number" min="0" [(ngModel)]="OT" (ngModelChange)="RepaintEntries()" />
             </div>
   
             <!--      FONT STYLE OVERRIDE      -->
-            <input type="checkbox" [(ngModel)]="OverrideCStyle"><span>Override Font Colour</span>
+            <input type="checkbox" [(ngModel)]="OverrideCStyle"><span>色の強制設定</span>
             <div *ngIf="OverrideCStyle">
-              <label>Character Colour </label>
+              <label>文字の色 </label>
               <input class="input" type="color" [(ngModel)]="OverrideCC" (ngModelChange)="RepaintEntries()" />
-              <label>Outline Colour </label>
+              <label>線の色 </label>
               <input class="input" type="color" [(ngModel)]="OverrideOC" (ngModelChange)="RepaintEntries()" />
             </div>
           </div>
   
           <div class="column">
             <!--        Font     -->
-            <label class="label">Font Setting </label>
+            <label class="label">フォント設定 </label>
             <input class="input" type="number" min="0" [(ngModel)]="FFsize" (ngModelChange)="RepaintEntries()" />
   
             <div class="field">
-              <label>Font Family </label>
+              <label>フォントファミリー </label>
               <div class="control">
                 <div class="select is-multiple">
                   <select multiple size="5" [(ngModel)]="FFamily" (ngModelChange)="FFSelectChange()">
@@ -255,9 +295,10 @@
           </div>
         </div>
 
+        <hr>
         <div>
-          <button class="button is-dark" (click)="PrevButtonClick()" style="float: left;">Prev</button>
-          <button class="button is-dark" (click)="NextButtonClick()" style="float: right;">Next</button>
+          <button class="button is-dark" (click)="PrevButtonClick()" style="float: left;"><fa-icon [icon]="faArrowLeft"></fa-icon> 前のページへ</button>
+          <button class="button is-dark" (click)="NextButtonClick()" style="float: right;">次へ <fa-icon [icon]="faArrowRight"></fa-icon></button>
         </div>
       </div>
       <div class="divider is-vertical is-left"></div>
@@ -266,9 +307,9 @@
       <div class="column">
         <div style="display: flex; flex-direction: column; width: 100%;">
           <div class="is-flex">
-            <span><strong>Preview</strong></span>
+            <span><strong>見本</strong></span>
             <button class="button is-dark is-small" style="margin-left: auto;" (click)="Backgroundchange()"
-              #BGSwitchButton>Black</button>
+              #BGSwitchButton>ブラック</button>
           </div>
           <div style="flex: 1; display: flex; flex-direction: row; align-items: stretch; overflow-y: hidden;">
             <div style="display: flex; flex-direction: column-reverse; height: 500px; background-color: white; padding: 15px; margin-top: 10px; overflow: auto; flex: 1;" #previewcontainer>
@@ -281,21 +322,33 @@
     <!--============================= Second Page  =============================-->
 
     <!------------------------------- Third Page  ------------------------------->
-    <div *ngSwitchCase="2">
-      <strong>In OBS, add "browser" source, use URL below</strong>
-      <p>URL
-        <button class="button is-small is-white is-focused" (click)="CopyBtnClick(true)">Copy</button>
-      </p>
-      <textarea class="textarea" placeholder="Generating Link..." readonly [(ngModel)]="ProxyLink"
-        #LinkTextArea></textarea>
-
-      <strong>and custom CSS below</strong>
-      <p>Custom CSS
-        <button class="button is-small is-white is-focused" (click)="CopyBtnClick(false)">Copy</button>
-      </p>
-      <textarea class="textarea" placeholder="Generating CSS..." readonly [(ngModel)]="ProxyCss"
-        #CSSTextArea></textarea>
-      <button class="mt-2 button is-dark" (click)="PrevButtonClick()">Prev</button>
+    <div *ngSwitchCase="2" style="display: flex; flex-direction: column;">
+      <div>
+        <p>
+          <strong>OBSに「ブラウザ」ソースを追加して、下のURLを使ってください</strong>
+        </p>
+        <p>URL : 
+          <button class="button is-small is-dark is-focused" (click)="CopyBtnClick(true)" style="margin-bottom: 10px; float: right;">{{ BtnText[0] }}</button>
+        </p>      
+        <textarea class="textarea" placeholder="Generating Link..." readonly [(ngModel)]="ProxyLink"
+          #LinkTextArea></textarea>
+  
+        <hr>
+        <p>
+          <strong>透明化するために、カスタムCSSは下の設定をコピーしてください</strong>
+        </p>
+        <p>カスタムCSS : 
+          <button class="button is-small is-black is-focused" (click)="CopyBtnClick(false)" style="margin-bottom: 10px; float: right;">{{ BtnText[1] }}</button>
+        </p>
+        
+        <textarea class="textarea" placeholder="Generating CSS..." readonly [(ngModel)]="ProxyCss"
+          #CSSTextArea></textarea> 
+      </div>
+      <hr>
+      <div style="display: flex; flex-direction: row; justify-content: space-between;">
+        <button class="mt-2 button is-dark" (click)="PrevButtonClick()"><fa-icon [icon]="faArrowLeft"></fa-icon> 前のページへ</button>
+        <button class="mt-2 button is-dark" (click)="SaveToFile()"><fa-icon [icon]="faFileExport"></fa-icon> ファイルに保存する</button>
+      </div>
     </div>
     <!--============================= Third Page  =============================-->
   </div>

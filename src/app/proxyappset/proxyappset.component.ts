@@ -3,7 +3,9 @@ import { WPproxyService } from '../services/wpproxy.service';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { Subscription, timer } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
-import { faPlus, faUser, faCommentDots, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faUser, faCommentDots, faHome, faArrowRight, faArrowLeft, faFileExport, faFileImport } from '@fortawesome/free-solid-svg-icons';
+import { saveAs } from 'file-saver';
+import { faYoutube, faTwitch } from '@fortawesome/free-brands-svg-icons';
 
 class RoomData {
   Nick: string | undefined;
@@ -57,13 +59,18 @@ export class ProxyappsetComponent implements OnInit {
   KeywordList: string[] = [];
   KeywordInput: string = "";
 
+  BtnText: string[] = [
+    "コピー", //Copy button URL
+    "コピー"  //Copy button CSS
+  ]
+
   /*  
     SECOND PAGE SETTING
     Styling and what's not
   */
   AuthName: boolean = true;
 
-  MaxDisplay: number = 1; //Maximum message card display
+  MaxDisplay: number = 3; //Maximum message card display
   OT: number = 1;          //Outline Thickness in pixel
   CardBGColour = {
     r: 0,
@@ -73,7 +80,7 @@ export class ProxyappsetComponent implements OnInit {
   }
   BGcolour: string = "#000000";
   FFamily: string = "sans-serif";
-  FFsize: number = 50;
+  FFsize: number = 16;
   TxAlign: string = "center";
   WebFont: string = "";
   WebFontTemp: string = "";
@@ -182,10 +189,10 @@ export class ProxyappsetComponent implements OnInit {
   Backgroundchange(): void {
     if (this.previewcontainer.nativeElement.style["background-color"] == "black") {
       this.previewcontainer.nativeElement.style["background-color"] = "white";
-      this.BGSwitchButton.nativeElement.innerHTML = "black";
+      this.BGSwitchButton.nativeElement.innerHTML = "ブラック";
     } else {
       this.previewcontainer.nativeElement.style["background-color"] = "black";
-      this.BGSwitchButton.nativeElement.innerHTML = "white";
+      this.BGSwitchButton.nativeElement.innerHTML = "ホワイト";
     }
   }
 
@@ -303,6 +310,152 @@ export class ProxyappsetComponent implements OnInit {
   }
   //============================== SECOND PAGE HANDLER ==============================
 
+  //------------------------------ SETTING FILE HANDLER ------------------------------
+  filename: string = "...";
+  TargetFile: File | null = null;
+
+  rgbToHex(r:number, g:number, b:number): string {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  SaveToFile() {
+    var WriteStream:any = {};
+    
+    WriteStream["ProxyMode"] = this.ProxyMode;
+
+    if (Number(this.ProxyMode) == 0) {
+      if (this.RoomNick != "") {
+        WriteStream["RoomNick"] = this.RoomNick;
+      }
+      if (this.RoomPass != "") {
+        WriteStream["RoomPass"] = this.RoomPass;
+      }
+    } else {
+      WriteStream["ChatURL"] = this.ChatURL;
+      WriteStream["AuthorList"] = this.AuthorList;
+      WriteStream["KeywordList"] = this.KeywordList;
+    }
+
+    WriteStream["AuthName"] = this.AuthName;
+    WriteStream["MaxDisplay"] = this.MaxDisplay;
+    WriteStream["OT"] = this.OT;
+    WriteStream["AniType"] = this.AniType;
+    WriteStream["AniDir"] = this.AniDir;
+    WriteStream["FFsize"] = this.FFsize;
+    WriteStream["FFamily"] = this.FFamily;
+    WriteStream["TxAlign"] = this.TxAlign;
+    WriteStream["OverrideCStyle"] = this.OverrideCStyle;
+    if (this.OverrideCStyle) {
+      WriteStream["OverrideCC"] = this.OverrideCC;
+      WriteStream["OverrideOC"] = this.OverrideOC;
+    }
+    WriteStream["CardBGColour"] = this.CardBGColour;
+
+    const blob = new Blob([JSON.stringify(WriteStream)], { type: 'text/plain' });
+    saveAs(blob, "MChad字幕レイヤー設定.txt");
+  }
+
+  FileChange(e: Event) {
+    let ef = (e.target as HTMLInputElement);
+    if (ef.files != null) {
+      this.filename = ef.files[0].name;
+      this.TargetFile = ef.files[0];
+    }
+    this.ParseFile();
+  }
+
+  ParseFile(): void {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if ((reader.result != null) && (this.TargetFile != null)) {
+        var JSONSetting: any;
+        try {
+          JSONSetting = JSON.parse(reader.result.toString());  
+        } catch (error) {
+          return;
+        }
+
+        if (JSONSetting["ProxyMode"] != undefined) {
+          this.ProxyMode = JSONSetting["ProxyMode"];
+        }
+
+        if (Number(this.ProxyMode) == 0) {
+          if (JSONSetting["RoomNick"] != undefined) {
+            this.RoomNick = JSONSetting["RoomNick"];
+          }
+          if (JSONSetting["RoomPass"] != undefined) {
+            this.RoomPass = JSONSetting["RoomPass"];
+          }
+        } else {
+          if (JSONSetting["ChatURL"] != undefined) {
+            this.ChatURL = JSONSetting["ChatURL"];
+          }
+          if (JSONSetting["AuthorList"] != undefined) {
+            this.AuthorList = JSONSetting["AuthorList"];
+          }
+          if (JSONSetting["KeywordList"] != undefined) {
+            this.KeywordList = JSONSetting["KeywordList"];
+          }
+        }
+
+        if (JSONSetting["AuthName"] != undefined) {
+          this.AuthName = JSONSetting["AuthName"];
+        }
+
+        if (JSONSetting["MaxDisplay"] != undefined) {
+          this.MaxDisplay = JSONSetting["MaxDisplay"];
+        }
+
+        if (JSONSetting["OT"] != undefined) {
+          this.OT = JSONSetting["OT"];
+        }
+
+        if (JSONSetting["AniType"] != undefined) {
+          this.AniType = JSONSetting["AniType"];
+        }
+
+        if (JSONSetting["AniDir"] != undefined) {
+          this.AniDir = JSONSetting["AniDir"];
+        }
+
+        if (JSONSetting["FFsize"] != undefined) {
+          this.FFsize = JSONSetting["FFsize"];
+        }
+
+        if (JSONSetting["FFamily"] != undefined) {
+          this.FFamily = JSONSetting["FFamily"];
+        }
+
+        if (JSONSetting["TxAlign"] != undefined) {
+          this.TxAlign = JSONSetting["TxAlign"];
+        }
+
+        if (JSONSetting["OverrideCStyle"] != undefined) {
+          this.OverrideCStyle = JSONSetting["OverrideCStyle"];
+        }
+
+        if (this.OverrideCStyle) {
+          if (JSONSetting["OverrideCC"] != undefined) {
+            this.OverrideCC = JSONSetting["OverrideCC"];
+          }
+          if (JSONSetting["OverrideOC"] != undefined) {
+            this.OverrideOC = JSONSetting["OverrideOC"];
+          }
+        }
+
+        if (JSONSetting["CardBGColour"] != undefined) {
+          this.CardBGColour = JSONSetting["CardBGColour"];
+          this.BGcolour = this.rgbToHex(this.CardBGColour.r, this.CardBGColour.g, this.CardBGColour.b);
+        }
+      }
+    }
+
+    if (this.TargetFile != null) {
+      reader.readAsText(this.TargetFile);
+    }
+  }
+  //============================== SETTING FILE HANDLER ==============================
+
   //------------------------------ MISC HANDLER ------------------------------
   NextButtonClick(): void {
     if (this.CurrentPage == 1) {
@@ -320,16 +473,6 @@ export class ProxyappsetComponent implements OnInit {
       }
       if ((this.FFamily != "sans-serif") && (this.FFamily != "cursive") && (this.FFamily != "monospace")) {
         this.WebFontTemp = this.FFamily;
-      }
-
-      this.TxAlign = "center"
-      this.FFsize = 16;
-      this.MaxDisplay = 3;
-      this.CardBGColour = {
-        r: 0,
-        g: 0,
-        b: 0,
-        a: 0
       }
     } else if (this.CurrentPage == 2) {
       var TempString = "";
@@ -426,7 +569,6 @@ export class ProxyappsetComponent implements OnInit {
           break;
       }
 
-
       if (!this.AuthName) {
         Linktoken["AuthName"] = 1;
       }
@@ -490,8 +632,16 @@ export class ProxyappsetComponent implements OnInit {
   CopyBtnClick(CopyLink: boolean) {
     if (CopyLink) {
       navigator.clipboard.writeText(this.ProxyLink).then().catch(e => console.error(e));
+      this.BtnText[0] = "コピーしたよん"
+      setTimeout(() => {
+        this.BtnText[0] = "コピー";
+      }, 3000);
     } else {
       navigator.clipboard.writeText(this.ProxyCss).then().catch(e => console.error(e));
+      this.BtnText[1] = "コピーしたよん"
+      setTimeout(() => {
+        this.BtnText[1] = "コピー";
+      }, 3000);
     }
   }
 
@@ -507,5 +657,12 @@ export class ProxyappsetComponent implements OnInit {
 
   faPlus = faPlus;
   faUser = faUser;
+  faArrowRight = faArrowRight;
+  faArrowLeft = faArrowLeft;
+  faHome = faHome;
   faComment = faCommentDots;
+  faFileImport = faFileImport;
+  faFileExport = faFileExport;
+  faYoutube = faYoutube;
+  faTwitch = faTwitch;
 }

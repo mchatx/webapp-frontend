@@ -734,7 +734,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
       } else {
         setTimeout(() => {
           this.StartLoader();
-        }, 200);
+        }, 333);
       }
     } else {
       this.EntryLoader = false;

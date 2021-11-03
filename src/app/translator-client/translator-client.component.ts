@@ -658,7 +658,18 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   }
 
   SpamBlock:boolean = false;
+  ExceptionString:string[] = [
+    "no",
+    "ok",
+    "me"
+  ];
   SendEntry(): void{
+    if (this.TLEntry.Stext.length < 3) {
+      if (this.ExceptionString.indexOf(this.TLEntry.Stext.toLowerCase()) == -1){
+        return;
+      }
+    }
+
     if (!this.SpamBlock && (this.ModalMenu == 0) && (this.TLEntry.Stext.trim() != "")){
       this.SpamBlock = true;
       if (this.CCcheck){

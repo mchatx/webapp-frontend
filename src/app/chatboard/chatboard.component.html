@@ -8,7 +8,7 @@
   
     <div style="display: flex; flex-direction: row; align-items: center; justify-content: left; margin-left: 5px; margin-right: 5px;">
       <div>
-        <label style="color: white; margin-right: 5px;">Font Size</label>
+        <label style="color: white; margin-right: 5px;">フォントサイズ</label>
         <input style="width: 50px; margin-right: 5px;" type="number" min="1" [(ngModel)]="FFsize"/>
       </div>
     </div>
@@ -162,15 +162,15 @@
       <div class="box">
         <!--  SKIMMER LIST  -->
         <div *ngSwitchCase="1">
-          <label class="label">Listener List</label>
+          <label class="label">チャットリスト</label>
           <table class="table">
             <thead>
               <tr>
-                <th>Type</th>
-                <th>Link</th>
-                <th>Status</th>
-                <th>Auto-TL</th>
-                <th>Remove</th>
+                <th>タイプ</th>
+                <th>URL</th>
+                <th>ステータス</th>
+                <th>自動翻訳</th>
+                <th>外す</th>
               </tr>
             </thead>
             <tbody *ngFor="let dt of ChatSource">
@@ -198,14 +198,21 @@
           </table>
           <hr>
           <div class="field">
-            <label class="label">Channel / Stream Link</label>
+            <label class="label">チャンネル／配信URL</label>
             <div class="control">
               <input class="input" type="text" placeholder="Channel / Stream Link" [(ngModel)]="AddLink"/>
             </div>
+            <ul style="margin-top: 10px;">
+              対応しているURL :
+              <li><fa-icon [icon]="faYoutube" style="font-size: 16px;"></fa-icon> https://www.youtube.com/channel/xxx</li>
+              <li><fa-icon [icon]="faYoutube" style="font-size: 16px;"></fa-icon> https://www.youtube.com/watch?v=xxx</li>
+              <li><img src="assets/img/Twitcast_Smol.png" width="16" height="16"/> https://twitcasting.tv/xxx</li>
+              <li><fa-icon [icon]="faTwitch" style="font-size: 16px;"></fa-icon> https://www.twitch.tv/xxx</li>
+            </ul>
           </div>
           <div style="display: flex; flex-direction: row; justify-content: space-between;">
-            <a class="button is-rounded is-danger" (click)="ModalMenu = 0">Close</a>
-            <a class="button is-rounded is-success" (click)="AddChatSkimmer()">Add</a>
+            <a class="button is-rounded is-danger" (click)="ModalMenu = 0">閉じる</a>
+            <a class="button is-rounded is-success" (click)="AddChatSkimmer()">加える</a>
           </div>
         </div>
   
