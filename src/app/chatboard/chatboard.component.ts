@@ -1,10 +1,11 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
-import { faArrowLeft, faLaughBeam, faFrownOpen, faLanguage, faQuestionCircle, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faLaughBeam, faFrownOpen, faLanguage, faQuestionCircle, faWrench, faFileExport, faFileImport, faCommentDots} from '@fortawesome/free-solid-svg-icons';
 import { faPlusSquare, faMinusSquare } from '@fortawesome/free-regular-svg-icons';
 import { faTwitch, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import { ChatskimmerService } from '../services/chatskimmer.service';
 import { environment } from '../../environments/environment';
 import * as tmi from 'tmi.js';
+import { saveAs } from 'file-saver';
 
 class MessageEntry {
   type: string = "";
@@ -415,6 +416,7 @@ export class ChatboardComponent implements OnInit, OnDestroy {
     }
     
     if (!this.TwitchBadgeArray){
+      this.TwitchBadgeArray = "";
       this.GetGlobalTwitchBadge();
     }
 
@@ -521,6 +523,121 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   //==============================  TWITCH BADGE HANDLER  =============================
 
 
+  //------------------------------ SETTING FILE HANDLER ------------------------------
+  filename: string = "...";
+  TargetFile: File | null = null;
+
+  rgbToHex(r:number, g:number, b:number): string {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  SaveToFile() {
+    var WriteStream:any = {};
+    
+    WriteStream["FFsize"] = this.FFsize;
+    WriteStream["ListenerConfig"] = this.ChatSource.map(e => {return e.config});
+
+    const blob = new Blob([JSON.stringify(WriteStream)], { type: 'text/plain' });
+    saveAs(blob, "MChadチャット板設定.txt");
+  }
+
+  FileChange(e: Event) {
+    let ef = (e.target as HTMLInputElement);
+    if (ef.files != null) {
+      this.filename = ef.files[0].name;
+      this.TargetFile = ef.files[0];
+    }
+    this.ParseFile();
+  }
+
+  ParseFile(): void {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if ((reader.result != null) && (this.TargetFile != null)) {
+        var JSONSetting: any;
+        try {
+          JSONSetting = JSON.parse(reader.result.toString());  
+        } catch (error) {
+          return;
+        }
+
+        this.ChatSource.forEach(e => {
+          if (e.ES) {
+            e.ES.close();
+          }
+          if (e.WS) {
+            e.WS.close();
+          }
+          if (e.TMIC) {
+            e.TMIC.disconnect();
+          }
+        })
+        if (this.ForceRefresh){
+          clearInterval(this.ForceRefresh);
+        }
+
+        if (JSONSetting["FFsize"] != undefined) {
+          this.FFsize = JSONSetting["FFsize"];
+        }
+
+        if (JSONSetting["ListenerConfig"] != undefined) {
+          JSONSetting["ListenerConfig"].forEach((e:any) => {
+            const ID = Date.now().toString();
+   
+            var Source:Listener = {
+              id: ID,
+              config: e,
+              Connected: false,
+              WS: undefined,
+              ES: undefined,
+              TMIC: undefined,
+              AuxData : undefined
+            };
+        
+            this.ChatSource.push(Source);
+        
+            if (!e) {
+              this.ModalNotif = true;
+              this.NotifText = "UNRECOGNIZED LINK";
+            } else {
+              if (e.TL == "OK") {
+                if (e.link){
+                  this.StartSync(Source, e.link.slice(0, 2));
+                } else {
+                  this.StartSync(Source, e.channel.slice(0, 2));
+                }
+              } else if (e.link){
+                switch (e.link.slice(0, 3)) {
+                  case "TC_":
+                    this.StartSyncWS(Source);
+                    break;
+        
+                  case "TW_":
+                    this.StartSyncTMI(Source);
+                    break;
+        
+                  case "YT_":
+                    this.StartSync(Source, "YT");
+                    break;  
+        
+                  default:
+                    this.StartSync(Source, "SYS");  
+                    break;
+                }
+              } else {
+                this.StartSync(Source, "SYS")
+              }
+            }
+          });
+        }
+      }
+    }
+
+    if (this.TargetFile != null) {
+      reader.readAsText(this.TargetFile);
+    }
+  }
+  //============================== SETTING FILE HANDLER ==============================
 
   AutoScroll:boolean = true;
 
@@ -750,5 +867,8 @@ export class ChatboardComponent implements OnInit, OnDestroy {
   faTwitch = faTwitch;
   faYoutube = faYoutube;
   faQuestionCircle = faQuestionCircle;
+  faCommentDots = faCommentDots;
+  faFileExport = faFileExport;
+  faFileImport = faFileImport;
   faWrench = faWrench;
 }

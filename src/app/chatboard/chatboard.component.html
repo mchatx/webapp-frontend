@@ -6,17 +6,36 @@
       <fa-icon [icon]="faArrowLeft"></fa-icon>
     </a>
   
-    <div style="display: flex; flex-direction: row; align-items: center; justify-content: left; margin-left: 5px; margin-right: 5px;">
+    <div style="display: flex; flex-direction: row; align-items: center; justify-content: left; margin-left: 5px">
       <div>
         <label style="color: white; margin-right: 5px;">フォントサイズ</label>
         <input style="width: 50px; margin-right: 5px;" type="number" min="1" [(ngModel)]="FFsize"/>
       </div>
     </div>
 
-    
-    <a class="button" (click)="ModalMenu = 1; AddLink = ''">
-        <fa-icon [icon]="faWrench"></fa-icon>
+    <a class="button" (click)="ModalMenu = 1; AddLink = ''" style="margin-left: 5px;">
+        <fa-icon [icon]="faCommentDots"></fa-icon>　チャットリスト
     </a>
+    
+    <a class="button" (click)="SaveToFile()" style="margin-left: 5px;">
+      <fa-icon [icon]="faFileExport"></fa-icon>　設定を保存する
+    </a>
+
+    <label class="file-label" style="margin-left: 5px;">
+      <input class="file-input" type="file" accept=".txt" name="resume"
+        (change)="FileChange($event)">
+      <span class="file-cta">
+        <span class="file-icon">
+          <fa-icon [icon]="faFileImport"></fa-icon>
+        </span>
+        <span class="file-label">
+          設定をファイルからロードする
+        </span>
+      </span>
+      <span class="file-name" style="display: none;">
+      </span>
+    </label>
+
   </div>
 
   <!---------------------- ENTRY VIEWER ------------------------>
@@ -98,7 +117,7 @@
                   <div>
                     <span *ngFor="let dt of Entry.data.message">
                       <span *ngIf="dt.type == 'S'" [innerHTML]="dt.content"></span>
-                      <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*1.5" [width]="FFsize*1.5"/>
+                      <img class="emoticon" *ngIf="dt.type == 'M'" [src]="dt.content" [height]="FFsize*4" [width]="FFsize*4"/>
                     </span>
                   </div>
                 </div>

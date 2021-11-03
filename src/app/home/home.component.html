@@ -6,33 +6,73 @@
         <h1 class="title is-unselectable has-text-white">MCHAD WEBAPP</h1>
         <p class="subtitle is-unselectable has-text-white">Specialized webapp for translators and streamers alike.</p>
         <h2 class="is-unselectable animate__animated animate__flipInX has-text-white">
-          By <span class="has-text-weight-bold">Fans</span>
-        </h2>
-        <h2 class="is-unselectable animate__animated animate__flipInX animate__delay-1s has-text-white">
-          From <span class="has-text-weight-bold">Fans</span>
-        </h2>
-        <h2 class="is-unselectable animate__animated animate__flipInX animate__delay-2s has-text-white">
+          By <span class="has-text-weight-bold">Fans, </span>
+        <span class="is-unselectable animate__animated animate__flipInX animate__delay-1s has-text-white">
+          From <span class="has-text-weight-bold">Fans, </span>
+        </span>
+        <span class="is-unselectable animate__animated animate__flipInX animate__delay-2s has-text-white">
           For <span class="has-text-weight-bold">Fans</span>
+        </span>
         </h2>
       </div>
       <!-- -------------------- Website Title ---------------------- -->
 
-      <!-- -------------------- Front Buttons ---------------------- -->
-      <div class="section">
-        <div class="buttons is-centered">
-          <a class="button is-primary is-medium is-inverted" [routerLink]="['/chatboard']"
-            [routerLinkActive]="['is-active']"> <span>チャット板</span> </a>
+      <!-- -------------------- Front Buttons 1---------------------- -->
+      <hr>
+      <div class="section" style="display: flex; flex-direction: column;">
+        <div style="margin-bottom: 10px;">
+          <h1 class="title has-text-white">配信者向けのツール</h1>
         </div>
-        <div class="buttons is-centered">
-          <a class="button is-primary is-medium is-inverted" [routerLink]="['/streamtool/setup']"
-            [routerLinkActive]="['is-active']"> <span>字幕レイヤー</span> </a>
-        </div>
-        <div class="buttons is-centered">
-          <a class="button is-primary is-medium is-inverted" [routerLink]="['/TLClient']"
-            [routerLinkActive]="['is-active']"> <span>Translator Client</span> </a>
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+          <div class="home-section" style="width: 49%;">
+            <h1 class="has-text-white" style="font-size: 2em;">チャット板</h1>
+            <div class="has-text-white">
+              <ul>
+                <li>多数のチャット欄一つの画面に見える。</li>
+                <li>Youtube、Twitch、 ツイキャスに対応。</li>
+                <li>DEEPLチャット自動翻訳機能。<br>
+                  （DEEPL翻訳は無料ではないので、特定の方にしか利用できないようにさせていただきます。大変申し訳ございません。）</li>
+              </ul>
+            </div>
+            <a class="button is-primary is-medium is-inverted" [routerLink]="['/chatboard']"
+            [routerLinkActive]="['is-active']" style="margin-top: 10px;"> <span>字幕レイヤー</span> </a>
+          </div>
+          <div class="home-section" style="width: 49%;">
+            <h1 class="has-text-white" style="font-size: 2em;">字幕レイヤー</h1>
+            <div class="has-text-white">
+              <ul>
+                <li>OBSのブラウザソースで簡単に使える字幕レイヤー。</li>
+                <li>お好きなスタイルにカスタマイズ可能。</li>
+                <li>内線のMChad翻訳使える。</li>
+                <li>Youtube、Twitch、 ツイキャスからでもフィルターで拾える。</li>
+              </ul>
+            </div>
+            <a class="button is-primary is-medium is-inverted" [routerLink]="['/streamtool/setup']"
+            [routerLinkActive]="['is-active']" style="margin-top: 10px;"> <span>字幕レイヤー</span> </a>
+          </div>
         </div>
       </div>
-      <!-- -------------------- Front Buttons ---------------------- -->     
+      <!-- -------------------- Front Buttons 1---------------------- -->     
+
+      <!-- -------------------- Front Buttons 2---------------------- -->
+      <hr>
+      <div class="section" style="display: flex; flex-direction: column;">
+        <div style="margin-bottom: 10px;">
+          <h1 class="title has-text-white">Translator Tool</h1>
+        </div>
+        <div style="display: flex; flex-direction: row; justify-content: center;">
+          <div class="home-section" style="width: 49%;">
+            <h1 class="has-text-white" style="font-size: 2em;">Translator Client</h1>
+            <h1 class="has-text-white">
+              MChad translator client in webapp version!<br>
+              Translator Client with sync and profile feature to maximize translation speed.
+            </h1>
+            <a class="button is-primary is-medium is-inverted" [routerLink]="['/TLClient']"
+            [routerLinkActive]="['is-active']" style="margin-top: 10px;"> <span>Translator Client</span> </a>
+          </div>
+        </div>
+      </div>
+      <!-- -------------------- Front Buttons 2---------------------- -->     
     </div>
   </div>
 </section>
