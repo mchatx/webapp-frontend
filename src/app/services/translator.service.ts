@@ -43,14 +43,26 @@ export class TranslatorService {
     }, { headers, observe: 'response', responseType: 'text'}));
   }
 
-  SendSync(token: string, dt: any): Observable<any> {
+
+  //-------------------------- SYNC HANDLER --------------------------
+  SignInSync(dt: any): Observable<any> {
     const headers = {
       'Content-Type': 'application/json'
     };
 
-    return (this.httpclient.post(environment.DBConn2 + '/sync/', {
-      UID: token,
+    return (this.httpclient.post(environment.DBConn4 + '/SignIn/', {
       data: dt
     }, { headers, observe: 'response', responseType: 'text'}));
   }
+
+  SendSync(token: string, dt: any): Observable<any> {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Btoken ' + token
+    };
+
+    return (this.httpclient.post(environment.DBConn4 + '/Master/', dt, { headers, observe: 'response', responseType: 'text'}));
+  }
+
+
 }

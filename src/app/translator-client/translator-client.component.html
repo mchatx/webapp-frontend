@@ -430,16 +430,32 @@
 
       <!--   SYNCED ROOM  -->
       <div *ngSwitchCase="9">
-        <div style="display: flex; flex-direction: column; align-items: center;">
-          <label class="label is-size-3">Use code below with MSync web extension for syncing</label>
-          <span class="tag is-black is-large">{{ SyncToken }}</span>
+        <div *ngIf="SyncUID != 'ERROR'">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <label class="label is-size-3">Use code below with MSync web extension for syncing</label>
+            <span class="tag is-black is-large">{{ SyncUID }}</span>
+          </div>
+          <hr>
+          <div>
+            <label class="label">Currently Synced IDs</label>
+            <p *ngFor="let UID of SyncUIDList"><fa-icon [icon]="faLink" style="margin-right: 5px;"></fa-icon>{{ UID }}</p>
+          </div>
+  
+          <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 30px;">
+            <a class="button is-rounded is-success" style="width: 100%;" (click)="ModalMenu = 0">OK</a>
+          </div>
         </div>
 
-        <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 30px;">
-          <a class="button is-rounded is-success" style="width: 100%;" (click)="ModalMenu = 0">OK</a>
+        <div *ngIf="SyncUID == 'ERROR'">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <label class="label is-size-3">UNABLE TO REACH SYNC SERVER! HALP!</label>
+          </div>
+  
+          <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 30px;">
+            <a class="button is-rounded is-warning" style="width: 100%;" (click)="ModalMenu = 0">Close</a>
+          </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>

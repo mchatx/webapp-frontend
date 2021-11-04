@@ -3,7 +3,7 @@ import { Router, RouterModule } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
-import { faHome, faLock, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faLock, faUser, faLink } from '@fortawesome/free-solid-svg-icons';
 import { saveAs } from 'file-saver';
 
 class FullEntry {
@@ -99,7 +99,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnDestroy(): void {
-    this.ES?.close();
+    this.SyncES?.close();
   }
 
   ngOnInit(): void {
@@ -148,6 +148,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
             this.RoomDt.SessPass = dt["SessPass"];
             this.RoomDt.StreamLink = dt["StreamLink"];
             this.RoomDt.Tags = dt["Tags"];
+            this.ThirdPartySharing = this.RoomDt.ExtSharing;
 
             if(this.cardcontainer && this.footer){
               this.cardcontainer.nativeElement.style["height"] = (window.innerHeight - this.footer.nativeElement.offsetHeight - 25).toString() + "px";
@@ -734,9 +735,10 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
 
       if (this.Synced == true){
         this.TLService.SendSync(this.SyncToken, {
-          Act: "MChad-LiveSend",
-          UID: this.SyncToken,
-          Text: this.LocalPref + TempEntry["Stext"]
+          broadcast: {
+            Act: "MChad-LiveSend",
+            Text: this.LocalPref + TempEntry["Stext"]
+          }
         }).subscribe({
           next: data => {
             this.EntryPrint({
@@ -842,134 +844,117 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
 
   //-----------------------------------  SYNCING  -----------------------------------
   Synced:boolean = false;
-  ES: EventSource|undefined = undefined;
+  SyncES: EventSource|undefined = undefined;
+  SyncUIDList: string[] = [];
   SyncToken:string = "";
+  SyncUID:string = "";
 
   StartSync() {
-    if (this.Synced == true){
-      this.SetModalMenu(9);
+    if (this.Synced){
+      this.ModalMenu = 9;
     } else {
-      this.ES = new EventSource(environment.DBConn + '/syncmaster?token=' + encodeURI(this.AppToken) + '&role=LTL');
-      
-      const b = this.SyncToken;
-      var i = 0;
-      var a = setInterval(() => {
-        if (b != this.SyncToken){
-          this.SetModalMenu(9);
-          clearInterval(a);
-        } else if (i == 300){
-          clearInterval(a);
-        }
-        i++;
-      },200);
-
-      this.ES.onmessage = e => {
-        if (e.data != "{}"){
-          const dt = JSON.parse(e.data);
-          if (dt["Token"]){
-            this.SyncToken = dt["Token"];
-            this.Synced = true;
+      this.TLService.SignInSync(this.TGEnc.TGEncoding(JSON.stringify({
+        time: Date.now()
+      }))).subscribe({
+        next: data => {
+          var dt = JSON.parse(this.TGEnc.TGDecoding(data.body));
+          this.SyncToken = dt.token;
+          this.SyncUID = dt.UID;
+          this.SyncUIDList = [];
+          this.ModalMenu = 9;
+          this.Synced = true;
+          if (this.SyncES){
+            this.SyncES.close();
           }
+          this.SyncESInit();
+        },
+        error: err => {
+          this.SyncUID = "ERROR";
+          this.ModalMenu = 9;
+          this.Synced = false;
         }
-      }
-  
-      this.ES.onerror = e => {
-        this.ES?.close();
-        this.SetModalMenu(0);
-        clearInterval(a);
-      }
-  
-      this.ES.onopen = e => {
-        console.log("START SYNCING");
-      }
+      });
     }
   }
 
   StopSync() {
     if (this.Synced == true){
-      this.Synced = false;
-      this.EntryPrint({
-        Stext: "(SYSTEM) UNSYNCED",
-        Stime: new Date().toTimeString().split(" ")[0],
-        CC: undefined,
-        OC: undefined,
-        key: ""
-      });
-      setTimeout(() => {
-        if (this.cardcontainer){
-          this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+      this.TLService.SendSync(this.SyncToken, {flag: "UNSYNC"}).subscribe({
+        next: data => {
+          this.Synced = false;
+          this.SyncToken = "";
+          this.SyncUID = "";
+          this.EntryPrint({
+            Stext: "(SYSTEM) UNSYNCED",
+            Stime: new Date().toTimeString().split(" ")[0],
+            CC: undefined,
+            OC: undefined,
+            key: ""
+          });
+          this.SyncUIDList = [];
+          this.SyncES?.close();
         }
-      }, 100);
-      this.ES?.close();
+      });
     }
   }
 
-  /*
-  StartListening(Btoken: string): void {
-    const RoomES = new EventSource('http://localhost:33333/TLAPI/?BToken=' + Btoken);
+  SyncESInit(){
+    this.SyncES = new EventSource(environment.DBConn4 + "/Master?token=btoken%20" + this.SyncToken);
 
-    RoomES.onmessage = e => {
-      if (e.data == '{ "flag":"Connect", "content":"CONNECTED TO SECURE SERVER"}'){
-      } else if (e.data != '{}'){
-        var DecodedString = this.TGEnc.TGDecoding(e.data);
-        if (DecodedString == '{ "flag":"Timeout", "content":"Translator side time out" }'){
-          RoomES.close();
-        } else {
-          var dt = JSON.parse(DecodedString);
+    this.SyncES.onmessage = e => {
+      var dt: any;
+      try {
+        dt = JSON.parse(e.data);
+      } catch (error) {
+        return;
+      }
+      console.log(dt);
+      switch (dt.Act) {
+        case "MChad-RollCall":
+          this.SyncUIDList.push(dt.UID);
+          this.EntryPrint({
+            Stext: "(SYSTEM) Synced (ID : " + dt.UID + ")",
+            Stime: new Date().toTimeString().split(" ")[0],
+            CC: undefined,
+            OC: undefined,
+            key: ""
+          });
+          this.TLService.SendSync(this.SyncToken, {
+            broadcast: {
+              Act: "MChad-SetMode",
+              UID: dt.UID,
+              Mode: "LiveChat"
+            }
+          }).subscribe({
+            next:data =>{
+              console.log("SYNCED OK");
+            }
+          });
+          break;
+      
+        case "MChad-Disconnect":
+          this.SyncUIDList = this.SyncUIDList.filter(e => e !== dt.UID);
+          this.EntryPrint({
+            Stext: "(SYSTEM) Desync (ID : " + dt.UID + ")",
+            Stime: new Date().toTimeString().split(" ")[0],
+            CC: undefined,
+            OC: undefined,
+            key: ""
+          });
+          break;
 
-          if (dt["flag"] == "insert"){
-            this.EntryPrint({
-              Stext: dt["content"]["Stext"],
-              key: dt["content"]["key"],
-              Stime: "",
-              CC: dt["content"]["CC"],
-              OC: dt["content"]["OC"]              
-            });
-          } else if (dt["flag"] == "update"){
-            this.EntryRepaint({
-              Stext: dt["content"]["Stext"],
-              key: dt["content"]["key"],
-              Stime: "",
-              CC: dt["content"]["CC"],
-              OC: dt["content"]["OC"]              
-            });
-          }
-        }
+        default:
+          break;
       }
     }
 
-    RoomES.onerror = e => {
-      RoomES.close();
-      this.EntryPrint({
-        Stime: "",
-        Stext: "CONNECTION ERROR",
-        OC: undefined,
-        CC: undefined,
-        key: ""
-      })
+    this.SyncES.onerror = e => {
+      this.SyncES?.close();
     }
 
-    RoomES.onopen = e => {
-      this.EntryPrint({
-        Stime: "",
-        Stext: "CONNECTED",
-        OC: undefined,
-        CC: undefined,
-        key: ""
-      })
+    this.SyncES.onopen = e => {
     }
-    
-  
-    RoomES.addEventListener('open', function(e) {
-    }, false);
-
-    RoomES.addEventListener('message', function (e) {
-    }, false);
-
-    RoomES.addEventListener('error', function(e) {
-    }, false);
   }
-  */
   //===================================  SYNCING  ===================================
 
 
@@ -1321,6 +1306,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
 
 
 
+  faLink = faLink;
   faUser = faUser;
   faLock = faLock;
   faHome = faHome;
