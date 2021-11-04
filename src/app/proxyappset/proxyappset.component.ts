@@ -3,7 +3,7 @@ import { WPproxyService } from '../services/wpproxy.service';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { Subscription, timer } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
-import { faPlus, faUser, faCommentDots, faHome, faArrowRight, faArrowLeft, faFileExport, faFileImport } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faUser, faCommentDots, faHome, faArrowRight, faArrowLeft, faFileExport, faFileImport, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import { saveAs } from 'file-saver';
 import { faYoutube, faTwitch } from '@fortawesome/free-brands-svg-icons';
 
@@ -665,4 +665,5 @@ export class ProxyappsetComponent implements OnInit {
   faFileExport = faFileExport;
   faYoutube = faYoutube;
   faTwitch = faTwitch;
+  faPlusCircle = faPlusCircle;
 }
