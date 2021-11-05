@@ -57,6 +57,8 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   //  DISPLAY VARIABLES
   OpenOption:Boolean = false
   EntryList: FullEntry[] = [];
+  EntryListTemp: FullEntry[] = [];
+  EntryLoader: boolean = false;
   OT:number = 1;
   ChatProxy:HTMLIFrameElement | undefined;
 
@@ -95,7 +97,6 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   constructor(
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
-    private router: Router,
     private route: ActivatedRoute
   ) { }
 
@@ -1079,11 +1080,16 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   }
 
   EntryPrint(dt:FullEntry): void{
-    if (this.EntryList.length == this.MaxDisplay){
+    if (this.EntryList.length >= this.MaxDisplay){
       this.EntryList.shift();
     }
 
-    this.EntryList.push(dt);
+    this.EntryListTemp.push(dt);
+
+    if (!this.EntryLoader){
+      this.EntryLoader = true;
+      this.StartLoader();
+    }
   }
   //===================================  ENTRY HANDLER  ===================================
 
@@ -1411,6 +1417,30 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   }
   //===================================== EXPORT MODULES =====================================
 
+
+  StartLoader(): void {
+    this
+    const EntryTemp = this.EntryListTemp.shift();
+    if (EntryTemp != undefined){
+      this.EntryList.push(EntryTemp);
+
+      if (this.EntryList.length > this.MaxDisplay){
+        this.EntryList.shift();
+      }
+  
+      if (this.EntryListTemp.length > 50){
+        setTimeout(() => {
+          this.StartLoader();
+        }, 100);
+      } else {
+        setTimeout(() => {
+          this.StartLoader();
+        }, 333);
+      }
+    } else {
+      this.EntryLoader = false;
+    }
+  }
 
 
   faLink = faLink;
