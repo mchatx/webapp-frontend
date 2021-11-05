@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener, OnDestroy } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
@@ -96,6 +96,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
     private router: Router,
+    private route: ActivatedRoute
   ) { }
 
   ngOnDestroy(): void {
@@ -103,6 +104,16 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params.token) {
+        console.log(params.token);
+      } else {
+        this.LoginRoute();
+      }
+    });
+  }
+
+  LoginRoute() {
     let test2: string | null = sessionStorage.getItem("MChatAppToken");
 
     if (test2 != undefined) {
@@ -174,7 +185,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         this.RoomNick = TokenData["Room"];
       } catch (error) {
       }
-    }
+    }    
   }
 
   LoginRoom() {
@@ -598,15 +609,6 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.arrowup', ['$event'])
   UpKeypress(event: KeyboardEvent):void {
-    this.ShiftUp();
-  }
-
-  @HostListener('document:keydown.arrowdown', ['$event'])
-  DownKeypress(event: KeyboardEvent):void {
-    this.ShiftDown();
-  }
-
-  ShiftUp():void {
     this.SaveProfile();
     if (this.SelectedProfile == 0){
       this.SelectedProfile = this.ProfileList.length - 1;
@@ -616,7 +618,8 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     this.LoadProfile();
   }
 
-  ShiftDown():void {
+  @HostListener('document:keydown.arrowdown', ['$event'])
+  DownKeypress(event: KeyboardEvent):void {
     this.SaveProfile();
     if (this.SelectedProfile == this.ProfileList.length - 1){
         this.SelectedProfile = 0;
@@ -624,6 +627,110 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       this.SelectedProfile++;
     }
     this.LoadProfile();
+  }
+
+  @HostListener('document:keydown.control.1', ['$event'])
+  CtrlAlpha1Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(0);
+  }
+
+  @HostListener('document:keydown.control.2', ['$event'])
+  CtrlAlpha2Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(1);
+  }
+
+  @HostListener('document:keydown.control.3', ['$event'])
+  CtrlAlpha3Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(2);
+  }
+
+  @HostListener('document:keydown.control.4', ['$event'])
+  CtrlAlpha4Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(3);
+  }
+
+  @HostListener('document:keydown.control.5', ['$event'])
+  CtrlAlpha5Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(4);
+  }
+
+  @HostListener('document:keydown.control.6', ['$event'])
+  CtrlAlpha6Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(5);
+  }
+
+  @HostListener('document:keydown.control.7', ['$event'])
+  CtrlAlpha7Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(6);
+  }
+
+  @HostListener('document:keydown.control.8', ['$event'])
+  CtrlAlpha8Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(7);
+  }
+
+  @HostListener('document:keydown.control.9', ['$event'])
+  CtrlAlpha9Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(8);
+  }
+
+  JumpToProfile(target:number) {
+    if (target < this.ProfileList.length){
+      this.SaveProfile();
+      this.SelectedProfile = target;
+      this.LoadProfile();
+    }
+  }
+
+  ShiftUp():void {
+    if(this.SelectedProfile > 1){
+      this.SelectedProfile -= 1;
+      var TempProfile: Profile = this.ProfileList[this.SelectedProfile];
+      this.ProfileList[this.SelectedProfile] = this.ProfileList[this.SelectedProfile + 1];
+      this.ProfileList[this.SelectedProfile + 1] = TempProfile;
+
+      if (!this.ProfileTab){
+        this.ProfileTab = true;
+        this.Profiletabtimeout = setTimeout(() => {
+          this.ProfileTab = false;
+        }, 3000);
+      } else {
+        clearTimeout(this.Profiletabtimeout);
+        this.Profiletabtimeout = setTimeout(() => {
+          this.ProfileTab = false;
+        }, 3000);
+      }
+    }
+  }
+
+  ShiftDown():void {
+    if((this.SelectedProfile < this.ProfileList.length  - 1) && (this.SelectedProfile != 0)){
+      this.SelectedProfile += 1;
+      var TempProfile: Profile = this.ProfileList[this.SelectedProfile];
+      this.ProfileList[this.SelectedProfile] = this.ProfileList[this.SelectedProfile - 1];
+      this.ProfileList[this.SelectedProfile - 1] = TempProfile;
+
+      if (!this.ProfileTab){
+        this.ProfileTab = true;
+        this.Profiletabtimeout = setTimeout(() => {
+          this.ProfileTab = false;
+        }, 3000);
+      } else {
+        clearTimeout(this.Profiletabtimeout);
+        this.Profiletabtimeout = setTimeout(() => {
+          this.ProfileTab = false;
+        }, 3000);
+      }
+    }
   }
 
   DeleteProfile():void {
@@ -908,7 +1015,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       } catch (error) {
         return;
       }
-      console.log(dt);
+
       switch (dt.Act) {
         case "MChad-RollCall":
           this.SyncUIDList.push(dt.UID);

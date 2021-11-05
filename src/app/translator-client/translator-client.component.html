@@ -96,8 +96,8 @@
           </div>
 
           <div style="display: flex; flex-direction: column; margin-right: 5px;">
-            <a class="button" style="margin-bottom: 5px;">Sync</a>
-            <a class="button">UnSync</a>
+            <a class="button" style="margin-bottom: 5px;" (click)="StartSync()">Sync</a>
+            <a class="button" (click)="StopSync()">UnSync</a>
           </div>
 
           <div style="display: flex; flex-direction: column; margin-right: 5px;">
@@ -150,8 +150,8 @@
     <!-------------------- PROFILE LIST -------------------->
     <div *ngIf="ProfileTab" style="position: absolute; right: 25px; bottom: 10px; z-index: 1; background-color: black; color: white; font-weight: bold;">
       <div *ngFor="let prf of ProfileList; index as i;">
-        <p *ngIf="i == SelectedProfile">> {{prf.Name}}</p>
-        <p *ngIf="i != SelectedProfile">{{prf.Name}}</p>
+        <p *ngIf="i == SelectedProfile">> {{ i + 1 }}. {{prf.Name}}</p>
+        <p *ngIf="i != SelectedProfile">{{ i + 1 }}. {{prf.Name}}</p>
       </div>
     </div>
     <!--================== PROFILE LIST ==================-->    
