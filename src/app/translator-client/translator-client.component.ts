@@ -1491,7 +1491,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
 
       if (TagList.indexOf(this.LangCode) == -1){
         Changes = true;
-        var TagTemp: string[] = TagList.filter(e => e !== this.LangCode);
+        var TagTemp: string[] = TagList.filter(e => e.toLowerCase() !== this.LangCode);
         TagTemp.push(this.LangCode);
         this.Tags = TagTemp.join(", ");
       } else {
