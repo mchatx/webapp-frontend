@@ -5,6 +5,7 @@ import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
 import { faHome, faLock, faUser, faLink } from '@fortawesome/free-solid-svg-icons';
 import { saveAs } from 'file-saver';
+import { LCEntries } from '../../constants/LanguageCode';
 
 class FullEntry {
   Stext: string = "";
@@ -94,6 +95,8 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   SelectedProfile: number = 0;
   ProfileList:Profile[] = [];
 
+  LangCode:string = "";
+
   constructor(
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
@@ -106,21 +109,18 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      if (params.token) {
-        console.log(params.token);
-      } else {
-        this.LoginRoute();
-      }
+      this.LoginRoute(params.token);
     });
   }
-
-  LoginRoute() {
+  
+  LoginRoute(Token: string | undefined) {
     let test2: string | null = sessionStorage.getItem("MChatAppToken");
 
     if (test2 != undefined) {
       try {
         this.AppToken = this.TGEnc.TGDecoding(test2);  
         this.LoginMode = true;
+        this.ModalMenu = 10;
 
         this.ProfileList.push({
           Name: 'Default',
@@ -162,6 +162,16 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
             this.RoomDt.Tags = dt["Tags"];
             this.ThirdPartySharing = this.RoomDt.ExtSharing;
 
+            this.StreamLink = this.RoomDt.StreamLink;
+            const CodeList:string[] = LCEntries.map(e => {return e.C});
+            const TagList:string[] = this.RoomDt.Tags.split(",").map(e => {return e.trim().toLowerCase()});
+            for (var i = 0; i < TagList.length; i++){
+              if (CodeList.indexOf(TagList[i]) != -1){
+                this.LangCode = TagList[i];
+                break;
+              }
+            }
+
             if(this.cardcontainer && this.footer){
               this.cardcontainer.nativeElement.style["height"] = (window.innerHeight - this.footer.nativeElement.offsetHeight - 25).toString() + "px";
               this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
@@ -172,6 +182,10 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
             this.NotifText = "ERROR CONNECTION TO SERVER..."
           }
         });
+
+        if (Token) {
+          this.InitAutoSync(Token);
+        }
 
         return;
       } catch (error) {
@@ -213,6 +227,46 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         location.reload();
       }
     });
+  }
+
+  InitAutoSync(Token: string) {
+    this.TLService.SignInSync(this.TGEnc.TGEncoding(JSON.stringify({
+      time: Date.now()
+    }))).subscribe({
+      next: data => {
+        var dt = JSON.parse(this.TGEnc.TGDecoding(data.body));
+        this.SyncToken = dt.token;
+        this.SyncUID = dt.UID;
+        this.SyncUIDList = [];
+        this.Synced = true;
+        if (this.SyncES){
+          this.SyncES.close();
+        }
+        this.SyncESInit();
+        this.InitAutoReSync(Token, dt.UID);
+      },
+      error: err => {
+        this.SyncUID = "ERROR";
+        this.ModalMenu = 9;
+        this.Synced = false;
+      }
+    });
+  }
+
+  InitAutoReSync(Token: string, SyncUID: string) {
+    this.TLService.AutoResync(this.TGEnc.TGEncoding(JSON.stringify({
+      Token: Token,
+      SyncToken: SyncUID
+    }))).subscribe({
+      next: data => {
+        var dt = JSON.parse(data.body);
+        this.StreamLink = dt.Link;
+      },
+      error: err => {
+        console.log(err);
+      }
+    });
+
   }
 
   @HostListener('window:resize', ['$event'])
@@ -1417,6 +1471,58 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   }
   //===================================== EXPORT MODULES =====================================
 
+  ModalBackgroundClick():void {
+    if (this.ModalMenu != 10) {
+      this.ModalMenu = 0;
+    }
+  }
+
+  SaveQuickSetup(): void {
+    var Changes:boolean = false;
+
+    if (this.StreamLink != this.RoomDt.StreamLink){
+      Changes = true;
+    }
+
+    if (this.LangCode != ""){
+      this.LocalPref = "[" + this.LangCode + "]";
+
+      const TagList:string[] = this.RoomDt.Tags.split(",").map(e => {return e.trim()});
+
+      if (TagList.indexOf(this.LangCode) == -1){
+        Changes = true;
+        var TagTemp: string[] = TagList.filter(e => e !== this.LangCode);
+        TagTemp.push(this.LangCode);
+        this.Tags = TagTemp.join(", ");
+      } else {
+        this.Tags = this.RoomDt.Tags;
+      }
+    }
+
+    if (Changes == true) {
+      this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+        act: "Update Metadata",
+        mode: 1,
+        data: {
+          Link: this.StreamLink,
+          Tags: this.Tags,
+          Note: this.RoomDt.Note
+        }
+      }))).subscribe({
+        next: data => {
+          this.RoomDt.StreamLink = this.StreamLink;
+          this.RoomDt.Tags = this.Tags;
+          this.RoomDt.Note = this.Notes;
+          this.ModalMenu = 0;
+        },
+        error: err => {
+          console.log(err);
+        }
+      });
+    } else {
+      this.ModalMenu = 0;
+    }
+  }
 
   StartLoader(): void {
     this
@@ -1442,7 +1548,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     }
   }
 
-
+  LCEntries = LCEntries;
   faLink = faLink;
   faUser = faUser;
   faLock = faLock;

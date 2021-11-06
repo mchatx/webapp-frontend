@@ -64,5 +64,13 @@ export class TranslatorService {
     return (this.httpclient.post(environment.DBConn4 + '/Master/', dt, { headers, observe: 'response', responseType: 'text'}));
   }
 
+  AutoResync(BToken: string): Observable<any> {
+    const headers = {
+      'Content-Type': 'application/json'
+    };
 
+    return (this.httpclient.post(environment.DBConn4 + '/AutoSync/Master', {
+      BToken: BToken
+    }, { headers, observe: 'response', responseType: 'text'}));
+  }
 }
