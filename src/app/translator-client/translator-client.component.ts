@@ -162,7 +162,9 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
             this.RoomDt.Tags = dt["Tags"];
             this.ThirdPartySharing = this.RoomDt.ExtSharing;
 
-            this.StreamLink = this.RoomDt.StreamLink;
+            if (!Token) {
+              this.StreamLink = this.RoomDt.StreamLink;
+            }
             const CodeList:string[] = LCEntries.map(e => {return e.C});
             const TagList:string[] = this.RoomDt.Tags.split(",").map(e => {return e.trim().toLowerCase()});
             for (var i = 0; i < TagList.length; i++){
@@ -1485,7 +1487,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     }
 
     if (this.LangCode != ""){
-      this.LocalPref = "[" + this.LangCode + "]";
+      this.LocalPref = "[" + this.LangCode + "] ";
 
       const TagList:string[] = this.RoomDt.Tags.split(",").map(e => {return e.trim()});
 
