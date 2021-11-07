@@ -33,7 +33,7 @@ export const LCEntries = [
     },
     {
       "D": "Korean",
-      "C": "ko"
+      "C": "kr"
     },
     {
       "D": "Russian",

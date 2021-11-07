@@ -6,6 +6,7 @@ import { TranslatorService } from '../services/translator.service';
 import { faHome, faLock, faUser, faLink } from '@fortawesome/free-solid-svg-icons';
 import { saveAs } from 'file-saver';
 import { LCEntries } from '../../constants/LanguageCode';
+import { collapseTextChangeRangesAcrossMultipleVersions, visitNode } from 'typescript';
 
 class FullEntry {
   Stext: string = "";
@@ -105,6 +106,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.SyncES?.close();
+    sessionStorage.removeItem("MChatRoom");
   }
 
   ngOnInit(): void {
@@ -115,10 +117,12 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   
   LoginRoute(Token: string | undefined) {
     let test2: string | null = sessionStorage.getItem("MChatAppToken");
+    let test3: string | null = sessionStorage.getItem("MChatRoom");
 
-    if (test2 != undefined) {
+    if ((test2 != undefined) && (test3 != undefined)) {
       try {
-        this.AppToken = this.TGEnc.TGDecoding(test2);  
+        this.AppToken = this.TGEnc.TGDecoding(test2);
+        this.RoomNick = test3;
         this.LoginMode = true;
         this.ModalMenu = 10;
 
@@ -192,6 +196,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         return;
       } catch (error) {
         sessionStorage.removeItem("MChatAppToken");
+        sessionStorage.removeItem("MChatRoom");
       }
     }
     
@@ -222,10 +227,12 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         this.status = "WRONG PASSWORD/ROOM NAME";
         this.SearchPass = "";
         sessionStorage.removeItem("MChatAppToken");
+        sessionStorage.removeItem("MChatRoom");
       },
       next: data => {
         const TToken = JSON.parse(data.body).BToken;
-        sessionStorage.setItem("MChatAppToken", TToken)
+        sessionStorage.setItem("MChatAppToken", TToken);
+        sessionStorage.setItem("MChatRoom", this.RoomNick);
         location.reload();
       }
     });
@@ -417,6 +424,8 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         this.RoomDt.Note = this.Notes;
         this.ModalMenu = 0;
         this.ModalNotif = false;
+
+        this.CheckLinkMember();
       },
       error: err => {
         console.log(err);
@@ -466,7 +475,10 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       next: data => {
         this.RoomDt.ExtSharing = this.ThirdPartySharing;
         this.ModalNotif = false;
-        console.log("3rd Party Change");
+        
+        if (this.RoomDt.ExtSharing) {
+          this.CheckLinkMember();
+        }
       },
       error: err => {
         console.log(err);
@@ -828,6 +840,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     "ok",
     "me"
   ];
+
   SendEntry(): void{
     if (this.TLEntry.Stext.length < 3) {
       if (this.ExceptionString.indexOf(this.TLEntry.Stext.toLowerCase()) == -1){
@@ -917,6 +930,55 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
                 this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
               }
             }, 100);
+          }
+        });
+      }
+
+      if ((this.RoomDt.ExtSharing) && (this.HolodexBounce)) {
+        this.TLService.HolodexBounce(this.TGEnc.TGEncoding(JSON.stringify({
+          nick: this.RoomNick,
+          Stext: TempEntry["Stext"],
+          Stime: Date.now(),
+          Lang: this.LangCode,
+          VidID: this.VidID
+        }))).subscribe({
+          next: data => {
+            if (data.body != "OK"){
+              this.HolodexBounceErrCount += 1;
+              if (this.HolodexBounceErrCount >= 3) {
+                this.HolodexBounce = false;
+                this.EntryPrint({
+                  Stext: "FAILED BOUNCING TO HOLODEX, TURNING OF HOLODEX BOUNCING (TURN ON AND OFF 3rd PARTY SHARING TO REACTIVATE)",
+                  Stime: Stime2,
+                  CC: undefined,
+                  OC: undefined,
+                  key: ""
+                });
+                setTimeout(() => {
+                  if (this.cardcontainer){
+                    this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+                  }
+                }, 100);
+              }
+            }
+          },
+          error: err =>{
+            this.HolodexBounceErrCount += 1;
+            if (this.HolodexBounceErrCount >= 3) {
+              this.HolodexBounce = false;
+              this.EntryPrint({
+                Stext: "FAILED BOUNCING TO HOLODEX, TURNING OF HOLODEX BOUNCING (TURN ON AND OFF 3rd PARTY SHARING TO REACTIVATE)",
+                Stime: Stime2,
+                CC: undefined,
+                OC: undefined,
+                key: ""
+              });
+              setTimeout(() => {
+                if (this.cardcontainer){
+                  this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+                }
+              }, 100);
+            }
           }
         });
       }
@@ -1473,6 +1535,54 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   }
   //===================================== EXPORT MODULES =====================================
 
+
+
+  //------------------------------------- HOLO BOUNCE -------------------------------------
+  HolodexBounce: boolean = false;
+  VidID: string = "";
+  HolodexBounceErrCount: number = 0;
+
+  CheckLinkMember():void {
+    this.HolodexBounce = false;
+    this.HolodexBounceErrCount = 0;
+
+    if (this.LangCode == ""){
+      return;
+    }
+
+    if (this.RoomDt.StreamLink.match(/youtu\.be\/|youtube\.com\/watch\?v=/gi)){
+      this.VidID = this.RoomDt.StreamLink;
+
+      if (this.VidID.indexOf("youtube.com/watch?v=") != - 1){
+        this.VidID = this.VidID.substr(this.VidID.indexOf("youtube.com/watch?v=") + ("youtube.com/watch?v=").length);
+      }
+
+      if (this.VidID.indexOf("youtu.be\\") != -1){
+        this.VidID = this.VidID.substr(this.VidID.indexOf("youtu.be\\") + ("youtu.be\\").length);
+      }
+
+      if (this.VidID.indexOf("&") != -1){
+        this.VidID = this.VidID.slice(0, this.VidID.indexOf("&"));
+      }
+
+      if (this.VidID.indexOf("?") != -1){
+        this.VidID = this.VidID.slice(0, this.VidID.indexOf("?"));
+      }
+
+      this.TLService.CheckIfMemberOnly(this.VidID).subscribe({
+        next: data => {
+          this.HolodexBounce = true;
+        },
+        error: err => {
+          this.HolodexBounce = false;
+        }
+      })
+    }
+  }
+  //===================================== HOLO BOUNCE =====================================
+
+
+
   ModalBackgroundClick():void {
     if (this.ModalMenu != 10) {
       this.ModalMenu = 0;
@@ -1516,6 +1626,8 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
           this.RoomDt.Tags = this.Tags;
           this.RoomDt.Note = this.Notes;
           this.ModalMenu = 0;
+
+          this.CheckLinkMember();
         },
         error: err => {
           console.log(err);
@@ -1523,6 +1635,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       });
     } else {
       this.ModalMenu = 0;
+      this.CheckLinkMember();
     }
   }
 

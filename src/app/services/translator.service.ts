@@ -42,8 +42,18 @@ export class TranslatorService {
       BToken: btoken
     }, { headers, observe: 'response', responseType: 'text'}));
   }
+  
+  CheckIfMemberOnly(VidID: string): Observable<any> {
+    return (this.httpclient.get("https://holodex.net/api/v2/videos/" + VidID));
+  }
 
+  HolodexBounce(btoken: string): Observable<any> {
+    const headers = {'Content-Type': 'application/json'};
 
+    return (this.httpclient.post(environment.DBConn2 + '/HolodexBounce/', {
+      BToken: btoken
+    }, { headers, observe: 'response', responseType: 'text'}));
+  }
   //-------------------------- SYNC HANDLER --------------------------
   SignInSync(dt: any): Observable<any> {
     const headers = {
