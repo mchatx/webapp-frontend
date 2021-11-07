@@ -948,7 +948,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
               if (this.HolodexBounceErrCount >= 3) {
                 this.HolodexBounce = false;
                 this.EntryPrint({
-                  Stext: "FAILED BOUNCING TO HOLODEX, TURNING OF HOLODEX BOUNCING (TURN ON AND OFF 3rd PARTY SHARING TO REACTIVATE)",
+                  Stext: "FAILED BOUNCING TO HOLODEX, TURNING OFF HOLODEX BOUNCING (TURN ON AND OFF 3rd PARTY SHARING TO REACTIVATE)",
                   Stime: Stime2,
                   CC: undefined,
                   OC: undefined,
@@ -967,7 +967,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
             if (this.HolodexBounceErrCount >= 3) {
               this.HolodexBounce = false;
               this.EntryPrint({
-                Stext: "FAILED BOUNCING TO HOLODEX, TURNING OF HOLODEX BOUNCING (TURN ON AND OFF 3rd PARTY SHARING TO REACTIVATE)",
+                Stext: "FAILED BOUNCING TO HOLODEX, TURNING OFF HOLODEX BOUNCING (TURN ON AND OFF 3rd PARTY SHARING TO REACTIVATE)",
                 Stime: Stime2,
                 CC: undefined,
                 OC: undefined,
