@@ -1557,8 +1557,8 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         this.VidID = this.VidID.substr(this.VidID.indexOf("youtube.com/watch?v=") + ("youtube.com/watch?v=").length);
       }
 
-      if (this.VidID.indexOf("youtu.be\\") != -1){
-        this.VidID = this.VidID.substr(this.VidID.indexOf("youtu.be\\") + ("youtu.be\\").length);
+      if (this.VidID.indexOf("youtu.be/") != -1){
+        this.VidID = this.VidID.substr(this.VidID.indexOf("youtu.be/") + ("youtu.be/").length);
       }
 
       if (this.VidID.indexOf("&") != -1){
