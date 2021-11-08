@@ -1600,10 +1600,11 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       this.LocalPref = "[" + this.LangCode + "] ";
 
       const TagList:string[] = this.RoomDt.Tags.split(",").map(e => {return e.trim()}).filter(e => e !== "");
+      const LangCodeList: string[] = LCEntries.map(e => {return e.C})
 
       if (TagList.indexOf(this.LangCode) == -1){
         Changes = true;
-        var TagTemp: string[] = TagList.filter(e => e.toLowerCase() !== this.LangCode);
+        var TagTemp: string[] = TagList.filter(e => !LangCodeList.includes(e.toLowerCase()));
         TagTemp.push(this.LangCode);
         this.Tags = TagTemp.join(", ");       
       } else {
