@@ -3,27 +3,41 @@
     <!------------------------------- First Page  ------------------------------->
     <div *ngSwitchCase="0" style="display: flex; flex-direction: column;">
       <div>
-        <label class="label">ファイルからロードする</label>
-        <div class="field">
-          <div class="file has-name is-small" id="wrap">
-            <label class="file-label">
-              <input class="file-input" type="file" accept=".txt" name="resume"
-                (change)="FileChange($event)">
-              <span class="file-cta">
-                <span class="file-icon">
-                  <fa-icon [icon]="faFileImport"></fa-icon>
-                </span>
-                <span class="file-label">
-                  MCHAD字幕レイヤー設定ファイル
-                </span>
-              </span>
-              <span class="file-name">
-                {{ filename }}
-              </span>
-            </label>
+        <div style="display: flex; flex-direction: row;">
+          <div>
+            <label class="label">ファイルからロードする</label>
+            <div class="field">
+              <div class="file has-name is-small" id="wrap">
+                <label class="file-label">
+                  <input class="file-input" type="file" accept=".txt" name="resume"
+                    (change)="FileChange($event)">
+                  <span class="file-cta">
+                    <span class="file-icon">
+                      <fa-icon [icon]="faFileImport"></fa-icon>
+                    </span>
+                    <span class="file-label">
+                      MCHAD字幕レイヤー設定ファイル
+                    </span>
+                  </span>
+                  <span class="file-name">
+                    {{ filename }}
+                  </span>
+                </label>
+              </div>
+            </div>
           </div>
+          <!--
+          <div style="width: 2px; background-color: black; margin-left: 10px; margin-right: 10px;"></div>
+          <div style="display: flex; flex-direction: column;">
+            <label class="label">プリセットからロードする</label>
+            <div style="display: flex; flex-direction: row;" >
+              <button class="button is-success">デフォルト</button>
+              <button class="button is-success">[en] チャットフィルター</button>
+              <button class="button is-success">MChad字幕</button>
+            </div>
+          </div>
+          -->
         </div>
-
 
         <hr>
         <div class="field">
@@ -42,6 +56,7 @@
           <div *ngSwitchCase="0">
             <div class="field">
               <label class="label">MChad部屋</label>
+              テスト用の場合は空にしてください。
               <div class="control">
                 <input class="input" list="Rooms" name="Select a Room" [(ngModel)]="RoomNick"
                   (ngModelChange)="CheckPass()" />
@@ -64,6 +79,7 @@
           <div *ngSwitchCase="1">
             <div class="field">
               <label class="label">配信URL</label>
+              テスト用の場合は空にしてください。
               <div class="control">
                 <input class="input" placeholder="Enter URL.." type="text" [(ngModel)]="ChatURL" />
               </div>
@@ -163,9 +179,18 @@
           <!-- Options -->
           <div class="column">
             <label class="label">字幕設定</label>
+
             <!--        Chat author     -->
             <label class="checkbox"><input type="checkbox" [checked]="AuthName==false"
-              (change)="CheckedChange2()" /> ユーザ名を隠す</label><br>
+              (change)="this.AuthName = !this.AuthName" /> ユーザ名を隠す</label><br>
+
+            <label class="checkbox"><input type="checkbox" [checked]="TimeStamp==true"
+              (change)="this.TimeStamp = !this.TimeStamp" /> タイムスタンプ</label><br>
+
+            <div *ngIf="TimeStamp">
+              <label>タイムスタンプの色 </label>
+              <input class="input" type="color" [(ngModel)]="TimeStampColour"/>
+            </div>
   
             <!--        Card Number     -->
             <label>字幕ライン </label>
@@ -207,7 +232,6 @@
                   <option [value]="'Down'" [selected]="AniDir=='Down'">下</option>
                 </select>
               </div>
-  
             </div>
           </div>
   
@@ -226,7 +250,19 @@
                 </div>
               </div>
             </div>
-  
+
+            <!--        Line Spacing     -->
+            <div>
+              <label>ラインの間隔 </label>
+              <input class="input" type="number" min="0" [(ngModel)]="LineSpacing" (ngModelChange)="RepaintEntries()" />
+            </div>
+            
+            <!--        Letter Spacing     -->
+            <div>
+              <label>文字間隔 （０＝デフォルト）</label>
+              <input class="input" type="number" min="0" [(ngModel)]="LetterSpacing" (ngModelChange)="RepaintEntries()" />
+            </div>
+
             <!--        Outline Thickness     -->
             <div>
               <!-- <div class="divider is-left is-black" data-content="Outline Thickness"></div> -->
@@ -249,6 +285,20 @@
             <label class="label">フォント設定 </label>
             <input class="input" type="number" min="0" [(ngModel)]="FFsize" (ngModelChange)="RepaintEntries()" />
   
+            <div class="field">
+              <label>太さ</label>
+              <div class="control">
+                <div class="select">
+                  <select [(ngModel)]="FFWeight" (ngModelChange)="RepaintEntries()">
+                    <option [value]="'200'" [selected]="FFWeight=='200'">細い</option>
+                    <option [value]="'normal'" [selected]="FFWeight=='normal'">普通</option>
+                    <option [value]="'bold'" [selected]="FFWeight=='bold'">太字</option>
+                    <option [value]="'900'" [selected]="FFWeight=='900'">超太字</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <div class="field">
               <label>フォントファミリー </label>
               <div class="control">

@@ -70,6 +70,9 @@ export class ProxyappsetComponent implements OnInit {
   */
   AuthName: boolean = true;
 
+  TimeStamp: boolean = false;
+  TimeStampColour: string = "#000000";
+
   MaxDisplay: number = 3; //Maximum message card display
   OT: number = 1;          //Outline Thickness in pixel
   CardBGColour = {
@@ -80,12 +83,16 @@ export class ProxyappsetComponent implements OnInit {
   }
   BGcolour: string = "#000000";
   FFamily: string = "sans-serif";
-  FFsize: number = 16;
+  FFsize: number = 24;
+  FFWeight: string = "bold";
   TxAlign: string = "center";
   WebFont: string = "";
   WebFontTemp: string = "";
   AniDir: string = "Up";
   AniType: string = "None";
+
+  LetterSpacing: number = 0;
+  LineSpacing: number = 5;
 
   OverrideCStyle: boolean = false;
   OverrideCC: string = "#000000"
@@ -235,10 +242,17 @@ export class ProxyappsetComponent implements OnInit {
 
   RepaintEntries(): void {
     this.DisplayElem.forEach((elem) => {
+      elem.style.marginTop = this.LineSpacing.toString() + "px";
+      if (this.LetterSpacing == 0){
+        elem.style.letterSpacing = "normal";
+      } else {
+        elem.style.letterSpacing = this.LetterSpacing.toString() + "px";
+      }
       elem.style.webkitTextStrokeWidth = this.OT.toString() + "px";
       elem.style.fontFamily = this.FFamily;
       elem.style.fontSize = this.FFsize.toString() + "px";
       elem.style.textAlign = this.TxAlign;
+      elem.style.fontWeight = this.FFWeight;
       elem.style.backgroundColor = "rgba(" + this.CardBGColour.r.toString() + ", " + this.CardBGColour.g.toString() + ", " + this.CardBGColour.b.toString() + ", " + this.CardBGColour.a.toString() + ")";
     })
   }
@@ -257,13 +271,19 @@ export class ProxyappsetComponent implements OnInit {
     }
 
     const cvs: HTMLHeadElement = this.Renderer.createElement('h1');
-    cvs.style.marginTop = "5px";
+    cvs.style.marginTop = this.LineSpacing.toString() + "px";
+    if (this.LetterSpacing == 0){
+      cvs.style.letterSpacing = "normal";
+    } else {
+      cvs.style.letterSpacing = this.LetterSpacing.toString() + "px";
+    }
     cvs.style.paddingLeft = "20px"
     cvs.style.paddingRight = "20px"
     cvs.style.webkitTextStrokeWidth = this.OT.toString() + "px";
     cvs.style.fontFamily = this.FFamily;
     cvs.style.fontSize = this.FFsize.toString() + "px";
     cvs.style.textAlign = this.TxAlign;
+    cvs.style.fontWeight = this.FFWeight;
     cvs.style.backgroundColor = "rgba(" + this.CardBGColour.r.toString() + ", " + this.CardBGColour.g.toString() + ", " + this.CardBGColour.b.toString() + ", " + this.CardBGColour.a.toString() + ")";
     cvs.id = "BoxShape";
 
@@ -280,8 +300,16 @@ export class ProxyappsetComponent implements OnInit {
       OC = this.OverrideOC.substr(1);
     }
 
+    if (this.TimeStamp) {
+      const spn: HTMLSpanElement = this.Renderer.createElement('spn');
+      spn.style.webkitTextFillColor = this.TimeStampColour;
+      spn.style.webkitTextStrokeColor = "#000000"
+      spn.textContent = (new Date().toTimeString().split(" ")[0]) + " ";
+      this.Renderer.appendChild(cvs, spn);
+    }
+
     if (Stext != undefined) {
-      cvs.textContent = Stext;
+      cvs.innerHTML = cvs.innerHTML + Stext;
     }
 
     var CCctx = "#";
@@ -299,14 +327,12 @@ export class ProxyappsetComponent implements OnInit {
 
     cvs.style.webkitTextFillColor = CCctx;
     cvs.style.webkitTextStrokeColor = OCctx;
+
+    
     this.Renderer.appendChild(this.cardcontainer.nativeElement, cvs);
 
     this.EntryList.push(dt);
     this.DisplayElem.push(cvs);
-  }
-
-  CheckedChange2() {
-    this.AuthName = !this.AuthName;
   }
   //============================== SECOND PAGE HANDLER ==============================
 
@@ -337,14 +363,19 @@ export class ProxyappsetComponent implements OnInit {
     }
 
     WriteStream["AuthName"] = this.AuthName;
+    WriteStream["TimeStamp"] = this.TimeStamp;
+    WriteStream["TimeStampColour"] = this.TimeStampColour;
     WriteStream["MaxDisplay"] = this.MaxDisplay;
     WriteStream["OT"] = this.OT;
     WriteStream["AniType"] = this.AniType;
     WriteStream["AniDir"] = this.AniDir;
     WriteStream["FFsize"] = this.FFsize;
     WriteStream["FFamily"] = this.FFamily;
+    WriteStream["FFWeight"] = this.FFWeight;
     WriteStream["TxAlign"] = this.TxAlign;
     WriteStream["OverrideCStyle"] = this.OverrideCStyle;
+    WriteStream["LineSpacing"] = this.LineSpacing;
+    WriteStream["LetterSpacing"] = this.LetterSpacing;
     if (this.OverrideCStyle) {
       WriteStream["OverrideCC"] = this.OverrideCC;
       WriteStream["OverrideOC"] = this.OverrideOC;
@@ -398,6 +429,10 @@ export class ProxyappsetComponent implements OnInit {
           }
         }
 
+        if (JSONSetting["TimeStamp"] != undefined) {
+          this.TimeStamp = JSONSetting["TimeStamp"];
+        }
+
         if (JSONSetting["AuthName"] != undefined) {
           this.AuthName = JSONSetting["AuthName"];
         }
@@ -426,6 +461,10 @@ export class ProxyappsetComponent implements OnInit {
           this.FFamily = JSONSetting["FFamily"];
         }
 
+        if (JSONSetting["FFWeight"] != undefined) {
+          this.FFWeight = JSONSetting["FFWeight"];
+        }
+
         if (JSONSetting["TxAlign"] != undefined) {
           this.TxAlign = JSONSetting["TxAlign"];
         }
@@ -434,6 +473,18 @@ export class ProxyappsetComponent implements OnInit {
           this.OverrideCStyle = JSONSetting["OverrideCStyle"];
         }
 
+        if (JSONSetting["TimeStampColour"] != undefined) {
+          this.TimeStampColour = JSONSetting["TimeStampColour"];
+        }
+
+        if (JSONSetting["LineSpacing"] != undefined) {
+          this.LineSpacing = JSONSetting["LineSpacing"];
+        }
+
+        if (JSONSetting["LetterSpacing"] != undefined) {
+          this.LetterSpacing = JSONSetting["LetterSpacing"];
+        }
+        
         if (this.OverrideCStyle) {
           if (JSONSetting["OverrideCC"] != undefined) {
             this.OverrideCC = JSONSetting["OverrideCC"];
@@ -481,6 +532,7 @@ export class ProxyappsetComponent implements OnInit {
       this.ProxyLink = TempString;
 
       TempString = "https://app.mchatx.org/streamtool/app/";
+      //TempString = "http://localhost:4200/streamtool/app/";
 
       var Linktoken: any = {};
       switch (Number(this.ProxyMode)) {
@@ -573,6 +625,11 @@ export class ProxyappsetComponent implements OnInit {
         Linktoken["AuthName"] = 1;
       }
 
+      if (this.TimeStamp) {
+        Linktoken["TS"] = 1;
+        Linktoken["TSC"] = this.TimeStampColour.substr(1);
+      }
+
       Linktoken["max"] = this.MaxDisplay;
 
       if (this.OT != 1) {
@@ -585,7 +642,10 @@ export class ProxyappsetComponent implements OnInit {
 
       Linktoken["FSF"] = this.FFsize;
       Linktoken["FSS"] = this.FFamily;
+      Linktoken["FSW"] = this.FFWeight;
       Linktoken["TAL"] = this.TxAlign;
+      Linktoken["LNS"] = this.LineSpacing;
+      Linktoken["LTS"] = this.LetterSpacing;
 
       if (this.OverrideCStyle){
         Linktoken["OCS"] = 1;

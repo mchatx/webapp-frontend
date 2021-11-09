@@ -43,7 +43,6 @@ class FullEntry {
 
 export class ProxyappComponent implements OnInit, OnDestroy {
   @ViewChild('cardcontainer', { static: false }) cardcontainer !: ElementRef;
-  @ViewChild('ChatContainer', { static: false }) ChatContainer !: ElementRef;
   @ViewChildren('item') itemElements!: QueryList<any>;
   scrollContainer: any;
 
@@ -52,8 +51,9 @@ export class ProxyappComponent implements OnInit, OnDestroy {
   TempEntryContainer: FullEntry[] = [];
   EntryList: FullEntry[] = [];
   EntryContainer: any[] = [];
-  DisplayElem: HTMLHeadingElement[] = [];
+  DisplayElem: HTMLHeadElement[] = [];
   FFsize: number = 40;
+  FFWeight:string = "bold";
   FStyle: string = "Ubuntu";
   TxAlign: string = "center";
   MaxDisplay = 100;
@@ -76,6 +76,13 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     keyword: ""
   }
   AuthName: boolean = true;
+
+  TimeStamp: boolean = false;
+  TimeStampColour: string = "#000000";
+
+  LineSpacing: number = 5;
+  LetterSpacing: number = 0;
+
   AniDuration: number = 300;
 
   OverrideCStyle: boolean = false;
@@ -135,6 +142,10 @@ export class ProxyappComponent implements OnInit, OnDestroy {
     }
     this.LoadFont = true;
 
+    if (ParamsList["FSW"]) {
+      this.FFWeight = ParamsList["FSW"];
+    }
+
     if (ParamsList["TAL"]) {
       this.TxAlign = ParamsList["TAL"];
     }
@@ -175,10 +186,19 @@ export class ProxyappComponent implements OnInit, OnDestroy {
       this.AuthName = true;
     }
 
-    if (ParamsList["FilterMode"]) {
-      this.ChatFilterMode = true;
+    if (ParamsList["TS"]) {
+      this.TimeStamp = true;
+      this.TimeStampColour = "#" + ParamsList["TSC"];
     } else {
-      this.ChatFilterMode = false;
+      this.TimeStamp = false;      
+    }
+
+    if (ParamsList["LNS"]){
+      this.LineSpacing = ParamsList["LNS"];
+    }
+
+    if (ParamsList["LTS"]){
+      this.LetterSpacing = ParamsList["LTS"];
     }
 
     if (ParamsList["room"]) {
@@ -201,8 +221,14 @@ export class ProxyappComponent implements OnInit, OnDestroy {
         })), ParamsList["room"].toString());
       }
     } else if (ParamsList["lc"] && ParamsList["vid"]) {
+      if (ParamsList["vid"] == "TEST") {
+        this.RoomTest();
+        return;
+      }
+      
       if (ParamsList["FilterMode"]) {
         this.Filter.author = [];
+        this.ChatFilterMode = true;
         if (ParamsList["keywords"]) {
           this.Filter.keyword = "";
           ParamsList["keywords"].forEach((e: string) => {
@@ -216,6 +242,8 @@ export class ProxyappComponent implements OnInit, OnDestroy {
         if (ParamsList["author"]) {
           this.Filter.author = ParamsList["author"];
         }
+      } else {
+        this.ChatFilterMode = false;
       }
 
       if (ParamsList["tp"] == false){
@@ -228,27 +256,7 @@ export class ProxyappComponent implements OnInit, OnDestroy {
         });
       }
     } else {
-      for (let i: number = 0; i < 10; i++) {
-        if (i % 2 != 0) {
-          this.MEntryAdd({
-            Author: "TEST",
-            Stext: "TEST" + i.toString() + " asdfkjzx" + " asdfkjzx" + " asdfkjzx" + " asdfkjzx" + " asdfkjzx",
-            Stime: 10000,
-            CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
-            OC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
-            key: ""
-          })
-        } else {
-          this.MEntryAdd({
-            Author: "TEST",
-            Stext: "TEST" + i.toString(),
-            Stime: 10000,
-            CC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
-            OC: Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16) + Math.floor(Math.random() * 256).toString(16),
-            key: ""
-          })
-        }
-      }
+      this.RoomTest();
     }
   }
   //============================================= PARAM PARSER =============================================
@@ -673,83 +681,99 @@ export class ProxyappComponent implements OnInit, OnDestroy {
   StartLoader(): void {
     const EntryTemp = this.TempEntryContainer.shift();
     if (EntryTemp != undefined){
-      this.EntryList.push(EntryTemp);
-
-      if (this.EntryList.length > this.MaxDisplay){
-        this.EntryList.shift();
-      }
-  
-      if (this.DisplayElem.length == this.MaxDisplay) {
-        this.DisplayElem.shift()?.remove();
-        this.EntryList.shift();
-      }
-  
-      const cvs: HTMLHeadingElement = this.Renderer.createElement('h1');
-      cvs.style.marginTop = "5px";
-      cvs.id = "BoxShape";
-  
-      if (this.Ani != "") {
-        cvs.className = "animate__animated animate__" + this.Ani;
-      }
-      cvs.style.webkitTextStrokeWidth = this.OT.toString() + "px";
-  
-      var Stext = EntryTemp.Stext;
-  
-      if (this.AuthName && EntryTemp.Author != "SYS") {
-        Stext = EntryTemp.Author + " : " + Stext;
-      }
-  
-      const CC = EntryTemp.CC;
-      const OC = EntryTemp.OC;
-      if (Stext != undefined) {
-        cvs.textContent = Stext;
-      }
-  
-      var CCctx = "#";
-      if (CC != undefined) {
-        CCctx += CC;
-      } else {
-        CCctx += "000000"
-      }
-      var OCctx = "#";
-      if (OC != undefined) {
-        OCctx += OC;
-      } else {
-        OCctx += "000000"
-      }
-  
-      if (this.OverrideCStyle){
-        CCctx = "#" + this.OverrideCC;
-        OCctx = "#" + this.OverrideOC;
-      }
-  
-      cvs.style.webkitTextFillColor = CCctx;
-      cvs.style.webkitTextStrokeColor = OCctx;
-      cvs.style.backgroundColor = "rgba(" + this.CardBGColour.r.toString() + ", " + this.CardBGColour.g.toString() + ", " + this.CardBGColour.b.toString() + ", " + this.CardBGColour.a.toString() + ")";
-      cvs.style.fontFamily = this.FStyle;
-      cvs.style.fontSize = this.FFsize + "px";
-      cvs.style.textAlign = this.TxAlign;
-      this.Renderer.appendChild(this.cardcontainer.nativeElement, cvs);
-  
-      this.EntryList.push(EntryTemp);
-      this.DisplayElem.push(cvs);
-  
-      this.cardcontainer.nativeElement.scroll({
-        top: this.cardcontainer.nativeElement.scrollHeight,
-        left: 0
-      });
-      
-      if (this.TempEntryContainer.length > 50){
-        setTimeout(() => {
-          this.StartLoader();
-        }, 100);
-      } else {
-        setTimeout(() => {
-          this.StartLoader();
-        }, 200);
-      }
+      this.EntryPrint(EntryTemp);
     } else {
       this.EntryLoader = false;
+    }
+  }
+
+  EntryPrint(dt: FullEntry): void {
+    while (this.DisplayElem.length >= this.MaxDisplay) {
+      this.DisplayElem.shift()?.remove();
+      this.EntryList.shift();
+    }
+
+    const cvs: HTMLHeadElement = this.Renderer.createElement('h1');
+    cvs.style.marginTop = this.LineSpacing.toString() + "px";
+    if (this.LetterSpacing == 0){
+      cvs.style.letterSpacing = "normal";
+    } else {
+      cvs.style.letterSpacing = this.LetterSpacing.toString() + "px";
+    }
+    cvs.style.paddingLeft = "20px"
+    cvs.style.paddingRight = "20px"
+    cvs.style.webkitTextStrokeWidth = this.OT.toString() + "px";
+    cvs.style.fontFamily = this.FStyle;
+    cvs.style.fontSize = this.FFsize.toString() + "px";
+    cvs.style.textAlign = this.TxAlign;
+    cvs.style.fontWeight = this.FFWeight;
+    cvs.style.backgroundColor = "rgba(" + this.CardBGColour.r.toString() + ", " + this.CardBGColour.g.toString() + ", " + this.CardBGColour.b.toString() + ", " + this.CardBGColour.a.toString() + ")";
+    cvs.id = "BoxShape";
+
+    if (this.Ani != "") {
+      cvs.className += "animate__animated animate__" + this.Ani;
+    }
+
+    var Stext = dt.Stext;
+
+    if (this.AuthName) {
+      Stext = dt.Author + " : " + Stext;
+    }
+
+    var CC = dt.CC;
+    var OC = dt.OC;
+    
+    if (this.OverrideCStyle){
+      CC = this.OverrideCC.substr(1);
+      OC = this.OverrideOC.substr(1);
+    }
+
+    if (this.TimeStamp) {
+      const spn: HTMLSpanElement = this.Renderer.createElement('spn');
+      spn.style.webkitTextFillColor = this.TimeStampColour;
+      spn.style.webkitTextStrokeColor = "#000000"
+      spn.textContent = (new Date().toTimeString().split(" ")[0]) + " ";
+      this.Renderer.appendChild(cvs, spn);
+    }
+
+    if (Stext != undefined) {
+      cvs.innerHTML = cvs.innerHTML + Stext;
+    }
+
+    var CCctx = "#";
+    if (CC != undefined) {
+      CCctx += CC;
+    } else {
+      CCctx += "000000"
+    }
+    var OCctx = "#";
+    if (CC != undefined) {
+      OCctx += OC;
+    } else {
+      OCctx += "000000"
+    }
+
+    cvs.style.webkitTextFillColor = CCctx;
+    cvs.style.webkitTextStrokeColor = OCctx;
+
+    this.Renderer.appendChild(this.cardcontainer.nativeElement, cvs);
+
+    this.EntryList.push(dt);
+    this.DisplayElem.push(cvs);
+
+    this.cardcontainer.nativeElement.scroll({
+      top: this.cardcontainer.nativeElement.scrollHeight,
+      left: 0
+    });
+    
+    if (this.TempEntryContainer.length > 50){
+      setTimeout(() => {
+        this.StartLoader();
+      }, 100);
+    } else {
+      setTimeout(() => {
+        this.StartLoader();
+      }, 200);
     }
   }
   //============================================= ENTRY DISPLAY =============================================

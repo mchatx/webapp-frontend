@@ -945,6 +945,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
           next: data => {
             if (data.body != "OK"){
               this.HolodexBounceErrCount += 1;
+              /*
               if (this.HolodexBounceErrCount >= 3) {
                 this.HolodexBounce = false;
                 this.EntryPrint({
@@ -960,10 +961,12 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
                   }
                 }, 100);
               }
+              */
             }
           },
           error: err =>{
             this.HolodexBounceErrCount += 1;
+            /*
             if (this.HolodexBounceErrCount >= 3) {
               this.HolodexBounce = false;
               this.EntryPrint({
@@ -979,6 +982,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
                 }
               }, 100);
             }
+            */
           }
         });
       }
@@ -1569,6 +1573,8 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         this.VidID = this.VidID.slice(0, this.VidID.indexOf("?"));
       }
 
+      this.HolodexBounce = true;
+      /*
       this.TLService.CheckIfMemberOnly(this.VidID).subscribe({
         next: data => {
           this.HolodexBounce = true;
@@ -1577,6 +1583,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
           this.HolodexBounce = false;
         }
       })
+      */
     }
   }
   //===================================== HOLO BOUNCE =====================================
