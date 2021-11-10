@@ -1082,52 +1082,57 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       next: data => {
         if (data["start_actual"]){
           var time: number = Date.parse(data["start_actual"]);
-          const Stime2 = (new Date(time)).toTimeString().split(" ")[0];
-          var a: any = new Date(time);
-          var b: string = a.getMilliseconds().toString();
-          while (b.length < 3){
-            b = "0" + b;
-          }
-          a = a.toUTCString().split(" ");
-          a = a[a.length - 2];
-          
-          var TempEntry: any = {
-            Stext: "--- Stream Starts ---",
-            Stime2: time,
-            CC: "",
-            OC: "",
-            Stime: a + ":" + b
-          }
-      
-          if (this.RoomDt.Empty == true){
-            TempEntry.Empty = true;
-          }
-      
-          this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
-            act: "New Entry",
-            data: TempEntry,
-            ExtShare: this.RoomDt.ExtSharing
-          }))).subscribe({
-            next: data => {
-              if (this.RoomDt.Empty == true){
-                this.RoomDt.Empty = false;
-              }
-        
-              const dt = JSON.parse(this.TGEnc.TGDecoding(JSON.parse(data.body).BToken));
-              this.EntryPrint({
-                Stext: TempEntry["Stext"],
-                Stime: Stime2,
-                CC: TempEntry["CC"],
-                OC: TempEntry["OC"],
-                key: dt["key"]
-              });
-              setTimeout(() => {
-                if (this.cardcontainer){
-                  this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
-                }
-              }, 100);
+
+          if (time > Date.now()) {
+            this.NormalStart();
+          } else {
+            const Stime2 = (new Date(time)).toTimeString().split(" ")[0];
+            var a: any = new Date(time);
+            var b: string = a.getMilliseconds().toString();
+            while (b.length < 3){
+              b = "0" + b;
             }
-          });
+            a = a.toUTCString().split(" ");
+            a = a[a.length - 2];
+            
+            var TempEntry: any = {
+              Stext: "--- Stream Starts ---",
+              Stime2: time,
+              CC: "",
+              OC: "",
+              Stime: a + ":" + b
+            }
+        
+            if (this.RoomDt.Empty == true){
+              TempEntry.Empty = true;
+            }
+        
+            this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
+              act: "New Entry",
+              data: TempEntry,
+              ExtShare: this.RoomDt.ExtSharing
+            }))).subscribe({
+              next: data => {
+                if (this.RoomDt.Empty == true){
+                  this.RoomDt.Empty = false;
+                }
+          
+                const dt = JSON.parse(this.TGEnc.TGDecoding(JSON.parse(data.body).BToken));
+                this.EntryPrint({
+                  Stext: TempEntry["Stext"],
+                  Stime: Stime2,
+                  CC: TempEntry["CC"],
+                  OC: TempEntry["OC"],
+                  key: dt["key"]
+                });
+                setTimeout(() => {
+                  if (this.cardcontainer){
+                    this.cardcontainer.nativeElement.scrollTop = this.cardcontainer.nativeElement.scrollHeight;
+                  }
+                }, 100);
+              }
+            });
+          }
         } else {
           this.NormalStart();
         }
