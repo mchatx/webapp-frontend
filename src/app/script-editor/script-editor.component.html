@@ -1,166 +1,191 @@
 <!--============================================ LOGIN PAGE =====================================================-->
 <!--                       @HOSU NO NEED TO CHANGE THIS PART             -->
 <div *ngIf="!LoginMode">
-    <section class="hero is-primary is-fullheight-with-navbar">
-      <div class="hero-body is-align-items-stretch">
-        <div class="container has-text-centered has-text-black">
-          <div class="animate__animated animate__fadeInDownBig">
-            <div class="mt-4">
-              <div class="box p-6">
-                <p class="title has-text-black">TL Login</p>
-                <div class="divider is-left is-black"></div>
-  
-                <!-- --------------- Room Name Input ---------------->
-                <div class="field has-text-left">
-                  <label class="label">Room Name</label>
-                  <div class="control has-icons-left">
-                    <input class="input is-rounded" type="text" placeholder="Room Name" [(ngModel)]="RoomNick">
-                    <span class="icon is-left is-small">
-                      <fa-icon [icon]="faUser"></fa-icon>
-                    </span>
-                  </div>
+  <section class="hero is-primary is-fullheight-with-navbar">
+    <div class="hero-body is-align-items-stretch">
+      <div class="container has-text-centered has-text-black">
+        <div class="animate__animated animate__fadeInDownBig">
+          <div class="mt-4">
+            <div class="box p-6">
+              <p class="title has-text-black">TL Login</p>
+              <div class="divider is-left is-black"></div>
+
+              <!-- --------------- Room Name Input ---------------->
+              <div class="field has-text-left">
+                <label class="label">Room Name</label>
+                <div class="control has-icons-left">
+                  <input class="input is-rounded" type="text" placeholder="Room Name" [(ngModel)]="RoomNick">
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faUser"></fa-icon>
+                  </span>
                 </div>
-                <!-- --------------- Room Name Input ---------------->
-  
-                <!-- --------------- Password Input ---------------->
-                <div class="field has-text-left">
-                  <label class="label">Password</label>
-                  <div class="control has-icons-left">
-                    <input class="input is-rounded" type="password" placeholder="Password" [(ngModel)]="SearchPass">
-                    <span class="icon is-left is-small">
-                      <fa-icon [icon]="faLock"></fa-icon>
-                    </span>
-                  </div>
-                </div>
-                <!-- --------------- Password Input ---------------->
-  
-                <!-- --------------- Enter Button ---------------->
-                <div class="field is-grouped p-4">
-                  <div class="control">
-                    <button class="button is-dark" (click)="LoginRoom()" #loadstate>Enter</button>
-                  </div>
-                  <div class="control">
-                    <p *ngIf="status !== ''" class="has-text-danger">{{ status }}</p>
-                  </div>
-                </div>
-                <!-- --------------- Enter Button ---------------->
               </div>
+              <!-- --------------- Room Name Input ---------------->
+
+              <!-- --------------- Password Input ---------------->
+              <div class="field has-text-left">
+                <label class="label">Password</label>
+                <div class="control has-icons-left">
+                  <input class="input is-rounded" type="password" placeholder="Password" [(ngModel)]="SearchPass">
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faLock"></fa-icon>
+                  </span>
+                </div>
+              </div>
+              <!-- --------------- Password Input ---------------->
+
+              <!-- --------------- Enter Button ---------------->
+              <div class="field is-grouped p-4">
+                <div class="control">
+                  <button class="button is-dark" (click)="LoginRoom()" #loadstate>Enter</button>
+                </div>
+                <div class="control">
+                  <p *ngIf="status !== ''" class="has-text-danger">{{ status }}</p>
+                </div>
+              </div>
+              <!-- --------------- Enter Button ---------------->
             </div>
           </div>
         </div>
       </div>
-    </section>
-  </div>
-  <!--============================================ LOGIN PAGE  =====================================================-->
-  
-  
-  
-  
-  
-  <div *ngIf="LoginMode">
-    <!---------------------- MENU ------------------------>
-    <div>
-      <a class="button is-small is-link" routerLink="/" [routerLinkActive]="['is-active']">
-        <fa-icon [icon]="faHome"></fa-icon>
-      </a>
-  
-      <div>
-        <label>Font Size </label>
-        <input type="number" min="1" [(ngModel)]="FFsize"/>
-      </div>
-  
-      <a class="button" (click)="SetModalMenu(2)">Script Setting</a>
-      <a class="button" (click)="SetModalMenu(6)">New Script</a>
-      <a class="button" (click)="SetModalMenu(8)">Export Script</a>
-      <a class="button" (click)="SetModalMenu(7)">Import Script</a>
-      <a class="button" (click)="SaveLocal()">Save Session</a>
-      <a class="button" (click)="SetModalMenu(5)">Upload To DB</a>
-      <a class="button" (click)="SetModalMenu(9)">Download From DB</a>
-      <a class="button" (click)="SetModalMenu(4)" >Sync</a>
-      <a class="button" (click)="UnSync()">UnSync</a>
     </div>
-    <!--==================== MENU ======================-->
-  
-    <!---------------------- VIDEO BOX ------------------------>
-    <div *ngIf="Synced">
-      <div id="player"></div>
-    </div>
-    <!---------------------- VIDEO BOX ------------------------>
+  </section>
+</div>
+<!--============================================ LOGIN PAGE  =====================================================-->
 
-    <!---------------------- TIMER CONTROL ------------------------>
-    <div>
-      <a class="button" (click)="StopTimer(true)"><fa-icon [icon]="faStop"></fa-icon></a>
-      <span>{{ TimerTime | date:'HH:mm:ss.SS':'UTC+0' }}</span>
-      <a class="button" (click)="StartTimer(true)"><fa-icon [icon]="faPlay"></fa-icon></a>
-    </div>
-    <!--==================== TIMER CONTROL ======================-->
 
-    <!---------------------- ENTRY VIEWER ------------------------>
-    <div class="container is-fluid">
-      <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" 
-        [style.font-size]="FFsize + 'px'" [style.text-align]="TxAlign" style="display: flex; flex-direction: column;" #cardcontainer>
-        <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft" (click)=OpenEditEntry(i)>
-          <h1>{{ Entry.Stime | date:'HH:mm:ss.SS':'UTC+0'}} : 
-            <span [style.-webkit-text-fill-color]="'#' + Entry.CC" [style.-webkit-text-stroke-color]="'#' + Entry.OC" style="cursor: pointer;">{{ Entry.Stext }}</span>
-          </h1>
+<section class="hero is-dark is-fullheight" *ngIf="LoginMode">
+  <!---------------------- MENU ------------------------>
+  <div class="hero-head">
+    <button *ngIf="!OpenOption" class="button is-small is-fullwidth is-primary" (click)="OpenOption=true">Menu</button>
+  
+    <div [ngClass]="BGColour == '#28282B' ? 'has-background-primary-light' : 'has-background-black'" *ngIf="OpenOption" style="width: 100%;">
+      <div style="width: 100%; display:flex; flex-direction: column; padding-left: 30px; padding-right: 30px; padding-top: 10px; padding-bottom: 10px;">
+        <!--                BIG MENU                   -->
+        <div style="width: 100%; display: flex; align-items: center;">
+          <a class="button is-small is-link" routerLink="/" [routerLinkActive]="['is-active']">
+            <fa-icon [icon]="faHome"></fa-icon>
+          </a>
+      
+          <div>
+            <label>Font Size </label>
+            <input type="number" min="1" [(ngModel)]="FFsize"/>
+          </div>
+      
+          <a class="button" (click)="SetModalMenu(2)">Script Setting</a>
+          <a class="button" (click)="SetModalMenu(6)">New Script</a>
+          <a class="button" (click)="SetModalMenu(8)">Export Script</a>
+          <a class="button" (click)="SetModalMenu(7)">Import Script</a>
+          <a class="button" (click)="SaveLocal()">Save Session</a>
+          <a class="button" (click)="SetModalMenu(5)">Upload To DB</a>
+          <a class="button" (click)="SetModalMenu(9)">Download From DB</a>
+          <a class="button" (click)="SetModalMenu(4)" >Load Video</a>
+          <a class="button" (click)="UnSync()">Unload Video</a>
         </div>
       </div>
     </div>
-    <!--==================== ENTRY VIEWER ======================-->
+  </div>
+  <!--==================== MENU ======================-->
+
+  <!---------------------- MAIN DISPLAY ------------------------>
+  <div class="hero-body" (click)="OpenOption=false" style="position: relative; display:flex; flex-direction: column; align-items: stretch;">
+    <!-----------------------  UPPER HEAD  ----------------------->
+    <div class="container is-fluid" style="display: flex; flex-direction: row;">
+
+      <!-- ENTRY VIEWER -->
+      <div class="container is-fluid">
+        <div class="container is-fluid">
+          <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" [style.font-size]="FFsize + 'px'" [style.text-align]="TxAlign" style="display: flex; flex-direction: column; overflow-y:hidden" #cardcontainer>
+            <div style="margin-top: auto;"></div>
+            <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft">
+              <h1>{{ Entry.Stime | date:'HH:mm:ss.SS':'UTC+0'}} : 
+                <span [style.-webkit-text-fill-color]="'#' + Entry.CC" [style.-webkit-text-stroke-color]="'#' + Entry.OC" (click)=OpenEditEntry(i) style="cursor: pointer;">{{ Entry.Stext }}</span>
+              </h1>
+            </div>
+          </div>
+        </div>
   
-    <!---------------------- TL TOOL ------------------------>
-    <div>
-      <!-------------------- PROFILE LIST -------------------->
-      <div *ngIf="ProfileTab">
-        <div *ngFor="let prf of ProfileList; index as i;">
-          <p *ngIf="i == SelectedProfile">> {{prf.Name}}</p>
-          <p *ngIf="i != SelectedProfile">{{prf.Name}}</p>
+        <!-------------------- PROFILE LIST -------------------->
+        <div *ngIf="ProfileTab" style="position: absolute; right: 25px; bottom: 10px; z-index: 1; background-color: black; color: white; font-weight: bold;">
+          <div *ngFor="let prf of ProfileList; index as i;">
+            <p *ngIf="i == SelectedProfile">> {{ i + 1 }}. {{prf.Name}}</p>
+            <p *ngIf="i != SelectedProfile">{{ i + 1 }}. {{prf.Name}}</p>
+          </div>
+        </div>
+        <!--================== PROFILE LIST ==================-->    
+      </div>
+
+      <!--  VIDEO CONTAINER  -->
+      <div style="display: flex; flex-direction: column;">
+        <div *ngIf="VidLoad" style="display: flex; flex-direction: column;">
+          <div id="player"></div>
+        </div>
+
+        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+          <a class="button" (click)="StopTimer(true)"><fa-icon [icon]="faStop"></fa-icon></a>
+          <span>{{ TimerTime | date:'HH:mm:ss.SS':'UTC+0' }}</span>
+          <a class="button" (click)="StartTimer(true)"><fa-icon [icon]="faPlay"></fa-icon></a>
         </div>
       </div>
-      <!--================== PROFILE LIST ==================-->
-  
-      <div>
-        <input type="text" [(ngModel)]="TLEntry.Stext" (keydown.enter)="SendEntry()" max="200"/>
-        <a class="button" (click)="SendEntry()">Enter</a>
-      </div>
-  
-      <div>
-        <label>Prefix </label>
-        <input type="text" [(ngModel)]="Prefix" max="30"/>
-      </div>
-  
-      <div>
-        <label>Suffix </label>
-        <input type="text" [(ngModel)]="Suffix" max="30"/>
-      </div>
-  
-      <div>
-        <input type="checkbox" [(ngModel)]="CCcheck">
-        <label>Character Colour </label>
-        <input type="color" [(ngModel)]="CCcolour"/>
-      </div>
-  
-      <div>
-        <input type="checkbox" [(ngModel)]="OCcheck">
-        <label>Outline Colour </label>
-        <input type="color" [(ngModel)]="OCcolour"/>
-      </div>
-  
-      <a class="button" (click)="SetModalMenu(1)">Add Profile</a>
-      <a class="button" (click)="ShiftUp()">Shift Up</a>
-      <a class="button" (click)="ShiftDown()">Shift Down</a>
-      <a class="button" (click)="DeleteProfile()">Delete Profile</a>
-    </div>
-    <!--==================== TL TOOL ======================-->
-
-    <div style="overflow-x: auto;">
-      <progress class="progress is-primary" [value]="TimerTime" [max]="TimelineDur*1000" [style.width]="TimelineDur*SecToPx + 'px'" #TimeLine></progress>
     </div>
   </div>
-  
-  
-  
-  
+  <!--==================== MAIN DISPLAY ======================-->
+
+  <!---------------------- TL TOOL ------------------------>
+  <div class="hero-foot" #footer>
+    <div class="container is-fluid" style="display: flex; flex-direction: column;">
+      <!-------------------- TIMELINE -------------------->
+      <div *ngIf="VidLoad">
+        <div style="overflow-x: auto;">
+          <progress class="progress is-primary" [value]="TimerTime" [max]="TimelineDur*1000" [style.width]="TimelineDur*SecToPx + 'px'" #TimeLine></progress>
+        </div>
+      </div>
+      <!--================== TIMELINE ==================-->
+
+      <div style="display: flex; flex-direction: row; margin-bottom: 5px;">
+        <input type="text" [(ngModel)]="TLEntry.Stext" (keydown.enter)="SendEntry()" max="200" style="width: 100%;"/>
+        <div class="control" style="margin-left: auto;">
+          <a class="button" (click)="SendEntry()" style="margin-left: 10px;">Enter</a>
+        </div>        
+      </div>
+
+      <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 5px;">
+        <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
+          <label style="margin-right: 10px;">Prefix </label>
+          <input style="width: 100px;" type="text" [(ngModel)]="Prefix" max="30"/>
+        </div>
+
+        <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
+          <label style="margin-right: 10px;">Suffix </label>
+          <input style="width: 100px;" type="text" [(ngModel)]="Suffix" max="30"/>
+        </div>
+
+        <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
+          <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="CCcheck">
+          <label style="margin-right: 10px;">Character Colour </label>
+          <input type="color" [(ngModel)]="CCcolour"/>
+        </div>
+
+        <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
+          <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="OCcheck">
+          <label style="margin-right: 10px;">Outline Colour </label>
+          <input type="color" [(ngModel)]="OCcolour"/>
+        </div>
+
+      </div>
+
+      <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px;">
+        <a class="button" (click)="SetModalMenu(1)" style="margin-right: 5px;">Add Profile</a>
+        <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
+        <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
+        <a class="button" (click)="DeleteProfile()" style="margin-right: 5px;">Delete Profile</a>
+      </div>
+    </div>
+  </div>
+  <!--==================== TL TOOL ======================-->
+</section>
+
+
 
   <!--
     1 => Add New Profile
@@ -178,111 +203,118 @@
     <div class="modal-background" (click)="ModalMenu = 0"></div>
 
     <div class="modal-content" [ngSwitch]="ModalMenu">
-      <!--  ADD NEW PROFILE  -->
-      <div *ngSwitchCase="1">
-        <p>NEW PROFILE</p>
-        <input type="text" [(ngModel)]="ProfileName"/>
-        <a class="button" (click)="ModalMenu = 0">Cancel</a>
-        <a class="button" (click)="AddProfile()">Ok</a>
-      </div>
+      <div class="box">
+        <!--  ADD NEW PROFILE  -->
+        <div *ngSwitchCase="1">
+          <div class="field">
+            <label class="label">New profile</label>
+            <div class="control">
+              <input class="input" type="text" [(ngModel)]="ProfileName"/>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: row; justify-content: space-between;">
+            <a class="button is-rounded is-danger" (click)="ModalMenu = 0">Cancel</a>
+            <a class="button is-rounded is-success" (click)="AddProfile()">Ok</a>
+          </div>
+        </div>
   
-      <!--  SCRIPT SETTING SESSION  -->
-      <div *ngSwitchCase="2">
-        <p>Title</p>
-        <input type="text" [(ngModel)]="TempSetting.ArchiveTitle" max="255"/>
-        <input type="checkbox" [(ngModel)]="TempSetting.PassCheck"><span>Password Protection</span>
-        <input type="text" [(ngModel)]="TempSetting.PassString" max="255"/>
-        <p>Link to stream</p>
-        <input type="text" [(ngModel)]="TempSetting.StreamLink" max="255"/>
-        <p>Tags</p>
-        <input type="text" [(ngModel)]="TempSetting.Tags" max="255"/>
-        <input type="checkbox" [(ngModel)]="TempSetting.ThirdPartySharing"><span>Party Sharing</span>
-        <input type="checkbox" [(ngModel)]="TempSetting.Hidden"><span>Hidden</span>
-        <a class="button" (click)="ModalMenu = 0; TempSetting = SavedSetting">CANCEL</a>
-        <a class="button" (click)="SaveArchiveSetting()">OK</a>
-      </div>
-    
-      <!-- EDIT ENRTY -->
-      <div *ngSwitchCase="3">
-        <p>EDIT ENTRY</p>
-        <input type="text" [(ngModel)]="EditText" (keydown.enter)="SendEntry()" max="200"/>
-  
-        <div>
-          <input type="checkbox" [(ngModel)]="EditCCheck">
-          <label>Character Colour </label>
-          <input type="color" [(ngModel)]="EditCC"/>
+        <!--  SCRIPT SETTING SESSION  -->
+        <div *ngSwitchCase="2">
+          <p>Title</p>
+          <input type="text" [(ngModel)]="TempSetting.ArchiveTitle" max="255"/>
+          <input type="checkbox" [(ngModel)]="TempSetting.PassCheck"><span>Password Protection</span>
+          <input type="text" [(ngModel)]="TempSetting.PassString" max="255"/>
+          <p>Link to stream</p>
+          <input type="text" [(ngModel)]="TempSetting.StreamLink" max="255"/>
+          <p>Tags</p>
+          <input type="text" [(ngModel)]="TempSetting.Tags" max="255"/>
+          <input type="checkbox" [(ngModel)]="TempSetting.ThirdPartySharing"><span>Party Sharing</span>
+          <input type="checkbox" [(ngModel)]="TempSetting.Hidden"><span>Hidden</span>
+          <a class="button" (click)="ModalMenu = 0; TempSetting = SavedSetting">CANCEL</a>
+          <a class="button" (click)="SaveArchiveSetting()">OK</a>
         </div>
     
-        <div>
-          <input type="checkbox" [(ngModel)]="EditOCheck">
-          <label>Outline Colour </label>
-          <input type="color" [(ngModel)]="EditOC"/>
-        </div>
+        <!-- EDIT ENRTY -->
+        <div *ngSwitchCase="3">
+          <p>EDIT ENTRY</p>
+          <input type="text" [(ngModel)]="EditText" (keydown.enter)="SendEntry()" max="200"/>
+  
+          <div>
+            <input type="checkbox" [(ngModel)]="EditCCheck">
+            <label>Character Colour </label>
+            <input type="color" [(ngModel)]="EditCC"/>
+          </div>
+    
+          <div>
+            <input type="checkbox" [(ngModel)]="EditOCheck">
+            <label>Outline Colour </label>
+            <input type="color" [(ngModel)]="EditOC"/>
+          </div>
    
-        <a class="button" (click)="ModalMenu = 0">CANCEL</a>
-        <a class="button" (click)="SendEdit()">OK</a>
-      </div>
-  
-      <!-- VIDEO SYNC LOADER -->
-      <div *ngSwitchCase="4">
-        <p>Sync to video URL</p>
-        <input type="text" [(ngModel)]="TempSetting.StreamLink"/>
-        <a class="button" (click)="ModalMenu = 0; TempSetting.StreamLink = SavedSetting.StreamLink">Cancel</a>
-        <a class="button" (click)="LoadVideo(); SavedSetting.StreamLink = TempSetting.StreamLink">Ok</a>
-      </div>
-
-      <!--  UPLOAD TO DB  -->
-      <div *ngSwitchCase="5">
-        <p>Title</p>
-        <input type="text" [(ngModel)]="TempSetting.ArchiveTitle" max="255"/>
-        <input type="checkbox" [(ngModel)]="TempSetting.PassCheck"><span>Password Protection</span>
-        <input type="text" [(ngModel)]="TempSetting.PassString" max="255"/>
-        <p>Link to stream</p>
-        <input type="text" [(ngModel)]="TempSetting.StreamLink" max="255"/>
-        <p>Tags</p>
-        <input type="text" [(ngModel)]="TempSetting.Tags" max="255"/>
-        <input type="checkbox" [(ngModel)]="TempSetting.ThirdPartySharing"><span>Party Sharing</span>
-        <input type="checkbox" [(ngModel)]="TempSetting.Hidden"><span>Hidden</span>
-        <a class="button" (click)="ModalMenu = 0; TempSetting = SavedSetting">CANCEL</a>
-        <a class="button" (click)="UploadToDB()">UPLOAD</a>
-      </div>
-
-      <!--  CONFIRM NEW SCRIPT  -->
-      <div *ngSwitchCase="6">
-        <p>Create new script?</p>
-        <a class="button" (click)="ModalMenu = 0">Cancel</a>
-        <a class="button" (click)="NewScript()">Ok</a>
-      </div>
-
-      <!--  IMPORT SCRIPT  -->
-      <div *ngSwitchCase="7">
-        <p>Import Script</p>
-        <input class="file-input" type="file" accept=".ass, .TTML, .srt" name="resume" (change)="FileChange($event)">
-        <span>{{ filename }}</span>
-        <a class="button" (click)="ModalMenu = 0; filename = 'No file uploaded'; TargetFile = null;">Cancel</a>
-        <a class="button" (click)="ImportFile()">Import</a>
-      </div>
-
-      <!--  EXPORT  -->
-      <div *ngSwitchCase="8">
-        <p>EXPORT FORMAT</p>
-        <a class="button" (click)="ExportToFile(0)">Export to plain text</a>
-        <a class="button" (click)="ExportToFile(1)">Export to srt</a>
-        <a class="button" (click)="ExportToFile(2)">Export to ass</a>
-        <a class="button" (click)="ExportToFile(3)">Export to TTML</a>
-        <a class="button" (click)="ModalMenu = 0">Cancel</a>
-      </div>
-
-      <!--  DOWNLOAD SCRIPT FROM DB  -->
-      <div *ngSwitchCase="9">
-        <p>DOWNLOAD FROM DB</p>
-        <div *ngFor="let Archivedt of DBScriptList; index as i">
-          <p style="cursor: pointer;" (click)="DBScriptSelectedIndex = i" [style.font-weight]="(DBScriptSelectedIndex == i) ? 'bold' : 'normal'">{{i+1}}. {{ Archivedt.Nick }} </p>
+          <a class="button" (click)="ModalMenu = 0">CANCEL</a>
+          <a class="button" (click)="SendEdit()">OK</a>
         </div>
-        <a class="button" (click)="ModalMenu = 0">Cancel</a>
-        <a class="button" (click)="DownloadScript()">Download</a>
-      </div>
+  
+        <!-- VIDEO SYNC LOADER -->
+        <div *ngSwitchCase="4">
+          <p>Sync to video URL</p>
+          <input type="text" [(ngModel)]="TempSetting.StreamLink"/>
+          <a class="button" (click)="ModalMenu = 0; TempSetting.StreamLink = SavedSetting.StreamLink">Cancel</a>
+          <a class="button" (click)="LoadVideo(); SavedSetting.StreamLink = TempSetting.StreamLink">Ok</a>
+        </div>
 
+        <!--  UPLOAD TO DB  -->
+        <div *ngSwitchCase="5">
+          <p>Title</p>
+          <input type="text" [(ngModel)]="TempSetting.ArchiveTitle" max="255"/>
+          <input type="checkbox" [(ngModel)]="TempSetting.PassCheck"><span>Password Protection</span>
+          <input type="text" [(ngModel)]="TempSetting.PassString" max="255"/>
+          <p>Link to stream</p>
+          <input type="text" [(ngModel)]="TempSetting.StreamLink" max="255"/>
+          <p>Tags</p>
+          <input type="text" [(ngModel)]="TempSetting.Tags" max="255"/>
+          <input type="checkbox" [(ngModel)]="TempSetting.ThirdPartySharing"><span>Party Sharing</span>
+          <input type="checkbox" [(ngModel)]="TempSetting.Hidden"><span>Hidden</span>
+          <a class="button" (click)="ModalMenu = 0; TempSetting = SavedSetting">CANCEL</a>
+          <a class="button" (click)="UploadToDB()">UPLOAD</a>
+        </div>
+
+        <!--  CONFIRM NEW SCRIPT  -->
+        <div *ngSwitchCase="6">
+          <p>Create new script?</p>
+          <a class="button" (click)="ModalMenu = 0">Cancel</a>
+          <a class="button" (click)="NewScript()">Ok</a>
+        </div>
+
+        <!--  IMPORT SCRIPT  -->
+        <div *ngSwitchCase="7">
+          <p>Import Script</p>
+          <input class="file-input" type="file" accept=".ass, .TTML, .srt" name="resume" (change)="FileChange($event)">
+          <span>{{ filename }}</span>
+          <a class="button" (click)="ModalMenu = 0; filename = 'No file uploaded'; TargetFile = null;">Cancel</a>
+          <a class="button" (click)="ImportFile()">Import</a>
+        </div>
+
+        <!--  EXPORT  -->
+        <div *ngSwitchCase="8">
+          <p>EXPORT FORMAT</p>
+          <a class="button" (click)="ExportToFile(0)">Export to plain text</a>
+          <a class="button" (click)="ExportToFile(1)">Export to srt</a>
+          <a class="button" (click)="ExportToFile(2)">Export to ass</a>
+          <a class="button" (click)="ExportToFile(3)">Export to TTML</a>
+          <a class="button" (click)="ModalMenu = 0">Cancel</a>
+        </div>
+
+        <!--  DOWNLOAD SCRIPT FROM DB  -->
+        <div *ngSwitchCase="9">
+          <p>DOWNLOAD FROM DB</p>
+          <div *ngFor="let Archivedt of DBScriptList; index as i">
+            <p style="cursor: pointer;" (click)="DBScriptSelectedIndex = i" [style.font-weight]="(DBScriptSelectedIndex == i) ? 'bold' : 'normal'">{{i+1}}. {{ Archivedt.Nick }} </p>
+          </div>
+          <a class="button" (click)="ModalMenu = 0">Cancel</a>
+          <a class="button" (click)="DownloadScript()">Download</a>
+        </div>
+      </div>
     </div>
   </div>
   <!--============================================ MODALS =====================================================-->

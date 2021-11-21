@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
 import { faHome, faPause, faPlay, faStop, faLock, faUser } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from '../services/account.service';
 
 class FullEntry {
   Stext: string = "";
@@ -46,6 +47,7 @@ export class ScriptEditorComponent implements OnInit {
   @ViewChild('TimeLine') Timeline !: ElementRef; 
   @ViewChild('loadstate') loadbutton!: ElementRef;
   LoginMode: boolean = false;
+  OpenOption: boolean = false;
   SearchPass: string = "";
   status:string = "";
 
@@ -87,7 +89,7 @@ export class ScriptEditorComponent implements OnInit {
   //  TIMER VARIABLES
   TimerTime: number = 0;
   TimerDelegate: any | undefined = undefined;
-  Synced: boolean = false;
+  VidLoad: boolean = false;
 
   // TIMELINE VARIABLES
   TimelineDur: number = 3600;
@@ -97,19 +99,43 @@ export class ScriptEditorComponent implements OnInit {
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
     private router: Router,
+    private AccService: AccountService
   ) { }
 
   ngOnInit(): void {
     let test: string | null = localStorage.getItem("MChatToken");
+
     if (test != undefined) {
       try {
         let TokenData = JSON.parse(this.TGEnc.TGDecoding(test));
-        this.RoomNick = TokenData["Room"];
+        if (TokenData["Role"] == "TL") {
+          this.AccService.CheckToken(TokenData["Room"], TokenData["Token"]).subscribe({
+            error: error => {
+              localStorage.removeItem("MChatToken");
+            },
+            next: data => {
+              this.LoginMode = true;
+              this.RoomNick = TokenData["Room"];
+              this.Token = TokenData["Token"];
+              this.RoomNick = TokenData["Room"];
+
+              this.ProfileList.push({
+                Name: 'Default',
+                Prefix: '',
+                Suffix: '',
+                OC: undefined,
+                CC: undefined
+              });
+            }
+          });
+        } else {
+          this.status = "THIS ACCOUNT DOESN'T HAVE TL PRIVILEGE";
+        }
       } catch (error) {
         localStorage.removeItem("MChatToken");
       }
+      this.RerenderTimeline();
     }
-    this.RerenderTimeline();
   }
 
   LoginRoom() {
@@ -117,8 +143,32 @@ export class ScriptEditorComponent implements OnInit {
     this.loadbutton.nativeElement.classList.add('is-loading')
     setTimeout(() => {
       this.loadbutton.nativeElement.classList.remove('is-loading')
-    }, 1000);
+      this.AccService.GetToken(this.RoomNick, this.SearchPass).subscribe({
+        error: error => {
+          setTimeout(() => {
+          }, 2000);
+          this.status = "WRONG PASSWORD/ROOM NAME";
+          this.RoomNick = "";
+          this.SearchPass = "";
+        },
+        next: data => {
+          this.status = "LOGIN SUCCESS"
+          if (data.body[0]["Role"] == "TL") {
+            localStorage.setItem("MChatToken", this.TGEnc.TGEncoding(JSON.stringify({
+              Room: this.RoomNick,
+              Token: data.body[0]["Token"],
+              Role: "TL"
+            })));
 
+            location.reload();
+          } else {
+            this.status = "THIS ACCOUNT DOESN'T HAVE TL PRIVILEGE";
+            this.RoomNick = "";
+            this.SearchPass = "";
+          }
+        }
+      });
+    }, 1000); //delay for button loading
   }
 
 
@@ -260,12 +310,12 @@ export class ScriptEditorComponent implements OnInit {
         this.LoadvideoYT();
       });
     }
-    this.Synced = true;
+    this.VidLoad = true;
     this.ModalMenu = 0;
   }
 
   UnSync():void {
-    this.Synced = false;
+    this.VidLoad = false;
     clearInterval(this.DelegatePlay);
   }
 
@@ -333,13 +383,13 @@ export class ScriptEditorComponent implements OnInit {
   //-------------------------- TIMER CONTROL --------------------------
   StartTimer(propagate:boolean):void {
     if (!this.TimerDelegate){
-      if (this.Synced){
+      if (this.VidLoad){
         this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
       }
       this.TimerDelegate = setInterval(() => {
         this.TimerTime += 100;
       }, 100);
-      if (propagate && this.Synced){
+      if (propagate && this.VidLoad){
         this.player.playVideo();
       }
     }
@@ -347,20 +397,20 @@ export class ScriptEditorComponent implements OnInit {
 
   StopTimer(propagate: boolean):void {
     if (this.TimerDelegate){
-      if (this.Synced){
+      if (this.VidLoad){
         this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
       }
       clearInterval(this.TimerDelegate);
       this.TimerDelegate = undefined;
-      if (propagate && this.Synced){
+      if (propagate && this.VidLoad){
         this.player.pauseVideo()
       }
     }
   }
 
   SendSeek(){
-    if (this.Synced){
-      this.player.seekTo(this.TimerTime, true);
+    if (this.VidLoad){
+      this.player.seekTo(this.TimerTime/1000, true);
     }
   }
   //========================== TIMER CONTROL ==========================
@@ -450,15 +500,6 @@ export class ScriptEditorComponent implements OnInit {
 
   @HostListener('document:keydown.arrowup', ['$event'])
   UpKeypress(event: KeyboardEvent):void {
-    this.ShiftUp();
-  }
-
-  @HostListener('document:keydown.arrowdown', ['$event'])
-  DownKeypress(event: KeyboardEvent):void {
-    this.ShiftDown();
-  }
-
-  ShiftUp():void {
     this.SaveProfile();
     if (this.SelectedProfile == 0){
       this.SelectedProfile = this.ProfileList.length - 1;
@@ -468,7 +509,8 @@ export class ScriptEditorComponent implements OnInit {
     this.LoadProfile();
   }
 
-  ShiftDown():void {
+  @HostListener('document:keydown.arrowdown', ['$event'])
+  DownKeypress(event: KeyboardEvent):void {
     this.SaveProfile();
     if (this.SelectedProfile == this.ProfileList.length - 1){
         this.SelectedProfile = 0;
@@ -476,6 +518,133 @@ export class ScriptEditorComponent implements OnInit {
       this.SelectedProfile++;
     }
     this.LoadProfile();
+  }
+
+  @HostListener('document:keydown.control.1', ['$event'])
+  CtrlAlpha1Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(0);
+  }
+
+  @HostListener('document:keydown.control.2', ['$event'])
+  CtrlAlpha2Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(1);
+  }
+
+  @HostListener('document:keydown.control.3', ['$event'])
+  CtrlAlpha3Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(2);
+  }
+
+  @HostListener('document:keydown.control.4', ['$event'])
+  CtrlAlpha4Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(3);
+  }
+
+  @HostListener('document:keydown.control.5', ['$event'])
+  CtrlAlpha5Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(4);
+  }
+
+  @HostListener('document:keydown.control.6', ['$event'])
+  CtrlAlpha6Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(5);
+  }
+
+  @HostListener('document:keydown.control.7', ['$event'])
+  CtrlAlpha7Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(6);
+  }
+
+  @HostListener('document:keydown.control.8', ['$event'])
+  CtrlAlpha8Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(7);
+  }
+
+  @HostListener('document:keydown.control.9', ['$event'])
+  CtrlAlpha9Keypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    this.JumpToProfile(8);
+  }
+
+  @HostListener('document:keydown.control.space', ['$event'])
+  CtrlSpaceKeypress(event: KeyboardEvent):void {
+    if (this.TimerDelegate) {
+      this.StopTimer(true);
+    } else {
+      this.StartTimer(true);
+    }
+  }
+
+  @HostListener('document:keydown.control.arrowright', ['$event'])
+  CtrlRightKeypress(event: KeyboardEvent):void {
+    this.TimerTime += 3000;
+    this.SendSeek();
+  }
+
+  @HostListener('document:keydown.control.arrowleft', ['$event'])
+  CtrlLeftKeypress(event: KeyboardEvent):void {
+    if (this.TimerTime > 5000) {
+      this.TimerTime -= 3000;
+      this.SendSeek();
+    }
+  }
+
+  JumpToProfile(target:number) {
+    if (target < this.ProfileList.length){
+      this.SaveProfile();
+      this.SelectedProfile = target;
+      this.LoadProfile();
+    }
+  }
+
+  ShiftUp():void {
+    if(this.SelectedProfile > 1){
+      this.SelectedProfile -= 1;
+      var TempProfile: Profile = this.ProfileList[this.SelectedProfile];
+      this.ProfileList[this.SelectedProfile] = this.ProfileList[this.SelectedProfile + 1];
+      this.ProfileList[this.SelectedProfile + 1] = TempProfile;
+
+      if (!this.ProfileTab){
+        this.ProfileTab = true;
+        this.Profiletabtimeout = setTimeout(() => {
+          this.ProfileTab = false;
+        }, 3000);
+      } else {
+        clearTimeout(this.Profiletabtimeout);
+        this.Profiletabtimeout = setTimeout(() => {
+          this.ProfileTab = false;
+        }, 3000);
+      }
+    }
+  }
+
+  ShiftDown():void {
+    if((this.SelectedProfile < this.ProfileList.length  - 1) && (this.SelectedProfile != 0)){
+      this.SelectedProfile += 1;
+      var TempProfile: Profile = this.ProfileList[this.SelectedProfile];
+      this.ProfileList[this.SelectedProfile] = this.ProfileList[this.SelectedProfile - 1];
+      this.ProfileList[this.SelectedProfile - 1] = TempProfile;
+
+      if (!this.ProfileTab){
+        this.ProfileTab = true;
+        this.Profiletabtimeout = setTimeout(() => {
+          this.ProfileTab = false;
+        }, 3000);
+      } else {
+        clearTimeout(this.Profiletabtimeout);
+        this.Profiletabtimeout = setTimeout(() => {
+          this.ProfileTab = false;
+        }, 3000);
+      }
+    }
   }
 
   DeleteProfile():void {
@@ -487,6 +656,7 @@ export class ScriptEditorComponent implements OnInit {
   }
 
   AddProfile():void {
+    this.SaveProfile();
     this.SelectedProfile = this.ProfileList.length;
     if (this.ProfileName != ''){
       this.ProfileList.push({

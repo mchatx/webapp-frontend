@@ -20,6 +20,7 @@ import { ProxyappsetComponent } from './proxyappset/proxyappset.component';
 import { TranslatorClientComponent } from './translator-client/translator-client.component';
 import { ScriptEditorComponent } from './script-editor/script-editor.component';
 import { ChatboardComponent } from './chatboard/chatboard.component';
+import { ArchiveEditComponent } from './archive-edit/archive-edit.component';
 
 @NgModule({
   declarations: [
@@ -32,7 +33,8 @@ import { ChatboardComponent } from './chatboard/chatboard.component';
     ProxyappsetComponent,
     TranslatorClientComponent,
     ScriptEditorComponent,
-    ChatboardComponent
+    ChatboardComponent,
+    ArchiveEditComponent
   ],
   imports: [
     BrowserModule,

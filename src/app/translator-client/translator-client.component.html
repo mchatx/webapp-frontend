@@ -227,6 +227,7 @@
 <!---------------------------------------------- MODALS ------------------------------------------------------->
 <div class="modal" [ngClass]="{ 'is-active' : ModalMenu != 0 }">
   <div class="modal-background" (click)="ModalBackgroundClick()"></div>
+  
   <div class="modal-content" [ngSwitch]="ModalMenu">
     <div class="box">
       <!--  ADD NEW PROFILE  -->
