@@ -116,17 +116,19 @@
       </div>
 
       <!--  VIDEO CONTAINER  -->
-      <div style="display: flex; flex-direction: column;">
-        <div *ngIf="VidLoad" style="display: flex; flex-direction: column;">
-          <div id="player"></div>
+      <div style="display: flex; flex-direction: column; padding-left: 5px; padding-bottom: 5px; margin-top: 5px;" [style.border-left]="VidLoad ? '2px solid white' : ''">
+        <div *ngIf="VidLoad" style="width: 50vw; height: 100%;">
+          <div id="player" style="width: 100%; height: 100%;"></div>
         </div>
 
-        <div style="display: flex; flex-direction: row; justify-content: space-between;">
-          <a class="button" (click)="StopTimer(true)"><fa-icon [icon]="faStop"></fa-icon></a>
-          <span>{{ TimerTime | date:'HH:mm:ss.SS':'UTC+0' }}</span>
-          <a class="button" (click)="StartTimer(true)"><fa-icon [icon]="faPlay"></fa-icon></a>
+  
+        <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 5px;">
+          <a class="button" style="font-size: 12px;" (click)="StopTimer(true)"><fa-icon [icon]="faStop"></fa-icon></a>
+          <span style="margin-left: 5px; margin-right: 5px;">{{ TimerTime | date:'HH:mm:ss.SS':'UTC+0' }}</span>
+          <a class="button" style="font-size: 12px;" (click)="StartTimer(true)"><fa-icon [icon]="faPlay"></fa-icon></a>
         </div>
       </div>
+
     </div>
   </div>
   <!--==================== MAIN DISPLAY ======================-->
@@ -135,12 +137,31 @@
   <div class="hero-foot" #footer>
     <div class="container is-fluid" style="display: flex; flex-direction: column;">
       <!-------------------- TIMELINE -------------------->
-      <div *ngIf="VidLoad">
-        <div style="overflow-x: auto;">
+      <div style="display: flex; flex-direction: column; 
+        border-top: 2px solid white; padding-top: 7px; 
+        border-bottom: 2px solid white; padding-bottom: 7px; margin-bottom: 5px;">
+
+        <div style="display: flex; flex-direction: row; margin-bottom: 10px;">
+          <button class="button" (click)="TimelineZoomin()" style="margin-left: auto; margin-right: 5px;">
+            <span class="icon is-left is-small">
+              <fa-icon [icon]="faSearchPlus"></fa-icon>
+            </span>
+            <span>Zoom in</span>
+          </button>
+          <button class="button" (click)="TimelineZoomout()">
+            <span class="icon is-left is-small">
+              <fa-icon [icon]="faSearchMinus"></fa-icon>
+            </span>
+            <span>Zoom out</span>
+          </button>
+        </div>
+
+        <div style="overflow-x: auto; display: flex; flex-direction: column;">
           <progress class="progress is-primary" [value]="TimerTime" [max]="TimelineDur*1000" [style.width]="TimelineDur*SecToPx + 'px'" #TimeLine></progress>
         </div>
+
       </div>
-      <!--================== TIMELINE ==================-->
+    <!--================== TIMELINE ==================-->
 
       <div style="display: flex; flex-direction: row; margin-bottom: 5px;">
         <input type="text" [(ngModel)]="TLEntry.Stext" (keydown.enter)="SendEntry()" max="200" style="width: 100%;"/>
@@ -149,7 +170,17 @@
         </div>        
       </div>
 
+      <!--
       <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 5px;">
+      </div>
+      -->
+
+      <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px;">
+        <a class="button" (click)="SetModalMenu(1)" style="margin-right: 5px;">Add Profile</a>
+        <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
+        <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
+        <a class="button" (click)="DeleteProfile()" style="margin-right: 5px;">Delete Profile</a>
+
         <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
           <label style="margin-right: 10px;">Prefix </label>
           <input style="width: 100px;" type="text" [(ngModel)]="Prefix" max="30"/>
@@ -171,15 +202,8 @@
           <label style="margin-right: 10px;">Outline Colour </label>
           <input type="color" [(ngModel)]="OCcolour"/>
         </div>
-
       </div>
 
-      <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px;">
-        <a class="button" (click)="SetModalMenu(1)" style="margin-right: 5px;">Add Profile</a>
-        <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
-        <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
-        <a class="button" (click)="DeleteProfile()" style="margin-right: 5px;">Delete Profile</a>
-      </div>
     </div>
   </div>
   <!--==================== TL TOOL ======================-->

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular
 import { Router } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
-import { faHome, faPause, faPlay, faStop, faLock, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faPause, faPlay, faStop, faLock, faUser, faSearchPlus, faSearchMinus } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from '../services/account.service';
 
 class FullEntry {
@@ -44,8 +44,7 @@ class ArchiveLink {
 })
 export class ScriptEditorComponent implements OnInit {
   @ViewChild('cardcontainer') cardcontainer !: ElementRef; 
-  @ViewChild('TimeLine') Timeline !: ElementRef; 
-  @ViewChild('loadstate') loadbutton!: ElementRef;
+  @ViewChild('loadstate') loadbutton !: ElementRef;
   LoginMode: boolean = false;
   OpenOption: boolean = false;
   SearchPass: string = "";
@@ -91,10 +90,6 @@ export class ScriptEditorComponent implements OnInit {
   TimerDelegate: any | undefined = undefined;
   VidLoad: boolean = false;
 
-  // TIMELINE VARIABLES
-  TimelineDur: number = 3600;
-  SecToPx: number = 2;
-
   constructor(
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
@@ -134,7 +129,6 @@ export class ScriptEditorComponent implements OnInit {
       } catch (error) {
         localStorage.removeItem("MChatToken");
       }
-      this.RerenderTimeline();
     }
   }
 
@@ -308,6 +302,7 @@ export class ScriptEditorComponent implements OnInit {
   
       setTimeout(() => {
         this.LoadvideoYT();
+        this.RerenderTimeline();
       });
     }
     this.VidLoad = true;
@@ -806,14 +801,34 @@ export class ScriptEditorComponent implements OnInit {
 
 
 
-  //-------------------------- TIMELINE HANDLER --------------------------
-  RerenderTimeline(){
+  //-------------------------- RULER HANDLER --------------------------
+  /*
+  @ViewChild('TimeLine') Timeline !: ElementRef; 
+  @ViewChild('TimeCanvas') TimeCanvas !: ElementRef;
+  ctx: CanvasRenderingContext2D | null = null;
+  */
 
+  // TIMELINE VARIABLES
+  TimelineDur: number = 3600;
+  SecToPx: number = 20;
+
+  TimelineZoomout() {
+    if (this.SecToPx > 5){
+      this.SecToPx -= 5;
+    }
   }
-  //========================== TIMELINE HANDLER ==========================
+
+  TimelineZoomin() {
+    this.SecToPx += 5;
+  }
+
+  RerenderTimeline(){
+  }
+  //========================== RULER HANDLER ==========================
 
 
-
+  faSearchPlus = faSearchPlus;
+  faSearchMinus = faSearchMinus;
   faUser = faUser;
   faLock = faLock;
   faHome = faHome;
