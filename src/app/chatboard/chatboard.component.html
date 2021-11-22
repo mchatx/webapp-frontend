@@ -192,8 +192,8 @@
                 <th>外す</th>
               </tr>
             </thead>
-            <tbody *ngFor="let dt of ChatSource">
-              <tr>
+            <tbody>
+              <tr *ngFor="let dt of ChatSource">
                 <td [ngSwitch]="dt.config.type">
                   <fa-icon *ngSwitchCase="'YT'" [icon]="faYoutube" style="font-size: 32px;"></fa-icon>
                   <fa-icon *ngSwitchCase="'TW'" [icon]="faTwitch" style="font-size: 32px;"></fa-icon>

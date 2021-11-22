@@ -1,16 +1,16 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
-import { faHome, faPause, faPlay, faStop, faLock, faUser, faSearchPlus, faSearchMinus } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faPause, faPlay, faStop, faLock, faUser, faSearchPlus, faSearchMinus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from '../services/account.service';
 
 class FullEntry {
   Stext: string = "";
   Stime: number = 0;
-  CC: string | undefined;
-  OC: string | undefined;
+  Prfidx: number = 0;
   key: string = "";
+  End: number = 0;
 }
 
 class Profile {
@@ -42,9 +42,13 @@ class ArchiveLink {
   templateUrl: './script-editor.component.html',
   styleUrls: ['./script-editor.component.scss']
 })
-export class ScriptEditorComponent implements OnInit {
+export class ScriptEditorComponent implements OnInit, AfterViewInit {
   @ViewChild('cardcontainer') cardcontainer !: ElementRef; 
   @ViewChild('loadstate') loadbutton !: ElementRef;
+  @ViewChild('TableHeightRef') TableHeightRef !: ElementRef;
+  @ViewChild('HeroHead') HeroHead !: ElementRef;
+  @ViewChild('HeroFoot') HeroFoot !: ElementRef;
+  @ViewChild('TableContainer') TableContainer !: ElementRef;
   LoginMode: boolean = false;
   OpenOption: boolean = false;
   SearchPass: string = "";
@@ -52,14 +56,12 @@ export class ScriptEditorComponent implements OnInit {
 
   //  DISPLAY VARIABLES
   EntryList: FullEntry[] = [];
-  OT:number = 1;
-  ChatProxy:HTMLIFrameElement | undefined;
-
   FFsize:number = 21;
-  FStyle:string = "Ubuntu";
-  TxAlign:CanvasTextAlign = "left";
-  MaxDisplay = 30;
   BGColour:string = "#28282B";
+  SelectedEntry: number = 0;
+
+  TableHeight: number = 100;
+  DocumentHeight: number = window.innerHeight;
 
   RoomNick: string = "";
   Token: string = "";
@@ -68,9 +70,9 @@ export class ScriptEditorComponent implements OnInit {
   TLEntry:FullEntry = ({
     Stext: "",
     Stime: 0,
-    CC: undefined,
-    OC: undefined,
-    key: ""
+    Prfidx: 0,
+    key: "",
+    End: 0
   });
 
   Prefix: string = "";
@@ -97,6 +99,22 @@ export class ScriptEditorComponent implements OnInit {
     private AccService: AccountService
   ) { }
 
+  InnerResize(wait: number | undefined = undefined):void {
+    if (this.TableHeightRef) {
+      if (wait) {
+        setTimeout(() => {
+          this.TableHeight = window.innerHeight - this.HeroFoot.nativeElement.offsetHeight - this.HeroHead.nativeElement.offsetHeight - 17; 
+        }, wait);
+      } else {
+        this.TableHeight = window.innerHeight - this.HeroFoot.nativeElement.offsetHeight - this.HeroHead.nativeElement.offsetHeight - 17;
+      }
+    }
+  }
+
+  ngAfterViewInit(): void {
+    this.InnerResize(100);
+  }
+
   ngOnInit(): void {
     let test: string | null = localStorage.getItem("MChatToken");
 
@@ -113,14 +131,6 @@ export class ScriptEditorComponent implements OnInit {
               this.RoomNick = TokenData["Room"];
               this.Token = TokenData["Token"];
               this.RoomNick = TokenData["Room"];
-
-              this.ProfileList.push({
-                Name: 'Default',
-                Prefix: '',
-                Suffix: '',
-                OC: undefined,
-                CC: undefined
-              });
             }
           });
         } else {
@@ -130,6 +140,14 @@ export class ScriptEditorComponent implements OnInit {
         localStorage.removeItem("MChatToken");
       }
     }
+
+    this.ProfileList.push({
+      Name: 'Default',
+      Prefix: '',
+      Suffix: '',
+      OC: undefined,
+      CC: undefined
+    });
   }
 
   LoginRoom() {
@@ -218,6 +236,12 @@ export class ScriptEditorComponent implements OnInit {
   };
 
   SetModalMenu(idx: number):void {
+    if (idx == 10) {
+      if (this.SelectedProfile == 0) {
+        return;
+      }
+    }
+
     this.ModalMenu = idx;
     switch (this.ModalMenu) {
       case 1:
@@ -236,51 +260,15 @@ export class ScriptEditorComponent implements OnInit {
     this.SavedSetting = this.TempSetting;
   }
 
-  OpenEditEntry(idx : number):void {
-    let test = this.EntryList[idx].CC;
-    if (test != undefined){
-      this.EditCC = '#' + test;
-      this.EditCCheck = true;
-    } else {
-      this.EditCC = '#FFFFFF';
-      this.EditCCheck = false;
-    }
-
-    test = this.EntryList[idx].OC;
-    if (test != undefined){
-      this.EditOC = '#' + test;  
-      this.EditOCheck = true;    
-    } else {
-      this.EditOC = '#FFFFFF';
-      this.EditOCheck = false;
-    }
-   
-    this.EditText = this.EntryList[idx].Stext;
-    this.EditKey = this.EntryList[idx].key;
-    this.SetModalMenu(3);
-  }
-
   SendEdit():void {
-    if (this.EditCCheck){
-      this.TLEntry.CC = this.EditCC.substr(1);
-    } else {
-      this.TLEntry.CC = undefined;
-    }
-
-    if (this.EditOCheck){
-      this.TLEntry.OC = this.EditOC.substr(1); 
-    } else {
-      this.TLEntry.OC = undefined;
-    }
-
     this.TLEntry.Stime = Date.now();
 
     this.UpdateEntry({
       Stext: this.EditText,
       Stime: 0,
-      CC: this.TLEntry.CC,
-      OC: this.TLEntry.OC,
-      key: this.EditKey
+      Prfidx: 0,
+      key: this.EditKey,
+      End: 0
     });
 
     this.ModalMenu = 0;
@@ -413,19 +401,27 @@ export class ScriptEditorComponent implements OnInit {
 
 
   //-------------------------- TL INPUT CONTROL --------------------------
+  SaveActiveProfile(mode: number): void {
+    switch (mode) {
+      case 0:
+        if (this.CCcheck) {
+          this.ProfileList[this.SelectedProfile].CC = this.CCcolour;
+        } else {
+          this.ProfileList[this.SelectedProfile].CC = undefined;
+        }
+        break;
+
+      case 1:
+        if (this.OCcheck) {
+          this.ProfileList[this.SelectedProfile].OC = this.OCcolour;
+        } else {
+          this.ProfileList[this.SelectedProfile].OC = undefined;
+        }
+        break;
+    }
+  }
+
   SaveProfile():void {
-    if (this.CCcheck){
-      this.ProfileList[this.SelectedProfile].CC = this.CCcolour;
-    } else {
-      this.ProfileList[this.SelectedProfile].CC = undefined;
-    }
-
-    if (this.OCcheck){
-      this.ProfileList[this.SelectedProfile].OC = this.OCcolour; 
-    } else {
-      this.ProfileList[this.SelectedProfile].OC = undefined;
-    }
-
     this.ProfileList[this.SelectedProfile].Suffix = this.Suffix;
     this.ProfileList[this.SelectedProfile].Prefix = this.Prefix;
   }
@@ -467,6 +463,10 @@ export class ScriptEditorComponent implements OnInit {
         this.ProfileTab = false;
       }, 3000);
     }
+  }
+
+  SearchProfile(): number {
+    return this.EntryList.filter(e => e.Prfidx == this.SelectedProfile).length;
   }
 
   @HostListener('document:keydown.tab', ['$event'])
@@ -644,6 +644,10 @@ export class ScriptEditorComponent implements OnInit {
 
   DeleteProfile():void {
     if (this.SelectedProfile != 0){
+      this.EntryList.filter(e => e.Prfidx == this.SelectedProfile).map(e => {
+        e.Prfidx = 0;
+        return e;
+      });
       this.ProfileList.splice(this.SelectedProfile, 1);
       this.SelectedProfile--;
     }
@@ -678,32 +682,22 @@ export class ScriptEditorComponent implements OnInit {
   SendEntry(): void{
     if (!this.SpamBlock){
       this.SpamBlock = true;
-      if (this.CCcheck){
-        this.TLEntry.CC = this.CCcolour.substr(1);
-      } else {
-        this.TLEntry.CC = undefined;
-      }
-  
-      if (this.OCcheck){
-        this.TLEntry.OC = this.OCcolour.substr(1); 
-      } else {
-        this.TLEntry.OC = undefined;
-      }
-  
       this.TLEntry.Stime = this.TimerTime;
   
       this.AddEntry({
         Stext: this.Prefix + this.TLEntry.Stext + this.Suffix,
         Stime: this.TLEntry.Stime,
-        CC: this.TLEntry.CC,
-        OC: this.TLEntry.OC,
-        key: Date.now().toString()
+        Prfidx: this.SelectedProfile,
+        key: Date.now().toString(),
+        End: this.TLEntry.Stime + 5000
       });
   
       this.TLEntry.Stext = "";
       setTimeout(() => {
+        this.InnerResize();
+        this.TableContainer.nativeElement.scrollTop = this.TableContainer.nativeElement.scrollHeight;
         this.SpamBlock = false;
-      }, 1000);
+      }, 100);
     }
   }
   //========================== TL INPUT CONTROL ==========================  
@@ -723,11 +717,33 @@ export class ScriptEditorComponent implements OnInit {
   }
 
   AddEntry(dt:FullEntry): void{
-    if (this.EntryList.length == this.MaxDisplay){
-      this.EntryList.shift();
+    let Inserted:boolean = false;
+    for (var i = 0; i < this.EntryList.length; i++) {
+      if (this.EntryList[i].Stime > dt.Stime) {
+        if (i > 0) {
+          this.EntryList[i].End = dt.Stime - 100;  
+        }
+
+        if (i < this.EntryList.length - 2) {
+          this.EntryList[i + 1].Stime = dt.End + 100;  
+        }
+        
+        this.EntryList.splice(i, 0, dt);
+        Inserted = true;
+        break;
+      }
     }
 
-    this.EntryList.push(dt);
+    if (!Inserted) {
+      if (this.EntryList.length != 0){
+        this.EntryList[this.EntryList.length - 1].End = dt.Stime - 100;
+      }
+      this.EntryList.push(dt);
+    }
+  }
+
+  DeleteEntry(): void {
+    this.EntryList.splice(this.SelectedEntry, 1);
   }
   //===================================  ENTRY HANDLER  ===================================
 
@@ -815,18 +831,20 @@ export class ScriptEditorComponent implements OnInit {
   TimelineZoomout() {
     if (this.SecToPx > 5){
       this.SecToPx -= 5;
+      this.InnerResize(10);
     }
   }
 
   TimelineZoomin() {
     this.SecToPx += 5;
+    this.InnerResize(10);
   }
 
   RerenderTimeline(){
   }
   //========================== RULER HANDLER ==========================
 
-
+  faTimesCircle = faTimesCircle;
   faSearchPlus = faSearchPlus;
   faSearchMinus = faSearchMinus;
   faUser = faUser;
