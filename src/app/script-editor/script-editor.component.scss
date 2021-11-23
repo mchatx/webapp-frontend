@@ -1,1 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@700&display=swap');
+
+textarea {
+    font-size: inherit; 
+    font-weight: inherit; 
+    font-family: inherit; 
+    -webkit-text-stroke-width: inherit; 
+    border-width: 0px; 
+    width: 100%; 
+    resize: none;
+}
+
+input.EntryEdit {
+    font-size: inherit; 
+    font-weight: inherit; 
+    font-family: inherit; 
+    -webkit-text-stroke-width: inherit; 
+    border-width: 0px; 
+    width: 100%; 
+}

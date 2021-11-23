@@ -58,7 +58,7 @@
                 <td>{{ i + 1 }}</td>
                 <td>{{ Entry.Stime | date:'HH:mm:ss.SS':'UTC+0'}}</td>
                 <td>{{ this.ProfileList[Entry.Prfidx].Name }}</td>
-                <td [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC">{{ Entry.Stext }}</td>
+                <td><input [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200"/></td>
               </tr>
             </tbody>
           </table>
@@ -117,13 +117,14 @@
         </div>
 
         <div style="overflow-x: auto; display: flex; flex-direction: column;">
-          <progress class="progress is-primary" [value]="TimerTime" [max]="TimelineDur*1000" [style.width]="TimelineDur*SecToPx + 'px'" #TimeLine></progress>
+          <canvas style="height: 20px; width: 300%;"  #TimeCanvas></canvas>
 
-          <div style="display: flex; flex-direction: row;">
+          <div style="display: flex; flex-direction: row; width: 300%;">
+            <div style="width: 6px; background-color: green; height: 100%;"></div>
             <div *ngFor="let Entry of EntryList" [style.width] = "(Entry.End - Entry.Stime)/1000*SecToPx + 'px'"
-              style="background-color: white; padding: 5px 10px 5px 10px; border-radius: 5%; border-left: 5px solid green;
-                -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-size: 21; font-weight: bolder; color: black;">
-              <span [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" style="word-wrap: break-word;">{{ Entry.Stext }}</span>
+              style="display: flex; flex-direction: row; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-size: 21; font-weight: bolder; color: black;">
+              <input style="background-color: white; padding: 5px 10px 5px 10x; border-radius: 4%;" [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200"/>
+              <div style="width: 6px; background-color: green; height: 100%; cursor: ew-resize;"></div>
              </div>
           </div>
         </div>

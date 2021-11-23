@@ -109,10 +109,14 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
         this.TableHeight = window.innerHeight - this.HeroFoot.nativeElement.offsetHeight - this.HeroHead.nativeElement.offsetHeight - 17;
       }
     }
+    this.RerenderTimeline();
   }
 
   ngAfterViewInit(): void {
     this.InnerResize(100);
+    setTimeout(() => {
+      this.RerenderTimeline();
+    }, 100);
   }
 
   ngOnInit(): void {
@@ -148,6 +152,14 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
       OC: undefined,
       CC: undefined
     });
+
+    this.AddEntry({
+      Stext: "--- Stream Starts ---",
+      Stime: 0,
+      Prfidx: 0,
+      key: Date.now().toString(),
+      End: 1000
+    })
   }
 
   LoginRoom() {
@@ -589,6 +601,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     if (this.TimerTime > 5000) {
       this.TimerTime -= 3000;
       this.SendSeek();
+    } else {
+      this.TimerTime = 0;
+      this.SendSeek();
     }
   }
 
@@ -689,7 +704,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
         Stime: this.TLEntry.Stime,
         Prfidx: this.SelectedProfile,
         key: Date.now().toString(),
-        End: this.TLEntry.Stime + 5000
+        End: this.TLEntry.Stime + 1000
       });
   
       this.TLEntry.Stext = "";
@@ -721,11 +736,11 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     for (var i = 0; i < this.EntryList.length; i++) {
       if (this.EntryList[i].Stime > dt.Stime) {
         if (i > 0) {
-          this.EntryList[i].End = dt.Stime - 100;  
+          this.EntryList[i].End = dt.Stime;  
         }
 
         if (i < this.EntryList.length - 2) {
-          this.EntryList[i + 1].Stime = dt.End + 100;  
+          this.EntryList[i + 1].Stime = dt.End;  
         }
         
         this.EntryList.splice(i, 0, dt);
@@ -736,7 +751,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
     if (!Inserted) {
       if (this.EntryList.length != 0){
-        this.EntryList[this.EntryList.length - 1].End = dt.Stime - 100;
+        this.EntryList[this.EntryList.length - 1].End = dt.Stime;
       }
       this.EntryList.push(dt);
     }
@@ -818,29 +833,67 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
 
   //-------------------------- RULER HANDLER --------------------------
-  /*
-  @ViewChild('TimeLine') Timeline !: ElementRef; 
-  @ViewChild('TimeCanvas') TimeCanvas !: ElementRef;
+  @ViewChild('TimeCanvas') TimeCanvas !: ElementRef<HTMLCanvasElement>;
   ctx: CanvasRenderingContext2D | null = null;
-  */
+  
 
   // TIMELINE VARIABLES
   TimelineDur: number = 3600;
-  SecToPx: number = 20;
+  SecToPx: number = 300;
 
   TimelineZoomout() {
-    if (this.SecToPx > 5){
-      this.SecToPx -= 5;
+    if (this.SecToPx > 20){
+      this.SecToPx -= 20;
       this.InnerResize(10);
+      this.RerenderTimeline();
     }
   }
 
   TimelineZoomin() {
-    this.SecToPx += 5;
+    this.SecToPx += 20;
     this.InnerResize(10);
+    this.RerenderTimeline();
   }
 
   RerenderTimeline(){
+    if (this.TimeCanvas) {
+      this.ctx = this.TimeCanvas.nativeElement.getContext("2d");
+
+      if (this.ctx) {
+        const width = this.TimeCanvas.nativeElement.offsetWidth;
+        const height = this.TimeCanvas.nativeElement.offsetHeight;
+        this.TimeCanvas.nativeElement.width = width;
+        this.TimeCanvas.nativeElement.height = height;
+   
+        this.ctx.save();
+        this.ctx.strokeStyle = 'white';
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = '14px Ubuntu';
+        this.ctx.lineWidth = 0.35;
+    
+        for (let x = 0; x*this.SecToPx/10 < width; x += 1) {
+          if (x % 10 == 0) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x*this.SecToPx/10, 0);
+            this.ctx.lineTo(x*this.SecToPx/10, height);
+            this.ctx.stroke();
+            this.ctx.fillText((x/10).toString(), x*this.SecToPx/10, height);
+          } else if (x % 2 == 0) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x*this.SecToPx/10, 0);
+            this.ctx.lineTo(x*this.SecToPx/10, height*2.0/3.0);
+            this.ctx.stroke();
+          } else {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x*this.SecToPx/10, 0);
+            this.ctx.lineTo(x*this.SecToPx/10, height*1.0/3.0);
+            this.ctx.stroke();
+          }
+        }
+    
+        this.ctx.restore();
+      }
+    }
   }
   //========================== RULER HANDLER ==========================
 
