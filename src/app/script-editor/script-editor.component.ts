@@ -331,6 +331,22 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
       ThirdPartySharing: true,
       Hidden: false
     };
+
+    this.ProfileList.push({
+      Name: 'Default',
+      Prefix: '',
+      Suffix: '',
+      OC: undefined,
+      CC: undefined
+    });
+
+    this.AddEntry({
+      Stext: "--- Stream Starts ---",
+      Stime: 0,
+      Prfidx: 0,
+      key: Date.now().toString(),
+      End: 1000
+    })
   }
 
   ImportFile() {
@@ -372,43 +388,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
   }
   //========================== AUX CONTROL ==========================
-
-
-
-  //-------------------------- TIMER CONTROL --------------------------
-  StartTimer(propagate:boolean):void {
-    if (!this.TimerDelegate){
-      if (this.VidLoad){
-        this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
-      }
-      this.TimerDelegate = setInterval(() => {
-        this.TimerTime += 100;
-      }, 100);
-      if (propagate && this.VidLoad){
-        this.player.playVideo();
-      }
-    }
-  }
-
-  StopTimer(propagate: boolean):void {
-    if (this.TimerDelegate){
-      if (this.VidLoad){
-        this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
-      }
-      clearInterval(this.TimerDelegate);
-      this.TimerDelegate = undefined;
-      if (propagate && this.VidLoad){
-        this.player.pauseVideo()
-      }
-    }
-  }
-
-  SendSeek(){
-    if (this.VidLoad){
-      this.player.seekTo(this.TimerTime/1000, true);
-    }
-  }
-  //========================== TIMER CONTROL ==========================
 
 
 
@@ -736,11 +715,11 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     for (var i = 0; i < this.EntryList.length; i++) {
       if (this.EntryList[i].Stime > dt.Stime) {
         if (i > 0) {
-          this.EntryList[i].End = dt.Stime;  
+          this.EntryList[i - 1].End = dt.Stime;  
         }
 
         if (i < this.EntryList.length - 2) {
-          this.EntryList[i + 1].Stime = dt.End;  
+          this.EntryList[i].Stime = dt.End;  
         }
         
         this.EntryList.splice(i, 0, dt);
@@ -833,7 +812,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
 
   //-------------------------- RULER HANDLER --------------------------
-  @ViewChild('TimeCanvas') TimeCanvas !: ElementRef<HTMLCanvasElement>;
+  @ViewChild('TimeCanvas1') TimeCanvas1 !: ElementRef<HTMLCanvasElement>;
+  @ViewChild('TimelineDiv') TimeDiv !: ElementRef<HTMLDivElement>;
   ctx: CanvasRenderingContext2D | null = null;
   ResizeMode: boolean = false;
   TimelineActive: boolean = false;
@@ -841,7 +821,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
   // TIMELINE VARIABLES
   TimelineDur: number = 3600;
-  SecToPx: number = 300;
+  SecToPx: number = 200;
 
   RulerMouseLeave(event: any) {
     this.TimelineActive = false;
@@ -924,14 +904,14 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   }
 
   RerenderTimeline(){
-    if (this.TimeCanvas) {
-      this.ctx = this.TimeCanvas.nativeElement.getContext("2d");
+    if (this.TimeCanvas1) {
+      this.ctx = this.TimeCanvas1.nativeElement.getContext("2d");
 
       if (this.ctx) {
-        const width = this.TimeCanvas.nativeElement.offsetWidth;
-        const height = this.TimeCanvas.nativeElement.offsetHeight;
-        this.TimeCanvas.nativeElement.width = width;
-        this.TimeCanvas.nativeElement.height = height;
+        const width = this.TimeCanvas1.nativeElement.offsetWidth;
+        const height = this.TimeCanvas1.nativeElement.offsetHeight;
+        this.TimeCanvas1.nativeElement.width = width;
+        this.TimeCanvas1.nativeElement.height = height;
    
         this.ctx.save();
         this.ctx.strokeStyle = 'white';
@@ -964,6 +944,48 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     }
   }
   //========================== RULER HANDLER ==========================
+
+
+
+  //-------------------------- TIMER CONTROL --------------------------
+  StartTimer(propagate:boolean):void {
+    if (!this.TimerDelegate){
+      if (this.VidLoad){
+        this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
+      }
+      this.TimerDelegate = setInterval(() => {
+        this.TimerTime += 100;
+        if (this.TimeDiv) {
+          this.TimeDiv.nativeElement.scrollLeft = this.TimerTime/1000*this.SecToPx;
+        }
+      }, 100);
+      if (propagate && this.VidLoad){
+        this.player.playVideo();
+      }
+    }
+  }
+
+  StopTimer(propagate: boolean):void {
+    if (this.TimerDelegate){
+      if (this.VidLoad){
+        this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
+      }
+      clearInterval(this.TimerDelegate);
+      this.TimerDelegate = undefined;
+      if (propagate && this.VidLoad){
+        this.player.pauseVideo()
+      }
+    }
+  }
+
+  SendSeek(){
+    if (this.VidLoad){
+      this.player.seekTo(this.TimerTime/1000, true);
+    }
+  }
+  //========================== TIMER CONTROL ==========================
+
+
 
   faTimesCircle = faTimesCircle;
   faSearchPlus = faSearchPlus;

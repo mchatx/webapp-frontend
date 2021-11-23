@@ -97,9 +97,7 @@
     <div class="container is-fluid" style="display: flex; flex-direction: column;">
 
       <!-------------------- TIMELINE -------------------->
-      <div style="display: flex; flex-direction: column; 
-        border-top: 2px solid white; padding-top: 7px; 
-        border-bottom: 2px solid white; padding-bottom: 7px; margin-bottom: 5px;">
+      <div style="display: flex; flex-direction: column; padding-bottom: 7px; margin-bottom: 5px;">
 
         <div style="display: flex; flex-direction: row; margin-bottom: 10px;">
           <button class="button" (click)="TimelineZoomin()" style="margin-left: auto; margin-right: 5px;">
@@ -116,18 +114,30 @@
           </button>
         </div>
 
-        <div style="overflow-x: auto; display: flex; flex-direction: column;">
-          <canvas style="height: 20px; width: 300%;"  #TimeCanvas></canvas>
+        <div style="position: relative;">
+          <div style="position: absolute; left: calc(50vw - 2px); top: 0px; width: 4px; height: 100%; z-index: 1; background-color: rgba(255, 0, 0, 0.3);"> </div>
 
-          <div style="display: flex; flex-direction: row; width: 300%; margin-top: 5px; margin-bottom: 5px;" (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
-            <div style="width: 6px; background-color: green; height: 100%;"></div>
-            
-            <div *ngFor="let Entry of EntryList; index as i" [style.width] = "(Entry.End - Entry.Stime)/1000*SecToPx + 'px'"
-              style="display: flex; flex-direction: row; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-size: 21; font-weight: bolder; color: black;">
-              <input style="background-color: white; padding: 5px 10px 5px 10x; border-radius: 4%; cursor: move; text-align: center;" [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" 
-                [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200" (mousedown)="RulerMouseDown($event, i, false)"/>
-              <div style="width: 6px; background-color: green; height: 100%; cursor: ew-resize;" (mousedown)="RulerMouseDown($event, i, true);"></div>
-             </div>
+          <div style="overflow-x: hidden; scroll-behavior: smooth; display: flex; flex-direction: column; border-top: 2px solid white; padding-top: 7px; border-bottom: 2px solid white;" #TimelineDiv>
+
+            <div style="display: flex; flex-direction: row; width: 600%; margin-left: 50vw;" (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
+              <canvas style="height: 20px; width: 200%; margin-left: auto;" #TimeCanvas1></canvas>
+              <!--
+              <canvas style="height: 20px; width: 200%;" #TimeCanvas2></canvas>
+              <canvas style="height: 20px; width: 200%;" #TimeCanvas3></canvas>
+              -->
+            </div>
+  
+            <div style="display: flex; flex-direction: row; width: 600%; margin-top: 5px; margin-bottom: 5px; margin-left: calc(50vw + 3px);" (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
+              <div *ngFor="let Entry of EntryList; index as i" [style.width] = "(Entry.End - Entry.Stime)/1000*SecToPx + 'px'"
+                style="display: flex; flex-direction: row; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-size: 21; font-weight: bolder; color: black;">
+  
+                <input style="background-color: white; padding: 5px 10px 5px 10x; border-radius: 4%; cursor: move; text-align: center;"
+                  [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" 
+                  class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200" (mousedown)="RulerMouseDown($event, i, false)"/>
+  
+                <div style="width: 6px; background-color: green; height: 100%; cursor: ew-resize;" (mousedown)="RulerMouseDown($event, i, true);"></div>
+              </div>
+            </div>
           </div>
         </div>
 
