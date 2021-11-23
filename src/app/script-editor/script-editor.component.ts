@@ -835,11 +835,79 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   //-------------------------- RULER HANDLER --------------------------
   @ViewChild('TimeCanvas') TimeCanvas !: ElementRef<HTMLCanvasElement>;
   ctx: CanvasRenderingContext2D | null = null;
-  
+  ResizeMode: boolean = false;
+  TimelineActive: boolean = false;
+  XPos: number = 0;
 
   // TIMELINE VARIABLES
   TimelineDur: number = 3600;
   SecToPx: number = 300;
+
+  RulerMouseLeave(event: any) {
+    this.TimelineActive = false;
+  }
+
+  RulerMouseDown(event: any, idx: number, ResizeSwitch: boolean) {
+    if (!this.TimelineActive) {
+      this.SelectedEntry = idx;
+      this.TimelineActive = true;
+      this.XPos = event.clientX;
+      this.ResizeMode = ResizeSwitch;
+    }
+  }
+
+  RulerMouseUp(event: any) {
+    this.TimelineActive = false;
+  }
+
+  RulerMouseMove(event: any) {
+    if (this.TimelineActive) {
+      if (this.ResizeMode) {
+        var a = this.EntryList[this.SelectedEntry].End + (event.clientX - this.XPos)/this.SecToPx*1000;
+        if (a - this.EntryList[this.SelectedEntry].Stime < 300) {
+          this.TimelineActive = false;
+          return;
+        }
+
+        if (this.SelectedEntry < this.EntryList.length - 1){
+          var b = this.EntryList[this.SelectedEntry + 1].Stime + (event.clientX - this.XPos)/this.SecToPx*1000;
+          if (this.EntryList[this.SelectedEntry + 1].End - b < 300) {
+            this.TimelineActive = false;
+            return;
+          }
+          this.EntryList[this.SelectedEntry + 1].Stime = b;
+        }
+
+        this.EntryList[this.SelectedEntry].End = a;
+
+      } else {
+        if (this.SelectedEntry != 0) {
+          var a = this.EntryList[this.SelectedEntry - 1].End + (event.clientX - this.XPos)/this.SecToPx*1000;
+          if (a - this.EntryList[this.SelectedEntry - 1].Stime < 300) {
+            this.TimelineActive = false;
+            return;
+          }
+
+          if (this.SelectedEntry < this.EntryList.length - 1){
+            var b = this.EntryList[this.SelectedEntry + 1].Stime + (event.clientX - this.XPos)/this.SecToPx*1000;
+            if (this.EntryList[this.SelectedEntry + 1].End - b < 300){
+              this.TimelineActive = false;
+              return;
+            }
+            this.EntryList[this.SelectedEntry + 1].Stime = b;
+          }
+
+          this.EntryList[this.SelectedEntry - 1].End = a;
+          this.EntryList[this.SelectedEntry].Stime += (event.clientX - this.XPos)/this.SecToPx*1000;
+          this.EntryList[this.SelectedEntry].End += (event.clientX - this.XPos)/this.SecToPx*1000;
+
+          
+        }
+      }
+      this.XPos = event.clientX;
+    }    
+  }
+
 
   TimelineZoomout() {
     if (this.SecToPx > 20){
@@ -877,7 +945,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
             this.ctx.moveTo(x*this.SecToPx/10, 0);
             this.ctx.lineTo(x*this.SecToPx/10, height);
             this.ctx.stroke();
-            this.ctx.fillText((x/10).toString(), x*this.SecToPx/10, height);
+            this.ctx.fillText((x/10).toString(), x*this.SecToPx/10 + 5, height);
           } else if (x % 2 == 0) {
             this.ctx.beginPath();
             this.ctx.moveTo(x*this.SecToPx/10, 0);

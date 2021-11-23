@@ -119,12 +119,14 @@
         <div style="overflow-x: auto; display: flex; flex-direction: column;">
           <canvas style="height: 20px; width: 300%;"  #TimeCanvas></canvas>
 
-          <div style="display: flex; flex-direction: row; width: 300%;">
+          <div style="display: flex; flex-direction: row; width: 300%; margin-top: 5px; margin-bottom: 5px;" (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
             <div style="width: 6px; background-color: green; height: 100%;"></div>
-            <div *ngFor="let Entry of EntryList" [style.width] = "(Entry.End - Entry.Stime)/1000*SecToPx + 'px'"
+            
+            <div *ngFor="let Entry of EntryList; index as i" [style.width] = "(Entry.End - Entry.Stime)/1000*SecToPx + 'px'"
               style="display: flex; flex-direction: row; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-size: 21; font-weight: bolder; color: black;">
-              <input style="background-color: white; padding: 5px 10px 5px 10x; border-radius: 4%;" [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200"/>
-              <div style="width: 6px; background-color: green; height: 100%; cursor: ew-resize;"></div>
+              <input style="background-color: white; padding: 5px 10px 5px 10x; border-radius: 4%; cursor: move; text-align: center;" [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" 
+                [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200" (mousedown)="RulerMouseDown($event, i, false)"/>
+              <div style="width: 6px; background-color: green; height: 100%; cursor: ew-resize;" (mousedown)="RulerMouseDown($event, i, true);"></div>
              </div>
           </div>
         </div>
