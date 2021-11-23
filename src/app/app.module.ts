@@ -34,7 +34,7 @@ import { ArchiveEditComponent } from './archive-edit/archive-edit.component';
     TranslatorClientComponent,
     ScriptEditorComponent,
     ChatboardComponent,
-    ArchiveEditComponent
+    ArchiveEditComponent,
   ],
   imports: [
     BrowserModule,

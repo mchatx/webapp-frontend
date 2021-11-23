@@ -56,7 +56,7 @@
               <tr *ngFor="let Entry of EntryList; index as i">
                 <td><fa-icon [icon]="faTimesCircle" (click)="ModalMenu = 3; SelectedEntry = i" style="cursor: pointer;"></fa-icon></td>
                 <td>{{ i + 1 }}</td>
-                <td>{{ Entry.Stime | date:'HH:mm:ss.SS':'UTC+0'}}</td>
+                <td>{{ this.SectoTimestring(Entry.Stime/1000, true, true) }}</td>
                 <td>{{ this.ProfileList[Entry.Prfidx].Name }}</td>
                 <td><input [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200"/></td>
               </tr>
@@ -83,7 +83,7 @@
   
         <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 5px;">
           <a class="button" style="font-size: 12px;" (click)="StopTimer(true)"><fa-icon [icon]="faStop"></fa-icon></a>
-          <span style="margin-left: 5px; margin-right: 5px;">{{ TimerTime | date:'HH:mm:ss.SS':'UTC+0' }}</span>
+          <span style="margin-left: 5px; margin-right: 5px;">{{ this.SectoTimestring(TimerTime/1000, true, true) }}</span>
           <a class="button" style="font-size: 12px;" (click)="StartTimer(true)"><fa-icon [icon]="faPlay"></fa-icon></a>
         </div>
       </div>
@@ -117,17 +117,17 @@
         <div style="position: relative;">
           <div style="position: absolute; left: calc(50vw - 2px); top: 0px; width: 4px; height: 100%; z-index: 1; background-color: rgba(255, 0, 0, 0.3);"> </div>
 
-          <div style="overflow-x: hidden; scroll-behavior: smooth; display: flex; flex-direction: column; border-top: 2px solid white; padding-top: 7px; border-bottom: 2px solid white;" #TimelineDiv>
-
-            <div style="display: flex; flex-direction: row; width: 600%; margin-left: 50vw;" (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
-              <canvas style="height: 20px; width: 200%; margin-left: auto;" #TimeCanvas1></canvas>
-              <!--
-              <canvas style="height: 20px; width: 200%;" #TimeCanvas2></canvas>
-              <canvas style="height: 20px; width: 200%;" #TimeCanvas3></canvas>
-              -->
+          <div style="overflow-x: hidden; display: flex; flex-direction: column; border-top: 2px solid white; padding-top: 7px; border-bottom: 2px solid white;"
+            [scrollLeft]="ScrollCalculator()" [style.scroll-behavior]="this.JumpScroll ? 'unset' : 'smooth'" #TimelineDiv>
+            
+            <div style="display: flex; flex-direction: row; margin-left: 50vw;" [style.width]="(3*SecToPx*SecPerBar).toString() + 'px'"
+              (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
+              <canvas [style.height]="this.BarHeight.toString() + 'px'" [style.width]="(SecToPx*SecPerBar).toString() + 'px'" #TimeCanvas1></canvas>
+              <canvas [style.height]="this.BarHeight.toString() + 'px'" [style.width]="(SecToPx*SecPerBar).toString() + 'px'" #TimeCanvas2></canvas>
+              <canvas style="margin-right: auto;" [style.height]="this.BarHeight.toString() + 'px'" [style.width]="(SecToPx*SecPerBar).toString() + 'px'" #TimeCanvas3></canvas>
             </div>
   
-            <div style="display: flex; flex-direction: row; width: 600%; margin-top: 5px; margin-bottom: 5px; margin-left: calc(50vw + 3px);" (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
+            <div style="display: flex; flex-direction: row; width: 600%; margin-top: 5px; margin-bottom: 5px;" [style.margin-left]="'calc(50vw + 3px + ' + XtraMargin.toString() + 'px)'" (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
               <div *ngFor="let Entry of EntryList; index as i" [style.width] = "(Entry.End - Entry.Stime)/1000*SecToPx + 'px'"
                 style="display: flex; flex-direction: row; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-size: 21; font-weight: bolder; color: black;">
   

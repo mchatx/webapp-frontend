@@ -114,9 +114,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.InnerResize(100);
-    setTimeout(() => {
-      this.RerenderTimeline();
-    }, 100);
   }
 
   ngOnInit(): void {
@@ -321,6 +318,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   NewScript(): void {
     this.ModalMenu = 0;
     this.EntryList = [];
+    this.BarCount = 0;
     this.SavedSetting = {
       StreamLink: "",
       Tags: "",
@@ -562,6 +560,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
   @HostListener('document:keydown.control.space', ['$event'])
   CtrlSpaceKeypress(event: KeyboardEvent):void {
+    event.preventDefault();
     if (this.TimerDelegate) {
       this.StopTimer(true);
     } else {
@@ -718,8 +717,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
           this.EntryList[i - 1].End = dt.Stime;  
         }
 
-        if (i < this.EntryList.length - 2) {
-          this.EntryList[i].Stime = dt.End;  
+        if (i < this.EntryList.length){
+          dt.End = this.EntryList[i].Stime;  
         }
         
         this.EntryList.splice(i, 0, dt);
@@ -737,7 +736,14 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   }
 
   DeleteEntry(): void {
-    this.EntryList.splice(this.SelectedEntry, 1);
+    if (this.SelectedEntry > 0) {
+      var dt: FullEntry = this.EntryList.splice(this.SelectedEntry, 1)[0];
+      if (this.SelectedEntry > 0) {
+        this.EntryList[this.SelectedEntry - 1].End = dt.End;
+      } else {
+        this.EntryList[this.SelectedEntry].Stime = dt.Stime;
+      }
+    }
   }
   //===================================  ENTRY HANDLER  ===================================
 
@@ -813,6 +819,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
   //-------------------------- RULER HANDLER --------------------------
   @ViewChild('TimeCanvas1') TimeCanvas1 !: ElementRef<HTMLCanvasElement>;
+  @ViewChild('TimeCanvas2') TimeCanvas2 !: ElementRef<HTMLCanvasElement>;
+  @ViewChild('TimeCanvas3') TimeCanvas3 !: ElementRef<HTMLCanvasElement>;
   @ViewChild('TimelineDiv') TimeDiv !: ElementRef<HTMLDivElement>;
   ctx: CanvasRenderingContext2D | null = null;
   ResizeMode: boolean = false;
@@ -822,6 +830,56 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   // TIMELINE VARIABLES
   TimelineDur: number = 3600;
   SecToPx: number = 200;
+  SecPerBar: number = 10;
+  BarHeight: number = 20;
+  XtraMargin: number = 0;
+  JumpScroll: boolean = true;
+  BarCount: number = 0;
+
+  SectoTimestring(Sec: number, msOutput: boolean = true, Full: boolean = false): string {
+    var MS:string = Math.floor((Sec % 1)*100).toString();
+    if (MS.length == 1){
+      MS = "0" + MS;
+    }
+
+    Sec = Math.floor(Sec);
+    var H: number = Math.floor(Sec/60/60);
+    Sec -= H*60*60;
+    var M: number = Math.floor(Sec/60);
+    Sec -= M*60;
+
+    var Stemp:string = H.toString() 
+    if (Stemp.length == 1){
+      Stemp = "0" + Stemp;
+    }
+    Stemp += ":" + ("0" + M.toString()).slice(-2) + ":" + ("0" + Sec.toString()).slice(-2) + "." + MS;
+
+    if (Full) {
+      if (msOutput) {
+        return Stemp;
+      } else {
+        return Stemp.slice(0, Stemp.length - 3);
+      }
+    } else {
+      for (var i = 0; i < 3; i++) {
+        if (Stemp.slice(0, 2) != "00"){
+          break;
+        } else {
+          Stemp = Stemp.slice(3);
+        }
+      }
+
+      if (Stemp[0] == '0'){
+        Stemp = Stemp.slice(1);
+      }
+
+      if (msOutput) {
+        return Stemp;
+      } else {
+        return Stemp.slice(0, Stemp.length - 3);
+      }
+    }
+  }
 
   RulerMouseLeave(event: any) {
     this.TimelineActive = false;
@@ -844,14 +902,14 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     if (this.TimelineActive) {
       if (this.ResizeMode) {
         var a = this.EntryList[this.SelectedEntry].End + (event.clientX - this.XPos)/this.SecToPx*1000;
-        if (a - this.EntryList[this.SelectedEntry].Stime < 300) {
+        if (a - this.EntryList[this.SelectedEntry].Stime < 50) {
           this.TimelineActive = false;
           return;
         }
 
         if (this.SelectedEntry < this.EntryList.length - 1){
           var b = this.EntryList[this.SelectedEntry + 1].Stime + (event.clientX - this.XPos)/this.SecToPx*1000;
-          if (this.EntryList[this.SelectedEntry + 1].End - b < 300) {
+          if (this.EntryList[this.SelectedEntry + 1].End - b < 50) {
             this.TimelineActive = false;
             return;
           }
@@ -863,14 +921,14 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
       } else {
         if (this.SelectedEntry != 0) {
           var a = this.EntryList[this.SelectedEntry - 1].End + (event.clientX - this.XPos)/this.SecToPx*1000;
-          if (a - this.EntryList[this.SelectedEntry - 1].Stime < 300) {
+          if (a - this.EntryList[this.SelectedEntry - 1].Stime < 50) {
             this.TimelineActive = false;
             return;
           }
 
           if (this.SelectedEntry < this.EntryList.length - 1){
             var b = this.EntryList[this.SelectedEntry + 1].Stime + (event.clientX - this.XPos)/this.SecToPx*1000;
-            if (this.EntryList[this.SelectedEntry + 1].End - b < 300){
+            if (this.EntryList[this.SelectedEntry + 1].End - b < 50){
               this.TimelineActive = false;
               return;
             }
@@ -892,56 +950,187 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   TimelineZoomout() {
     if (this.SecToPx > 20){
       this.SecToPx -= 20;
-      this.InnerResize(10);
-      this.RerenderTimeline();
+      this.InnerResize(100);
     }
   }
 
   TimelineZoomin() {
-    this.SecToPx += 20;
-    this.InnerResize(10);
-    this.RerenderTimeline();
+    if (this.SecToPx < 380) {
+      this.SecToPx += 20;
+      this.InnerResize(100);
+    }
   }
 
   RerenderTimeline(){
     if (this.TimeCanvas1) {
-      this.ctx = this.TimeCanvas1.nativeElement.getContext("2d");
+      for(var i = 0; i < 3; i++) {
+        switch (i) {
+          case 0:
+            this.ctx = this.TimeCanvas1.nativeElement.getContext("2d");    
+            this.TimeCanvas1.nativeElement.width = this.SecToPx*this.SecPerBar;
+            this.TimeCanvas1.nativeElement.height = this.BarHeight;
+            break;
 
-      if (this.ctx) {
-        const width = this.TimeCanvas1.nativeElement.offsetWidth;
-        const height = this.TimeCanvas1.nativeElement.offsetHeight;
-        this.TimeCanvas1.nativeElement.width = width;
-        this.TimeCanvas1.nativeElement.height = height;
-   
-        this.ctx.save();
-        this.ctx.strokeStyle = 'white';
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = '14px Ubuntu';
-        this.ctx.lineWidth = 0.35;
-    
-        for (let x = 0; x*this.SecToPx/10 < width; x += 1) {
-          if (x % 10 == 0) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x*this.SecToPx/10, 0);
-            this.ctx.lineTo(x*this.SecToPx/10, height);
-            this.ctx.stroke();
-            this.ctx.fillText((x/10).toString(), x*this.SecToPx/10 + 5, height);
-          } else if (x % 2 == 0) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x*this.SecToPx/10, 0);
-            this.ctx.lineTo(x*this.SecToPx/10, height*2.0/3.0);
-            this.ctx.stroke();
-          } else {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x*this.SecToPx/10, 0);
-            this.ctx.lineTo(x*this.SecToPx/10, height*1.0/3.0);
-            this.ctx.stroke();
-          }
+          case 1:
+            this.ctx = this.TimeCanvas2.nativeElement.getContext("2d");    
+            this.TimeCanvas2.nativeElement.width = this.SecToPx*this.SecPerBar;
+            this.TimeCanvas2.nativeElement.height = this.BarHeight;
+            break;
+
+          case 2:
+            this.ctx = this.TimeCanvas3.nativeElement.getContext("2d");    
+            this.TimeCanvas3.nativeElement.width = this.SecToPx*this.SecPerBar;
+            this.TimeCanvas3.nativeElement.height = this.BarHeight;
+            break;    
         }
-    
-        this.ctx.restore();
+        
+        if (this.ctx) {
+          this.ctx.save();
+          this.ctx.strokeStyle = 'white';
+          this.ctx.fillStyle = 'white';
+          this.ctx.font = '14px Ubuntu';
+          this.ctx.lineWidth = 0.35;
+      
+          for (let x = 0; x/10 < this.SecPerBar; x += 1) {
+            if (x % 10 == 0) {
+              this.ctx.beginPath();
+              this.ctx.moveTo(x*this.SecToPx/10, 0);
+              this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight);
+              this.ctx.stroke();
+              
+              this.ctx.fillText(this.SectoTimestring(x/10 + i*this.SecPerBar + this.BarCount*this.SecPerBar, false, false), x*this.SecToPx/10 + 5, this.BarHeight);
+            } else if (x % 2 == 0) {
+              this.ctx.beginPath();
+              this.ctx.moveTo(x*this.SecToPx/10, 0);
+              this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*2.0/3.0);
+              this.ctx.stroke();
+            } else {
+              this.ctx.beginPath();
+              this.ctx.moveTo(x*this.SecToPx/10, 0);
+              this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*1.0/3.0);
+              this.ctx.stroke();
+            }
+          }
+      
+          this.ctx.restore();
+        }
       }
     }
+  }
+
+  ScrollCalculator(): number {
+    if (this.TimerTime/1000 > (2.0 + this.BarCount)*this.SecPerBar){
+      this.BarCount++;
+      this.RenderForward();
+    } else if ((this.TimerTime/1000 < (1.0 + this.BarCount)*this.SecPerBar) && (this.BarCount > 0)) {
+      this.BarCount--;
+      this.RenderBackward();
+    }
+
+    return (this.TimerTime/1000 - this.BarCount*this.SecPerBar)*this.SecToPx;
+  }
+
+  RenderForward(): void {
+    this.ctx = this.TimeCanvas1.nativeElement.getContext("2d");
+    if (this.ctx) {
+      this.TimeCanvas1.nativeElement.width = this.SecToPx*this.SecPerBar;
+      this.TimeCanvas1.nativeElement.height = this.BarHeight;
+      this.ctx.drawImage(this.TimeCanvas2.nativeElement, 0, 0);
+    }
+
+    this.ctx = this.TimeCanvas2.nativeElement.getContext("2d");
+    if (this.ctx) {
+      this.TimeCanvas2.nativeElement.width = this.SecToPx*this.SecPerBar;
+      this.TimeCanvas2.nativeElement.height = this.BarHeight;
+      this.ctx.drawImage(this.TimeCanvas3.nativeElement, 0, 0);
+    }
+
+    this.ctx = this.TimeCanvas3.nativeElement.getContext("2d");    
+    this.TimeCanvas3.nativeElement.width = this.SecToPx*this.SecPerBar;
+    this.TimeCanvas3.nativeElement.height = this.BarHeight;
+    
+    if (this.ctx) {
+      this.ctx.save();
+      this.ctx.strokeStyle = 'white';
+      this.ctx.fillStyle = 'white';
+      this.ctx.font = '14px Ubuntu';
+      this.ctx.lineWidth = 0.35;
+  
+      for (let x = 0; x/10 < this.SecPerBar; x += 1) {
+        if (x % 10 == 0) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x*this.SecToPx/10, 0);
+          this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight);
+          this.ctx.stroke();
+          
+          this.ctx.fillText(this.SectoTimestring(x/10 + 2*this.SecPerBar + this.BarCount*this.SecPerBar, false, false), x*this.SecToPx/10 + 5, this.BarHeight);
+        } else if (x % 2 == 0) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x*this.SecToPx/10, 0);
+          this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*2.0/3.0);
+          this.ctx.stroke();
+        } else {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x*this.SecToPx/10, 0);
+          this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*1.0/3.0);
+          this.ctx.stroke();
+        }
+      }
+  
+      this.ctx.restore();
+    }
+  }
+
+  RenderBackward(): void {
+    this.ctx = this.TimeCanvas3.nativeElement.getContext("2d");
+    if (this.ctx) {
+      this.TimeCanvas3.nativeElement.width = this.SecToPx*this.SecPerBar;
+      this.TimeCanvas3.nativeElement.height = this.BarHeight;
+      this.ctx.drawImage(this.TimeCanvas2.nativeElement, 0, 0);
+    }
+
+    this.ctx = this.TimeCanvas2.nativeElement.getContext("2d");
+    if (this.ctx) {
+      this.TimeCanvas2.nativeElement.width = this.SecToPx*this.SecPerBar;
+      this.TimeCanvas2.nativeElement.height = this.BarHeight;
+      this.ctx.drawImage(this.TimeCanvas1.nativeElement, 0, 0);
+    }
+
+    this.ctx = this.TimeCanvas1.nativeElement.getContext("2d");    
+    this.TimeCanvas1.nativeElement.width = this.SecToPx*this.SecPerBar;
+    this.TimeCanvas1.nativeElement.height = this.BarHeight;
+    
+    if (this.ctx) {
+      this.ctx.save();
+      this.ctx.strokeStyle = 'white';
+      this.ctx.fillStyle = 'white';
+      this.ctx.font = '14px Ubuntu';
+      this.ctx.lineWidth = 0.35;
+  
+      for (let x = 0; x/10 < this.SecPerBar; x += 1) {
+        if (x % 10 == 0) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x*this.SecToPx/10, 0);
+          this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight);
+          this.ctx.stroke();
+          
+          this.ctx.fillText(this.SectoTimestring(x/10 + this.BarCount*this.SecPerBar, false, false), x*this.SecToPx/10 + 5, this.BarHeight);
+        } else if (x % 2 == 0) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x*this.SecToPx/10, 0);
+          this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*2.0/3.0);
+          this.ctx.stroke();
+        } else {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x*this.SecToPx/10, 0);
+          this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*1.0/3.0);
+          this.ctx.stroke();
+        }
+      }
+  
+      this.ctx.restore();
+    }
+
   }
   //========================== RULER HANDLER ==========================
 
@@ -954,11 +1143,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
         this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
       }
       this.TimerDelegate = setInterval(() => {
-        this.TimerTime += 100;
-        if (this.TimeDiv) {
-          this.TimeDiv.nativeElement.scrollLeft = this.TimerTime/1000*this.SecToPx;
-        }
-      }, 100);
+        this.TimerTime += 20;
+      }, 20);
       if (propagate && this.VidLoad){
         this.player.playVideo();
       }
