@@ -48,6 +48,7 @@
                 <th></th>
                 <th style="color: white;">#</th>
                 <th style="color: white;">Timestamp</th>
+                <th style="color: white;">End</th>
                 <th style="color: white;">Profile</th>
                 <th style="width: 100%; color: white;">Text</th>
               </tr>
@@ -56,7 +57,8 @@
               <tr *ngFor="let Entry of EntryList; index as i">
                 <td><fa-icon [icon]="faTimesCircle" (click)="ModalMenu = 3; SelectedEntry = i" style="cursor: pointer;"></fa-icon></td>
                 <td>{{ i + 1 }}</td>
-                <td>{{ this.SectoTimestring(Entry.Stime/1000, true, true) }}</td>
+                <td>{{ Entry.Stime/1000 | timePrinter:true:true }}</td>
+                <td>{{ Entry.End/1000 | timePrinter:true:true }}</td>
                 <td>{{ this.ProfileList[Entry.Prfidx].Name }}</td>
                 <td><input [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200"/></td>
               </tr>
@@ -83,7 +85,7 @@
   
         <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 5px;">
           <a class="button" style="font-size: 12px;" (click)="StopTimer(true)"><fa-icon [icon]="faStop"></fa-icon></a>
-          <span style="margin-left: 5px; margin-right: 5px;">{{ this.SectoTimestring(TimerTime/1000, true, true) }}</span>
+          <span style="margin-left: 5px; margin-right: 5px;">{{ TimerTime/1000 | timePrinter:true:true }}</span>
           <a class="button" style="font-size: 12px;" (click)="StartTimer(true)"><fa-icon [icon]="faPlay"></fa-icon></a>
         </div>
       </div>
@@ -98,22 +100,6 @@
 
       <!-------------------- TIMELINE -------------------->
       <div style="display: flex; flex-direction: column; padding-bottom: 7px; margin-bottom: 5px;">
-
-        <div style="display: flex; flex-direction: row; margin-bottom: 10px;">
-          <button class="button" (click)="TimelineZoomin()" style="margin-left: auto; margin-right: 5px;">
-            <span class="icon is-left is-small">
-              <fa-icon [icon]="faSearchPlus"></fa-icon>
-            </span>
-            <span>Zoom in</span>
-          </button>
-          <button class="button" (click)="TimelineZoomout()">
-            <span class="icon is-left is-small">
-              <fa-icon [icon]="faSearchMinus"></fa-icon>
-            </span>
-            <span>Zoom out</span>
-          </button>
-        </div>
-
         <div style="position: relative;">
           <div style="position: absolute; left: calc(50vw - 2px); top: 0px; width: 4px; height: 100%; z-index: 1; background-color: rgba(255, 0, 0, 0.3);"> </div>
 
@@ -127,8 +113,11 @@
               <canvas style="margin-right: auto;" [style.height]="this.BarHeight.toString() + 'px'" [style.width]="(SecToPx*SecPerBar).toString() + 'px'" #TimeCanvas3></canvas>
             </div>
   
-            <div style="display: flex; flex-direction: row; width: 600%; margin-top: 5px; margin-bottom: 5px;" [style.margin-left]="'calc(50vw + 3px + ' + XtraMargin.toString() + 'px)'" (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
-              <div *ngFor="let i of this.TimeCardIdx" [style.width] = "(this.EntryList[i].End - this.EntryList[i].Stime)/1000*SecToPx + 'px'"
+            <div style="display: flex; flex-direction: row; margin-top: 5px; margin-bottom: 5px;" [style.width]="(3*SecToPx*SecPerBar).toString() + 'px'" 
+              [style.margin-left]="'calc(50vw + 3px + ' + XtraMargin.toString() + 'px)'" (mouseleave)="RulerMouseLeave($event)" 
+              (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
+
+              <div *ngFor="let i of this.TimeCardIdx" [style.width] = "CardWidthCalculator(i)"
                 style="display: flex; flex-direction: row; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-size: 21; font-weight: bolder; color: black;">
   
                 <input style="background-color: white; padding: 5px 10px 5px 10x; border-radius: 4%; text-align: center;"
@@ -156,7 +145,7 @@
       </div>
       -->
 
-      <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px;">
+      <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px; margin-top: 10px;">
         <a class="button" (click)="SetModalMenu(1)" style="margin-right: 5px;">Add Profile</a>
         <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
         <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
@@ -183,6 +172,19 @@
           <label style="margin-right: 10px;">Outline Colour </label>
           <input type="color" [(ngModel)]="OCcolour" (ngModelChange)="SaveActiveProfile(1)"/>
         </div>
+
+        <button class="button" (click)="TimelineZoomin()" style="margin-left: auto; margin-right: 5px;">
+          <span class="icon is-left is-small">
+            <fa-icon [icon]="faSearchPlus"></fa-icon>
+          </span>
+          <span>Zoom in</span>
+        </button>
+        <button class="button" (click)="TimelineZoomout()">
+          <span class="icon is-left is-small">
+            <fa-icon [icon]="faSearchMinus"></fa-icon>
+          </span>
+          <span>Zoom out</span>
+        </button>
       </div>
 
     </div>

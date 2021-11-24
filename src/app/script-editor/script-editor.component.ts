@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
@@ -42,7 +42,7 @@ class ArchiveLink {
   templateUrl: './script-editor.component.html',
   styleUrls: ['./script-editor.component.scss']
 })
-export class ScriptEditorComponent implements OnInit, AfterViewInit {
+export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('cardcontainer') cardcontainer !: ElementRef; 
   @ViewChild('loadstate') loadbutton !: ElementRef;
   @ViewChild('TableHeightRef') TableHeightRef !: ElementRef;
@@ -114,6 +114,15 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.InnerResize(100);
+  }
+
+  ngOnDestroy(): void {
+    if (this.TimerDelegate) {
+      clearInterval(this.TimerDelegate);
+    }
+    if(this.TrackerDelegate) {
+      clearInterval(this.TrackerDelegate);
+    }
   }
 
   ngOnInit(): void {
@@ -285,34 +294,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     this.ModalMenu = 0;
   }
 
-  LoadVideo(): void {
-    if (this.TempSetting.StreamLink.indexOf("https://www.youtube.com/watch?v=") != -1){
-      var YTID:string = this.TempSetting.StreamLink.replace("https://www.youtube.com/watch?v=", "");
-      if (YTID.indexOf("&") != -1){
-        YTID = YTID.substring(0,YTID.indexOf("&"));
-      }
-      this.video = YTID;
-      this.DelegatePlay = setInterval(() => {
-        if (this.playstart){
-          this.playstart = false;
-          this.StartTimer(false);
-        }
-      }, 100);
-  
-      setTimeout(() => {
-        this.LoadvideoYT();
-        this.RerenderTimeline();
-      }, 100);
-    }
-    this.VidLoad = true;
-    this.ModalMenu = 0;
-  }
-
-  UnSync():void {
-    this.VidLoad = false;
-    clearInterval(this.DelegatePlay);
-  }
-
   UploadToDB(): void {
     this.ModalMenu = 0;
   }
@@ -322,6 +303,21 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     this.EntryList = [];
     this.BarCount = 0;
     this.TimeCardIdx = [];
+    this.XtraMargin = 0;
+    this.TimerTime = 0;
+    if (this.TimerDelegate) {
+      clearInterval(this.TimerDelegate);
+      this.TimerDelegate = undefined;
+    }
+    if(this.TrackerDelegate) {
+      clearInterval(this.TrackerDelegate);
+      this.TrackerDelegate = undefined;
+    }
+
+    this.RerenderTimeline(); 
+    this.ReloadDisplayCards();
+    this.ScrollCalculator();
+
     this.SavedSetting = {
       StreamLink: "",
       Tags: "",
@@ -737,11 +733,10 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   public video: any;
   public player: any;
 
-  DelegatePlay:any;
-  playstart:boolean = false;
+  TrackerDelegate: any;
+  PauseTracker: boolean = false;
 
   LoadvideoYT() {
-    this.StopTimer(false);
     if (window['YT']) {
       this.startVideoYT();
       return;
@@ -765,6 +760,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
         playsinline: 1
       },
       events: {
+        'onReady': this.ReadyStateYT.bind(this),
         'onStateChange': this.onPlayerStateChangeYT.bind(this),
       }
     });
@@ -774,11 +770,13 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     this.TogglePlayPause();
   };
 
+  ReadyStateYT() {
+    this.PauseTracker = false;
+  }
+
   TogglePlayPause(){
     switch (this.player.getPlayerState()) {
       case 1:
-        this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
-        this.playstart = true;
         break;
     
       case 2:
@@ -786,17 +784,64 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
         break;
       
       case 3:
-        if (Math.abs(this.TimerTime/1000 - this.player.getCurrentTime()) > this.SecPerBar) {
-          const BarCountNew = Math.floor(this.player.getCurrentTime()/this.SecPerBar);
-          if (BarCountNew > 0) {
-            this.BarCount = BarCountNew - 1;
-          } else {
-            this.BarCount = 0;
-          }
-          this.ReloadDisplayCards();
-          this.RerenderTimeline();  
-        }
         break;
+    }
+  }
+
+  StartTracker(): void {
+    this.PauseTracker = true;
+    if (this.TrackerDelegate) {
+      clearInterval(this.TrackerDelegate);
+      this.TrackerDelegate = undefined;
+    }
+
+    this.TrackerDelegate = setInterval(() => {
+      if (!this.PauseTracker) {
+        this.TimerTime = this.player.getCurrentTime()*1000;  
+      }      
+      this.ScrollCalculator();  
+    }, 20);
+
+  }
+
+  LoadVideo(): void {
+    if (this.TempSetting.StreamLink.indexOf("https://www.youtube.com/watch?v=") == 0){
+      var YTID:string = this.TempSetting.StreamLink.replace("https://www.youtube.com/watch?v=", "");
+      if (YTID.indexOf("&") != -1){
+        YTID = YTID.substring(0,YTID.indexOf("&"));
+      }
+      this.video = YTID;
+  
+      setTimeout(() => {
+        this.LoadvideoYT();
+        this.RerenderTimeline();
+      }, 100);
+      this.UnSync();
+      this.StopTimer(false);
+      this.VidLoad = true;
+      this.StartTracker();
+      this.ModalMenu = 0;
+    } else if (this.TempSetting.StreamLink.indexOf("https://youtu.be/") == 0) {
+      var YTID:string = this.TempSetting.StreamLink.replace("https://youtu.be/", "");
+      this.video = YTID;
+  
+      setTimeout(() => {
+        this.LoadvideoYT();
+        this.RerenderTimeline();
+      }, 100);
+      this.UnSync();
+      this.StopTimer(false);
+      this.VidLoad = true;
+      this.StartTracker();
+      this.ModalMenu = 0;
+    }
+  }
+
+  UnSync():void {
+    this.VidLoad = false;
+    if(this.TrackerDelegate) {
+      clearInterval(this.TrackerDelegate);
+      this.TrackerDelegate = undefined;
     }
   }
 
@@ -826,8 +871,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   // TIMELINE VARIABLES
   TimelineDur: number = 3600;
   SecToPx: number = 140;
-  SecPerBar: number = 40;
-  BarHeight: number = 20;
+  SecPerBar: number = 20;
+  BarHeight: number = 25;
   XtraMargin: number = 0;
   JumpScroll: boolean = true;
   BarCount: number = 0;
@@ -1035,14 +1080,25 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   }
 
   ScrollCalculator(): void {
-    if (this.TimerTime/1000 > (2.0 + this.BarCount)*this.SecPerBar){
-      this.BarCount++;
-      this.RenderForward();
+    if (Math.abs(this.TimerTime/1000/this.SecPerBar - this.BarCount) > 2) {
+      const BarCountNew = Math.floor(this.TimerTime/1000/this.SecPerBar);
+      if (BarCountNew > 0) {
+        this.BarCount = BarCountNew - 1;
+      } else {
+        this.BarCount = 0;
+      }
+      this.RerenderTimeline(); 
       this.ReloadDisplayCards();
-    } else if ((this.TimerTime/1000 < (1.0 + this.BarCount)*this.SecPerBar) && (this.BarCount > 0)) {
-      this.BarCount--;
-      this.RenderBackward();
-      this.ReloadDisplayCards();
+    } else {
+      if (this.TimerTime/1000 > (2.0 + this.BarCount)*this.SecPerBar){
+        this.BarCount++;
+        this.RenderForward();
+        this.ReloadDisplayCards();
+      } else if ((this.TimerTime/1000 < (1.0 + this.BarCount)*this.SecPerBar) && (this.BarCount > 0)) {
+        this.BarCount--;
+        this.RenderBackward();
+        this.ReloadDisplayCards();
+      }
     }
 
     this.TimeDiv.nativeElement.scrollLeft = (this.TimerTime/1000 - this.BarCount*this.SecPerBar)*this.SecToPx;
@@ -1155,6 +1211,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     this.XtraMargin = 0;
     for (var i = 0; i < this.EntryList.length; i++) {
       if (this.EntryList[i].End > (this.BarCount + 3.0)*this.SecPerBar*1000) {
+        if (this.EntryList[i].Stime < (this.BarCount + 3.0)*this.SecPerBar*1000) {
+          this.TimeCardIdx.push(i);
+        }
         break;
       } else if (this.EntryList[i].End > this.BarCount*this.SecPerBar*1000){
         if (this.EntryList[i].Stime >= this.BarCount*this.SecPerBar*1000){
@@ -1166,10 +1225,20 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
           continue;
         } else {
-          this.XtraMargin = (this.EntryList[i].End/1000 - this.BarCount*this.SecPerBar)*this.SecToPx;
+          this.TimeCardIdx.push(i);
           continue;
         }
       } 
+    }
+  }
+
+  CardWidthCalculator(idx: number): string{
+    if ((idx != 0) && (idx == this.TimeCardIdx[0])) {
+      return (((this.EntryList[idx].End/1000 - this.BarCount*this.SecPerBar)*this.SecToPx).toString() + 'px');
+    } else if (this.EntryList[idx].End > (this.BarCount + 3.0)*this.SecPerBar*1000) {
+      return ((((this.BarCount + 3.0)*this.SecPerBar - this.EntryList[idx].Stime/1000)*this.SecToPx).toString() + 'px');
+    } else {
+      return (((this.EntryList[idx].End - this.EntryList[idx].Stime)/1000*this.SecToPx).toString() + 'px');
     }
   }
   //========================== RULER HANDLER ==========================
@@ -1181,10 +1250,22 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   @HostListener('document:keydown.control.space', ['$event'])
   CtrlSpaceKeypress(event: KeyboardEvent):void {
     event.preventDefault();
-    if (this.TimerDelegate) {
-      this.StopTimer(true);
+    if (this.VidLoad){
+      if (this.player){
+        if (this.player){
+          if (this.player.getPlayerState() != 1) {
+            this.player.playVideo();
+          } else if (this.player.getPlayerState() == 1) {
+            this.player.pauseVideo();
+          }
+        }
+      }
     } else {
-      this.StartTimer(true);
+      if (this.TimerDelegate) {
+        this.StopTimer(true);
+      } else {
+        this.StartTimer(true);
+      }
     }
     this.ScrollCalculator();
   }
@@ -1210,18 +1291,16 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
 
   StartTimer(propagate:boolean):void {
-    if (!this.TimerDelegate){
-      this.TimerDelegate = setInterval(() => {
-        this.TimerTime += 20;
-        if (this.VidLoad){
-          if (this.player) {
-            this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
-          }
-        }
-        this.ScrollCalculator();  
-      }, 20);
-      if (propagate && this.VidLoad){
+    if (this.VidLoad) {
+      if (propagate){
         this.player.playVideo();
+      }
+    } else {
+      if (!this.TimerDelegate){
+        this.TimerDelegate = setInterval(() => {
+          this.TimerTime += 20;
+          this.ScrollCalculator();  
+        }, 20);
       }
     }
   }
@@ -1230,9 +1309,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     if (this.TimerDelegate){
       clearInterval(this.TimerDelegate);
       this.TimerDelegate = undefined;
-      if (propagate && this.VidLoad){
-        this.player.pauseVideo()
-      }
+    }
+    if (propagate && this.VidLoad){
+      this.player.pauseVideo();
     }
   }
 

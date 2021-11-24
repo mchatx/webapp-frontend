@@ -21,6 +21,7 @@ import { TranslatorClientComponent } from './translator-client/translator-client
 import { ScriptEditorComponent } from './script-editor/script-editor.component';
 import { ChatboardComponent } from './chatboard/chatboard.component';
 import { ArchiveEditComponent } from './archive-edit/archive-edit.component';
+import { TimePrinterPipe } from './pipe/time-printer.pipe';
 
 @NgModule({
   declarations: [
@@ -35,6 +36,7 @@ import { ArchiveEditComponent } from './archive-edit/archive-edit.component';
     ScriptEditorComponent,
     ChatboardComponent,
     ArchiveEditComponent,
+    TimePrinterPipe,
   ],
   imports: [
     BrowserModule,
