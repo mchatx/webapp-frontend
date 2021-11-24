@@ -150,6 +150,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
       CC: undefined
     });
 
+    /*
     this.AddEntry({
       Stext: "--- Stream Starts ---",
       Stime: 0,
@@ -157,6 +158,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
       key: Date.now().toString(),
       End: 1000
     })
+    */
   }
 
   LoginRoom() {
@@ -300,7 +302,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
       setTimeout(() => {
         this.LoadvideoYT();
         this.RerenderTimeline();
-      });
+      }, 100);
     }
     this.VidLoad = true;
     this.ModalMenu = 0;
@@ -319,6 +321,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     this.ModalMenu = 0;
     this.EntryList = [];
     this.BarCount = 0;
+    this.TimeCardIdx = [];
     this.SavedSetting = {
       StreamLink: "",
       Tags: "",
@@ -338,6 +341,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
       CC: undefined
     });
 
+    /*
     this.AddEntry({
       Stext: "--- Stream Starts ---",
       Stime: 0,
@@ -345,6 +349,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
       key: Date.now().toString(),
       End: 1000
     })
+    */
   }
 
   ImportFile() {
@@ -558,33 +563,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     this.JumpToProfile(8);
   }
 
-  @HostListener('document:keydown.control.space', ['$event'])
-  CtrlSpaceKeypress(event: KeyboardEvent):void {
-    event.preventDefault();
-    if (this.TimerDelegate) {
-      this.StopTimer(true);
-    } else {
-      this.StartTimer(true);
-    }
-  }
-
-  @HostListener('document:keydown.control.arrowright', ['$event'])
-  CtrlRightKeypress(event: KeyboardEvent):void {
-    this.TimerTime += 3000;
-    this.SendSeek();
-  }
-
-  @HostListener('document:keydown.control.arrowleft', ['$event'])
-  CtrlLeftKeypress(event: KeyboardEvent):void {
-    if (this.TimerTime > 5000) {
-      this.TimerTime -= 3000;
-      this.SendSeek();
-    } else {
-      this.TimerTime = 0;
-      this.SendSeek();
-    }
-  }
-
   JumpToProfile(target:number) {
     if (target < this.ProfileList.length){
       this.SaveProfile();
@@ -722,8 +700,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
         }
         
         this.EntryList.splice(i, 0, dt);
+        this.ReloadDisplayCards();
         Inserted = true;
-        break;
+        return;
       }
     }
 
@@ -732,18 +711,19 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
         this.EntryList[this.EntryList.length - 1].End = dt.Stime;
       }
       this.EntryList.push(dt);
+      this.ReloadDisplayCards();
+      return;
     }
   }
 
   DeleteEntry(): void {
+    var dt: FullEntry = this.EntryList.splice(this.SelectedEntry, 1)[0];
     if (this.SelectedEntry > 0) {
-      var dt: FullEntry = this.EntryList.splice(this.SelectedEntry, 1)[0];
-      if (this.SelectedEntry > 0) {
-        this.EntryList[this.SelectedEntry - 1].End = dt.End;
-      } else {
-        this.EntryList[this.SelectedEntry].Stime = dt.Stime;
-      }
+      this.EntryList[this.SelectedEntry - 1].End = dt.End;
+    } else {
+      this.EntryList[this.SelectedEntry].Stime = dt.Stime;
     }
+    this.ReloadDisplayCards();
   }
   //===================================  ENTRY HANDLER  ===================================
 
@@ -761,6 +741,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   playstart:boolean = false;
 
   LoadvideoYT() {
+    this.StopTimer(false);
     if (window['YT']) {
       this.startVideoYT();
       return;
@@ -794,17 +775,31 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   };
 
   TogglePlayPause(){
-    this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
     switch (this.player.getPlayerState()) {
       case 1:
+        this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
         this.playstart = true;
         break;
     
       case 2:
         this.StopTimer(false);
         break;
+      
+      case 3:
+        if (Math.abs(this.TimerTime/1000 - this.player.getCurrentTime()) > this.SecPerBar) {
+          const BarCountNew = Math.floor(this.player.getCurrentTime()/this.SecPerBar);
+          if (BarCountNew > 0) {
+            this.BarCount = BarCountNew - 1;
+          } else {
+            this.BarCount = 0;
+          }
+          this.ReloadDisplayCards();
+          this.RerenderTimeline();  
+        }
+        break;
     }
   }
+
   //===========================  VIDEO LOADER HANDLER  ===========================
 
 
@@ -826,11 +821,12 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   ResizeMode: boolean = false;
   TimelineActive: boolean = false;
   XPos: number = 0;
+  TimeCardIdx: number[] = [];
 
   // TIMELINE VARIABLES
   TimelineDur: number = 3600;
-  SecToPx: number = 200;
-  SecPerBar: number = 10;
+  SecToPx: number = 140;
+  SecPerBar: number = 40;
   BarHeight: number = 20;
   XtraMargin: number = 0;
   JumpScroll: boolean = true;
@@ -939,7 +935,21 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
           this.EntryList[this.SelectedEntry].Stime += (event.clientX - this.XPos)/this.SecToPx*1000;
           this.EntryList[this.SelectedEntry].End += (event.clientX - this.XPos)/this.SecToPx*1000;
 
+        } else {
+          var a = this.EntryList[this.SelectedEntry].Stime + (event.clientX - this.XPos)/this.SecToPx*1000;
+          if (a < 0) {
+            this.TimelineActive = false;
+            return;
+          }
+
+          if (this.EntryList[this.SelectedEntry].End - a < 50){
+            this.TimelineActive = false;
+            return;
+          }
+    
+          this.EntryList[this.SelectedEntry].Stime = a;
           
+          this.ReloadDisplayCards();
         }
       }
       this.XPos = event.clientX;
@@ -949,14 +959,20 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
   TimelineZoomout() {
     if (this.SecToPx > 20){
+      const XMarginTemp:number = this.XtraMargin/this.SecToPx;
       this.SecToPx -= 20;
+      this.XtraMargin = XMarginTemp*this.SecToPx;
+      this.ScrollCalculator();
       this.InnerResize(100);
     }
   }
 
   TimelineZoomin() {
-    if (this.SecToPx < 380) {
+    if (this.SecToPx < 200) {
+      const XMarginTemp:number = this.XtraMargin/this.SecToPx;
       this.SecToPx += 20;
+      this.XtraMargin = XMarginTemp*this.SecToPx;
+      this.ScrollCalculator();
       this.InnerResize(100);
     }
   }
@@ -1018,16 +1034,18 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
     }
   }
 
-  ScrollCalculator(): number {
+  ScrollCalculator(): void {
     if (this.TimerTime/1000 > (2.0 + this.BarCount)*this.SecPerBar){
       this.BarCount++;
       this.RenderForward();
+      this.ReloadDisplayCards();
     } else if ((this.TimerTime/1000 < (1.0 + this.BarCount)*this.SecPerBar) && (this.BarCount > 0)) {
       this.BarCount--;
       this.RenderBackward();
+      this.ReloadDisplayCards();
     }
 
-    return (this.TimerTime/1000 - this.BarCount*this.SecPerBar)*this.SecToPx;
+    this.TimeDiv.nativeElement.scrollLeft = (this.TimerTime/1000 - this.BarCount*this.SecPerBar)*this.SecToPx;
   }
 
   RenderForward(): void {
@@ -1130,20 +1148,77 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
   
       this.ctx.restore();
     }
+  }
 
+  ReloadDisplayCards():void {
+    this.TimeCardIdx = [];
+    this.XtraMargin = 0;
+    for (var i = 0; i < this.EntryList.length; i++) {
+      if (this.EntryList[i].End > (this.BarCount + 3.0)*this.SecPerBar*1000) {
+        break;
+      } else if (this.EntryList[i].End > this.BarCount*this.SecPerBar*1000){
+        if (this.EntryList[i].Stime >= this.BarCount*this.SecPerBar*1000){
+          this.TimeCardIdx.push(i);
+          
+          if ((i == 0) && (this.EntryList[i].Stime != 0)){
+            this.XtraMargin = (this.EntryList[i].Stime/1000 - this.BarCount*this.SecPerBar)*this.SecToPx;
+          }
+
+          continue;
+        } else {
+          this.XtraMargin = (this.EntryList[i].End/1000 - this.BarCount*this.SecPerBar)*this.SecToPx;
+          continue;
+        }
+      } 
+    }
   }
   //========================== RULER HANDLER ==========================
 
 
 
   //-------------------------- TIMER CONTROL --------------------------
+
+  @HostListener('document:keydown.control.space', ['$event'])
+  CtrlSpaceKeypress(event: KeyboardEvent):void {
+    event.preventDefault();
+    if (this.TimerDelegate) {
+      this.StopTimer(true);
+    } else {
+      this.StartTimer(true);
+    }
+    this.ScrollCalculator();
+  }
+
+  @HostListener('document:keydown.control.arrowright', ['$event'])
+  CtrlRightKeypress(event: KeyboardEvent):void {
+    this.TimerTime += 3000;
+    this.SendSeek();
+    this.ScrollCalculator();
+  }
+
+  @HostListener('document:keydown.control.arrowleft', ['$event'])
+  CtrlLeftKeypress(event: KeyboardEvent):void {
+    if (this.TimerTime > 5000) {
+      this.TimerTime -= 3000;
+      this.SendSeek();
+    } else {
+      this.TimerTime = 0;
+      this.SendSeek();
+    }
+    this.ScrollCalculator();
+  }
+
+
   StartTimer(propagate:boolean):void {
     if (!this.TimerDelegate){
-      if (this.VidLoad){
-        this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
-      }
       this.TimerDelegate = setInterval(() => {
         this.TimerTime += 20;
+        if (this.VidLoad){
+          if (this.player) {
+            this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
+          }
+        }
+        this.ScrollCalculator();  
       }, 20);
       if (propagate && this.VidLoad){
         this.player.playVideo();
@@ -1153,9 +1228,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit {
 
   StopTimer(propagate: boolean):void {
     if (this.TimerDelegate){
-      if (this.VidLoad){
-        this.TimerTime = Math.round(this.player.getCurrentTime() * 1000);
-      }
       clearInterval(this.TimerDelegate);
       this.TimerDelegate = undefined;
       if (propagate && this.VidLoad){

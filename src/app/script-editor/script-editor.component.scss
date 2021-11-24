@@ -18,3 +18,16 @@ textarea {
     border-width: 0px; 
     width: 100%;
 }
+
+.EntryEditCard {
+    font-size: inherit; 
+    font-weight: inherit; 
+    font-family: inherit; 
+    -webkit-text-stroke-width: inherit; 
+    border-width: 0px; 
+    width: 100%;
+}
+
+.EntryEditCard:active {
+    cursor:move;
+}

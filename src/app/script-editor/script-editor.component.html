@@ -118,7 +118,7 @@
           <div style="position: absolute; left: calc(50vw - 2px); top: 0px; width: 4px; height: 100%; z-index: 1; background-color: rgba(255, 0, 0, 0.3);"> </div>
 
           <div style="overflow-x: hidden; display: flex; flex-direction: column; border-top: 2px solid white; padding-top: 7px; border-bottom: 2px solid white;"
-            [scrollLeft]="ScrollCalculator()" [style.scroll-behavior]="this.JumpScroll ? 'unset' : 'smooth'" #TimelineDiv>
+            [style.scroll-behavior]="this.JumpScroll ? 'unset' : 'smooth'" #TimelineDiv>
             
             <div style="display: flex; flex-direction: row; margin-left: 50vw;" [style.width]="(3*SecToPx*SecPerBar).toString() + 'px'"
               (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
@@ -128,12 +128,12 @@
             </div>
   
             <div style="display: flex; flex-direction: row; width: 600%; margin-top: 5px; margin-bottom: 5px;" [style.margin-left]="'calc(50vw + 3px + ' + XtraMargin.toString() + 'px)'" (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
-              <div *ngFor="let Entry of EntryList; index as i" [style.width] = "(Entry.End - Entry.Stime)/1000*SecToPx + 'px'"
+              <div *ngFor="let i of this.TimeCardIdx" [style.width] = "(this.EntryList[i].End - this.EntryList[i].Stime)/1000*SecToPx + 'px'"
                 style="display: flex; flex-direction: row; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-size: 21; font-weight: bolder; color: black;">
   
-                <input style="background-color: white; padding: 5px 10px 5px 10x; border-radius: 4%; cursor: move; text-align: center;"
-                  [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" 
-                  class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200" (mousedown)="RulerMouseDown($event, i, false)"/>
+                <input style="background-color: white; padding: 5px 10px 5px 10x; border-radius: 4%; text-align: center;"
+                  [style.-webkit-text-fill-color]="this.ProfileList[this.EntryList[i].Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[this.EntryList[i].Prfidx].OC" 
+                  class="EntryEditCard" type="text" [(ngModel)]="this.EntryList[i].Stext" max="200" (mousedown)="RulerMouseDown($event, i, false)"/>
   
                 <div style="width: 6px; background-color: green; height: 100%; cursor: ew-resize;" (mousedown)="RulerMouseDown($event, i, true);"></div>
               </div>
