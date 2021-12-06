@@ -1,9 +1,10 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
 import { faHome, faPause, faPlay, faStop, faLock, faUser, faSearchPlus, faSearchMinus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from '../services/account.service';
+import { ArchiveService } from '../services/archive.service';
 
 class FullEntry {
   Stext: string = "";
@@ -25,11 +26,13 @@ class ArchiveSetting {
   StreamLink:string = "";
   Tags:string = "";
   Notes:string = "";
+  Link:string = "";
   PassCheck:boolean = false;
   PassString:string = "";
   ArchiveTitle:string = "";
   ThirdPartySharing:boolean = true;
   Hidden:boolean = false;
+  Downloadable:boolean = false;
 }
 
 class ArchiveLink {
@@ -92,11 +95,15 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   TimerDelegate: any | undefined = undefined;
   VidLoad: boolean = false;
 
+  ModalNotif:boolean = false;
+  NotifText:string = "";
+
   constructor(
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
-    private router: Router,
-    private AccService: AccountService
+    private AccService: AccountService,
+    private AService: ArchiveService,
+    private route: ActivatedRoute
   ) { }
 
   InnerResize(wait: number | undefined = undefined):void {
@@ -126,48 +133,144 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    let test: string | null = localStorage.getItem("MChatToken");
+    this.route.queryParams.subscribe(params => {
+      let test: string | null = localStorage.getItem("MChatToken");
 
-    if (test != undefined) {
-      try {
-        let TokenData = JSON.parse(this.TGEnc.TGDecoding(test));
-        if (TokenData["Role"] == "TL") {
-          this.AccService.CheckToken(TokenData["Room"], TokenData["Token"]).subscribe({
-            error: error => {
-              localStorage.removeItem("MChatToken");
-            },
-            next: data => {
-              this.LoginMode = true;
-              this.RoomNick = TokenData["Room"];
-              this.Token = TokenData["Token"];
-              this.RoomNick = TokenData["Room"];
-            }
-          });
-        } else {
-          this.status = "THIS ACCOUNT DOESN'T HAVE TL PRIVILEGE";
+      if (test != undefined) {
+        try {
+          let TokenData = JSON.parse(this.TGEnc.TGDecoding(test));
+          if (TokenData["Role"] == "TL") {
+            this.AccService.CheckToken(TokenData["Room"], TokenData["Token"]).subscribe({
+              error: error => {
+                localStorage.removeItem("MChatToken");
+                if (params.archive){
+                  this.ModalMenu = 11;
+                }
+              },
+              next: data => {
+                this.LoginMode = true;
+                this.RoomNick = TokenData["Room"];
+                this.Token = TokenData["Token"];
+                this.RoomNick = TokenData["Room"];
+
+                if (params.archive) {
+                  this.LoadParseArchive(params.archive);
+                }
+              }
+            });
+          } else {
+            this.status = "THIS ACCOUNT DOESN'T HAVE TL PRIVILEGE";
+          }
+        } catch (error) {
+          localStorage.removeItem("MChatToken");
         }
-      } catch (error) {
-        localStorage.removeItem("MChatToken");
+      } else if (params.archive) {
+        this.ModalMenu = 11;
       }
-    }
+  
+      this.ProfileList.push({
+        Name: 'Default',
+        Prefix: '',
+        Suffix: '',
+        OC: undefined,
+        CC: undefined
+      });
+    });
+  }
 
-    this.ProfileList.push({
-      Name: 'Default',
-      Prefix: '',
-      Suffix: '',
-      OC: undefined,
-      CC: undefined
+  LoadParseArchive(ArchiveLink: string) {
+    this.AService.GetOneArchiveInfo(this.RoomNick, this.Token, ArchiveLink).subscribe({
+      next: data => {
+        const dt = JSON.parse(data.body);
+        this.SavedSetting = {
+          Link: dt["Link"],
+          StreamLink: dt["StreamLink"],
+          Tags: dt["Tags"],
+          Notes: dt["Note"],
+          PassCheck: dt["Pass"],
+          PassString: "",
+          ArchiveTitle: dt["Nick"],
+          ThirdPartySharing: dt["ExtShare"],
+          Hidden: dt["Hidden"],
+          Downloadable: dt["Downloadable"]
+        };
+        this.TempSetting = this.SavedSetting;
+      }
     });
 
-    /*
-    this.AddEntry({
-      Stext: "--- Stream Starts ---",
-      Stime: 0,
-      Prfidx: 0,
-      key: Date.now().toString(),
-      End: 1000
-    })
-    */
+    this.AService.GetOneArchive(this.RoomNick, this.Token, ArchiveLink).subscribe(
+      (response: any) => {
+        if (response.status != 200) {
+          console.log("TEST");
+          this.ModalNotif = true;
+          this.NotifText = "FAILED LOADING ARCHIVE " + ArchiveLink;
+        } else {
+          this.EntryList = [];
+          this.ProfileList = [];
+          this.ProfileList.push({
+            Name: 'Default',
+            Prefix: '',
+            Suffix: '',
+            OC: undefined,
+            CC: undefined
+          });
+    
+          var dt = JSON.parse(response.body);
+          var CutOff:number = 0;
+
+          if (dt.length > 0){
+            if (dt[0].Stime > 1000*60*20){
+              CutOff = dt[0].Stime;
+            }
+          }
+
+          for (let i = 0; i < dt.length; i++) {
+            let PIdx = -1;
+
+            if (!dt[i].CC || !dt[i].OC) {
+              PIdx = 0;
+            } else {
+              for (let j = 0; j < this.ProfileList.length; j++){
+                if ((this.ProfileList[j].CC == '#' + dt[i].CC.toString()) && (this.ProfileList[j].OC == '#' + dt[i].OC.toString())){
+                  PIdx = j; 
+                  break;
+                }
+              }
+  
+              if (PIdx == -1){
+                PIdx = this.ProfileList.length;
+                this.ProfileList.push({
+                  Name: 'Profile' + PIdx.toString(),
+                  Prefix: '',
+                  Suffix: '',
+                  OC: '#' + dt[i].OC,
+                  CC: '#' + dt[i].CC
+                })
+              }
+            }
+
+            if (i != dt.length - 1){
+              this.EntryList.push({
+                Stext: dt[i].Stext,
+                Stime: dt[i].Stime - CutOff,
+                Prfidx: PIdx,
+                key: "",
+                End: dt[i + 1].Stime - CutOff
+              });
+            } else {
+              this.EntryList.push({
+                Stext: dt[i].Stext,
+                Stime: dt[i].Stime - CutOff,
+                Prfidx: PIdx,
+                key: "",
+                End: dt[i].Stime + 5000 - CutOff
+              });
+
+              this.ReloadDisplayCards();
+            }
+          }
+        }
+    });
   }
 
   LoginRoom() {
@@ -241,7 +344,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     PassString: "",
     ArchiveTitle: "",
     ThirdPartySharing: true,
-    Hidden: false
+    Hidden: false,
+    Link: "",
+    Downloadable: false
   };
 
   SavedSetting: ArchiveSetting = {
@@ -252,7 +357,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     PassString: "",
     ArchiveTitle: "",
     ThirdPartySharing: true,
-    Hidden: false
+    Hidden: false,
+    Link: "",
+    Downloadable: false
   };
 
   SetModalMenu(idx: number):void {
@@ -326,7 +433,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       PassString: "",
       ArchiveTitle: "",
       ThirdPartySharing: true,
-      Hidden: false
+      Hidden: false,
+      Link: "",
+      Downloadable: false
     };
 
     this.ProfileList.push({

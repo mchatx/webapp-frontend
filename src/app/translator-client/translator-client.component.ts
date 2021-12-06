@@ -1,12 +1,11 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
 import { faHome, faLock, faUser, faLink } from '@fortawesome/free-solid-svg-icons';
 import { saveAs } from 'file-saver';
 import { LCEntries } from '../../constants/LanguageCode';
-import { collapseTextChangeRangesAcrossMultipleVersions, visitNode } from 'typescript';
 
 class FullEntry {
   Stext: string = "";

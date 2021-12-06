@@ -1,5 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, Inject, HostListener } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ArchiveService } from '../services/archive.service';
 import { TsugeGushiService } from '../services/tsuge-gushi.service'
 import { AccountService } from '../services/account.service';
@@ -1017,7 +1016,7 @@ export class ArchiveEditComponent implements OnInit {
             this.ExportTTML();
             break;
         }
-      });
+    });
   }
 
   ExportSrt(): void {

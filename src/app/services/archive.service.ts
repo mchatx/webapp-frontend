@@ -182,6 +182,22 @@ export class ArchiveService {
     }, { headers, observe: 'response', responseType: 'text' }));
   }
 
+  GetOneArchiveInfo(
+    room: string,
+    token: string,
+    link: string | undefined
+  ): Observable<any> {
+
+    const headers = { 'Content-Type': 'application/json' };
+
+    return (this.httpclient.post(environment.DBConn + '/Archive/', {
+      Act: 'GetArchiveInfo',
+      Room: room,
+      Token: token,
+      Link: link
+    }, { headers, observe: 'response', responseType: 'text' }));
+  }
+
   //=========================================== ARCHIVE EDIT HANDLER ===========================================
 
 }
