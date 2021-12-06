@@ -55,365 +55,446 @@
 </div>
 <!--============================================ LOGIN MENU =====================================================-->
 
-<div *ngIf="LoginMode">
-  <div class="columns is-multiline">
-    <div class="column is-full">
-      <!-- ============================= Logout Button ============================== -->
-      <div class="section">
-        <div class="content">
-          <h1 class="has-text-centered">Archive Manager</h1>
-        </div>
+<section class="hero is-dark is-fullheight" style="font-family: Ubuntu;" *ngIf="LoginMode">
+  <!---------------------- MENU ------------------------>
+  <div class="hero-head">
+    <div class="has-background-primary-light" style="width: 100%;">
+      <div style="width: 100%; display:flex; flex-direction: column; padding-left: 30px; padding-right: 30px; padding-top: 10px; padding-bottom: 10px;">
+        <h1 class="Title has-text-centered has-text-black" style="font-weight: bold; font-size: 3em;">Archive Manager</h1>
         <div class="divider is-black">
-          <button class="button is-dark" routerLink="/archive" routerLinkActive="active">Back to Archive</button>
+          <h1 class="Subtitle has-text-black" style="font-size: 1.5em;">{{ this.Room }}</h1>
         </div>
-      </div>
-      <!-- =========================================================================== -->
-
-
-      <!-- ================================= Button Menu =================================== -->
-      <div [ngSwitch]="mode">
-        <div class="buttons is-centered" *ngSwitchDefault>
-          <button class="button is-outlined is-dark" (click)="Setmode('Upload')" #show_hidden1 #is_active1>
-            <span class="icon">
+        
+        <div style="display: flex; flex-direction: row;">
+          <button class="button is-dark" routerLink="/" routerLinkActive="active" style="margin-right: 5px;">
+            <span class="icon is-left is-small">
+              <fa-icon [icon]="faHome"></fa-icon>
+            </span>
+            <span>Back to home</span>
+          </button>
+          <button class="button is-dark" style="margin-right: 5px;" (click)="OpenUploadModal(1)">
+            <span class="icon is-left is-small">
               <fa-icon [icon]="faUpload"></fa-icon>
             </span>
-            <p>Upload</p>
+            <span>Upload Script</span>
           </button>
-          <button class="button is-outlined is-dark" (click)="Setmode('Export')" #show_hidden2 #is_active2>
-            <span class="icon">
-              <fa-icon [icon]="faFileExport"></fa-icon>
+          <button class="button is-dark" (click)="LogOut()" style="margin-left: auto;">
+            <span class="icon is-left is-small">
+              <fa-icon [icon]="faSignOutAlt"></fa-icon>
             </span>
-            <p>Export</p>
-          </button>
-          <button class="button is-outlined is-dark" (click)="Setmode('Edit')" #show_hidden3 #is_active3>
-            <span class="icon">
-              <fa-icon [icon]="faEdit"></fa-icon>
-            </span>
-            <p>Edit</p>
-          </button>
-          <button class="button is-outlined is-dark" (click)="Setmode('Delete')" #show_hidden4 #is_active4>
-            <span class="icon">
-              <fa-icon [icon]="faTrash"></fa-icon>
-            </span>
-            <p>Delete</p>
+            <span>Logout</span>
           </button>
         </div>
       </div>
-      <!-- ================================= Button Menu =================================== -->
-    </div>
-
-    <div class="column">
-      <section class="hero has-background-primary-dark is-fullheight-with-navbar">
-        <div class="hero-body is-align-items-stretch">
-          <div class="container" [ngSwitch]="mode">
-            <!---------------------------------------------- UPLOAD MENU ------------------------------------------------------->
-            <div *ngSwitchCase="'Upload'">
-              <div class="section">
-                <div class="box">
-                  <p class="title has-text-black has-text-centered pt-2">Upload</p>
-                  <p class="has-text-centered">Accepts .ass, .TTML, and .srt</p>
-                  <div class="divider is-left is-black"></div>
-                  <div class="field">
-                    <div class="file has-name is-small" id="wrap">
-                      <label class="file-label">
-                        <input class="file-input" type="file" accept=".ass, .TTML, .srt" name="resume"
-                          (change)="FileChange($event)">
-                        <span class="file-cta">
-                          <span class="file-icon">
-                            <fa-icon [icon]="faFileUpload"></fa-icon>
-                          </span>
-                          <span class="file-label">
-                            Choose a file…
-                          </span>
-                        </span>
-                        <span class="file-name">
-                          {{ filename }}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                  <div class="notification is-white has-text-danger has-text-centered">
-                    {{ status }}</div>
-                  <div class="field">
-                    <progress class="progress is-hidden" max="100" #show_hidden>30%</progress>
-                  </div>
-                  <!------- ONLY SHOW MENU BELOW IF THE FILE IS PARSED WITHOUT ANY TROUBLE ------->
-                  <div *ngIf="FileParsed">
-                    <label class="checkbox label has-text-centered">
-                      <input type="checkbox" [(ngModel)]="Overwrite" (change)="ResetSelectedIndex()">
-                        Overwrite
-                    </label>
-                    <!------- IF UPLOADING NEW ARCHIVE ------->
-                    <div *ngIf="!Overwrite">
-                      <div class="section">
-                        <div class="field">
-                          <label class="label">Archive Title</label>
-                          <div class="control">
-                            <input class="input is-rounded" type="text" placeholder="Archive Title"
-                              [(ngModel)]="SelectedArchive.Nick">
-                          </div>
-                        </div>
-                        <div class="field">
-                          <label class="label">Tags</label>
-                          <div class="control">
-                            <input class="input is-rounded" type="text" placeholder="Tags"
-                              [(ngModel)]="SelectedArchive.Tags">
-                          </div>
-                        </div>
-                        <div class="field">
-                          <label class="label">Stream Link</label>
-                          <div class="control has-icons-left">
-                            <input class="input is-rounded" type="text" placeholder="Stream Link"
-                              [(ngModel)]="SelectedArchive.StreamLink">
-                          </div>
-                        </div>
-                        <div class="field">
-                          <label class="label">Archive Note</label>
-                          <p class="control">
-                            <textarea class="textarea" placeholder="Note" maxlength="1024"
-                              [(ngModel)]="SelectedArchive.Note"></textarea>
-                          </p>
-                        </div>
-                        <div class="field">
-                          <label class="checkbox">
-                            <input type="checkbox" [(ngModel)]="SelectedArchive.Pass">
-                            <strong>Password Protection</strong>
-
-                          </label>
-                          <div class="control" *ngIf="SelectedArchive.Pass">
-                            <input class="input is-rounded" type="password" placeholder="Password"
-                              [(ngModel)]="PassString">
-                          </div>
-                        </div>
-                        <div class="field">
-                          <label class="checkbox">
-                            <input type="checkbox" [(ngModel)]="SelectedArchive.Hidden">
-                            <strong>Hidden</strong>
-                          </label>
-                        </div>
-                        <div class="field">
-                          <label class="checkbox">
-                            <input type="checkbox" [(ngModel)]="SelectedArchive.ExtShare">
-                            <strong>Third-Party Shared</strong>
-                          </label>
-                        </div>
-                        <div class="field">
-                          <label class="checkbox">
-                            <input type="checkbox" [(ngModel)]="SelectedArchive.Downloadable">
-                            <strong>Downloadable</strong>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                    <!--===== IF UPLOADING NEW ARCHIVE =====-->
-
-                    <!------- IF OVERWRITING ARCHIVE ------->
-                    <div *ngIf="Overwrite">
-                      <div class="section">
-                        <p class="block has-text-centered subtitle is-5">Choose which to overwrite</p>
-                        <ul id="wrap">
-                          <li class="ArchiveUIList" *ngFor="let archive of Archivedt; let i = index">
-                            <p [class.marked]='i===SelectedIndex' (click)="SetSelected(i)"> {{i+1}}.
-                              {{ archive.Nick }}
-                            </p>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <!--===== IF OVERWRITING ARCHIVE =====-->
-                  </div>
-                  <div class="field">
-                    <div class="buttons">
-                      <button class="button is-dark" (click)="Setmode('')">Cancel</button>
-                      <div *ngIf="FileParsed">
-                        <div *ngIf="!Overwrite">
-                          <button class="button is-dark" (click)="PushUpload(true)" #loadstate>Upload</button>
-                        </div>
-                        <div *ngIf="Overwrite">
-                          <button class="button is-dark" (click)="PushUpload(false)" *ngIf="SelectedIndex === -1"
-                            disabled>Upload</button>
-                          <button class="button is-dark" (click)="PushUpload(false)" *ngIf="SelectedIndex !== -1"
-                            #loadstate>Upload</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!--============================================ UPLOAD MENU =====================================================-->
-
-            <!---------------------------------------------- EXPORT MENU ------------------------------------------------------->
-            <div *ngSwitchCase="'Export'">
-              <div class="section">
-                <div class="box">
-                  <p class="title has-text-black has-text-centered pt-2">Export</p>
-                  <div class="divider is-left is-black"></div>
-                  <div class="control">
-                    <p class="has-text-centered has-text-danger">{{ status }}</p>
-                  </div>
-                  <div class="field">
-                    <progress class="progress is-hidden" max="100" #show_hidden>30%</progress>
-                  </div>
-                  <div class="section">
-                    <p class="block has-text-centered subtitle is-5">Choose which to Export</p>
-                    <ul id="wrap">
-                      <li class="ArchiveUIList" *ngFor="let archive of Archivedt; let i = index">
-                        <p [class.marked]="i === SelectedIndex" (click)="SetSelected(i)">{{i+1}}. {{ archive.Nick }}
-                        </p>
-                      </li>
-                    </ul>
-                  </div>
-                  <div class="field">
-                    <div class="buttons has-addons is-centered">
-                      <button class="button is-dark" (click)="LoadEntries('srt')" *ngIf="SelectedIndex === -1"
-                        disabled>Export srt</button>
-                      <button class="button is-dark" (click)="LoadEntries('ass')" *ngIf="SelectedIndex === -1"
-                        disabled>Export ass</button>
-                      <button class="button is-dark" (click)="LoadEntries('TTML')" *ngIf="SelectedIndex === -1"
-                        disabled>Export TTML</button>
-                      <button class="button is-dark" (click)="LoadEntries('srt')" *ngIf="SelectedIndex !== -1"
-                        #loadstatesrt>Export srt</button>
-                      <button class="button is-dark" (click)="LoadEntries('ass')" *ngIf="SelectedIndex !== -1"
-                        #loadstateass>Export ass</button>
-                      <button class="button is-dark" (click)="LoadEntries('TTML')" *ngIf="SelectedIndex !== -1"
-                        #loadstatettml>Export TTML</button>
-                    </div>
-                    <button class="button is-dark" (click)="Setmode('')">Cancel</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!--============================================ EXPORT MENU =====================================================-->
-
-            <!---------------------------------------------- EDIT MENU ------------------------------------------------------->
-            <div *ngSwitchCase="'Edit'">
-              <div class="section">
-                <div class="box">
-                  <p class="title has-text-black has-text-centered pt-2">Edit</p>
-                  <div class="divider is-left is-black"></div>
-                  <div class="control">
-                    <p class="has-text-centered has-text-danger">{{ status }}</p>
-                  </div>
-                  <div class="field">
-                    <progress class="progress is-hidden" max="100" #show_hidden>30%</progress>
-                  </div>
-                  <div class="section">
-                    <p class="block has-text-centered subtitle is-5">Choose which to Edit</p>
-                    <ul id="wrap">
-                      <li class="ArchiveUIList" *ngFor="let archive of Archivedt; let i = index">
-                        <p [class.marked]="i === SelectedIndex" (click)="SetSelected(i)">{{i+1}}. {{ archive.Nick }}
-                        </p>
-                      </li>
-                    </ul>
-                  </div>
-                  <div class="section">
-                    <div class="field has-text-left">
-                      <label class="label">Archive Title</label>
-                      <div class="control">
-                        <input class="input is-rounded" type="text" placeholder="Archive Title"
-                          [(ngModel)]="SelectedArchive.Nick">
-                      </div>
-                    </div>
-                    <div class="field has-text-left">
-                      <label class="label">Tags</label>
-                      <div class="control">
-                        <input class="input is-rounded" type="text" placeholder="Stream Tags"
-                          [(ngModel)]="SelectedArchive.Tags">
-                      </div>
-                    </div>
-                    <div class="field has-text-left">
-                      <label class="label">Stream Link</label>
-                      <div class="control has-icons-left">
-                        <input class="input is-rounded" type="text" placeholder="Stream Link"
-                          [(ngModel)]="SelectedArchive.StreamLink">
-                      </div>
-                    </div>
-                    <div class="field">
-                      <label class="label">Archive Note</label>
-                      <p class="control">
-                        <textarea class="textarea" placeholder="Note" maxlength="1024"
-                          [(ngModel)]="SelectedArchive.Note"></textarea>
-                      </p>
-                    </div>
-                    <div class="field has-text-left">
-                      <label class="label"><input type="checkbox" [(ngModel)]="SelectedArchive.Pass">Password
-                        Protection</label>
-                      <div class="control" *ngIf="SelectedArchive.Pass">
-                        <input class="input is-rounded" type="password" placeholder="Password" [(ngModel)]="PassString">
-                      </div>
-                    </div>
-                    <div class="field">
-                      <label class="checkbox">
-                        <input type="checkbox" [(ngModel)]="SelectedArchive.Hidden">
-                        Hidden
-                      </label>
-                    </div>
-                    <div class="field">
-                      <label class="checkbox">
-                        <input type="checkbox" [(ngModel)]="SelectedArchive.ExtShare">
-                        Third-Party Shared
-                      </label>
-                    </div>
-                    <div class="field">
-                      <label class="checkbox">
-                        <input type="checkbox" [(ngModel)]="SelectedArchive.Downloadable">
-                        Downloadable
-                      </label>
-                    </div>
-                  </div>
-                  <div class="field">
-                    <div class="buttons">
-                      <button class="button is-dark" (click)="Setmode('')">Cancel</button>
-                      <button class="button is-dark" (click)="PushUpdate()" *ngIf="SelectedIndex === -1"
-                        disabled>Update</button>
-                      <button class="button is-dark" (click)="PushUpdate()" *ngIf="SelectedIndex !== -1"
-                        #loadstate>Update</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!--============================================ EDIT MENU =====================================================-->
-
-            <!---------------------------------------------- DELETE MENU ------------------------------------------------------->
-            <div *ngSwitchCase="'Delete'">
-              <div class="section">
-                <div class="box">
-                  <p class="title has-text-black has-text-centered pt-2">Export</p>
-                  <div class="divider is-left is-black"></div>
-                  <div class="control">
-                    <p class="has-text-centered has-text-danger">{{ status }}</p>
-                  </div>
-                  <div class="field">
-                    <progress class="progress is-hidden" max="100" #show_hidden>30%</progress>
-                  </div>
-                  <div class="section">
-                    <p class="block has-text-centered subtitle is-5">Choose which to Delete</p>
-                    <ul id="wrap">
-                      <li class="ArchiveUIList" *ngFor="let archive of Archivedt; let i = index">
-                        <p [class.marked]="i === SelectedIndex" (click)="SetSelected(i)">{{i+1}}. {{ archive.Nick }}
-                        </p>
-                      </li>
-                    </ul>
-                  </div>
-                  <div class="field">
-                    <div class="buttons">
-                      <button class="button is-dark" (click)="Setmode('')">Cancel</button>
-                      <button class="button is-dark" (click)="PushDelete()" *ngIf="SelectedIndex === -1"
-                        disabled>Delete</button>
-                      <button class="button is-dark" (click)="PushDelete()" *ngIf="SelectedIndex !== -1"
-                        #loadstate>Delete</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!--============================================ DELETE MENU =====================================================-->
-          </div>
-        </div>
-      </section>
     </div>
   </div>
-  <app-scroll-to-top></app-scroll-to-top>
+  <!--==================== MENU ======================-->
+
+  <!---------------------- BODY ------------------------>
+  <div class="hero-body" style="position: relative; display:flex; flex-direction: column; align-items: stretch; font-family: Ubuntu; padding-left: 15px; padding-right: 15px;">
+    <div style="display: flex; flex-direction: row; align-items: center;">
+      <button [disabled]="this.CurrentPage <= 1" class="button is-light is-small" (click)="PrevPage()" style="margin-right: 5px;">
+        <span class="icon is-left is-small">
+          <fa-icon [icon]="faArrowLeft"></fa-icon>
+        </span>
+        <span style="font-weight: bold;">Prev</span>
+      </button>
+      <label>( {{ (this.CurrentPage - 1)*30  }} - {{ (this.CurrentPage - 1)*30 + this.Archivedt.length }} out of {{ this.ArchiveLength }} archive(s) )</label>
+      <button [disabled]="(this.CurrentPage - 1)*30 + this.Archivedt.length >= this.ArchiveLength" class="button is-light is-small" (click)="NextPage()" style="margin-left: auto;">
+        <span style="font-weight: bold;">Next</span>
+        <span class="icon is-right is-small">
+          <fa-icon [icon]="faArrowRight"></fa-icon>
+        </span>
+      </button>
+    </div>
+
+    <table style="width: 100%; margin-top: 10px; margin-bottom: 10px;" class="table is-striped">
+      <thead style="position: sticky; top: 0; background-color: black;">
+        <tr>
+          <th style="color: white;">#</th>
+          <th style="color: white;">Title</th>
+          <th style="color: white;">
+            <fa-icon [icon]="faLink"></fa-icon>
+            <span> Stream Link</span>
+          </th>
+          <th style="color: white; min-width: 85px;">
+            <fa-icon [icon]="faTags"></fa-icon>
+            <span> Tags</span>
+          </th>
+          <th style="color: white;"><span class="icon"><fa-icon [icon]="faShareAlt"></fa-icon></span></th>
+          <th style="color: white;"><span class="icon"><fa-icon [icon]="faDownload"></fa-icon></span></th>
+          <th style="color: white;"><span class="icon"><fa-icon [icon]="faEyeSlash"></fa-icon></span></th>
+          <th style="color: white;"><span class="icon"><fa-icon [icon]="faLock"></fa-icon></span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-template ngFor let-dt [ngForOf]="Archivedt" let-i="index">
+          <tr (click)="this.SelectedIndex = i; this.SelectedArchive = this.Archivedt[i];">
+            <td>{{ (this.CurrentPage - 1)*30 + i + 1 }}</td>
+            <td>{{ dt.Nick }}</td>
+            <td>{{ dt.StreamLink }}</td>
+            <td>{{ dt.Tags }}</td>
+            <td>
+              <span *ngIf="dt.ExtShare" style="color: rgb(0, 0, 0);"class="icon"><fa-icon [icon]="faShareAlt"></fa-icon></span>
+              <span *ngIf="!dt.ExtShare" style="color: rgba(0, 0, 0, 0.13);" class="icon"><fa-icon [icon]="faShareAlt"></fa-icon></span>
+            <td>
+              <span *ngIf="dt.Downloadable" style="color: rgb(0, 0, 0);"class="icon"><fa-icon [icon]="faDownload"></fa-icon></span>
+              <span *ngIf="!dt.Downloadable" style="color: rgba(0, 0, 0, 0.13);" class="icon"><fa-icon [icon]="faDownload"></fa-icon></span>
+            </td>
+            <td>
+              <span *ngIf="dt.Hidden" style="color: rgb(0, 0, 0);"class="icon"><fa-icon [icon]="faEyeSlash"></fa-icon></span>
+              <span *ngIf="!dt.Hidden" style="color: rgba(0, 0, 0, 0.13);" class="icon"><fa-icon [icon]="faEyeSlash"></fa-icon></span>
+            </td>
+            <td>
+              <span *ngIf="dt.Pass" style="color: rgb(0, 0, 0);"class="icon"><fa-icon [icon]="faLock"></fa-icon></span>
+              <span *ngIf="!dt.Pass" style="color: rgba(0, 0, 0, 0.13);" class="icon"><fa-icon [icon]="faLock"></fa-icon></span>
+            </td>
+          </tr>
+
+          <tr *ngIf="i == this.SelectedIndex">
+            <td class="has-background-primary has-text-white" colspan="8">
+              <div style="width: 100%; display: flex; flex-direction: row; justify-content: space-between;">
+                
+                <button class="button" (click)="OpenUploadModal(2)">
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faPenAlt"></fa-icon>
+                  </span>
+                  <span>Upload Revision</span>
+                </button>
+              
+                <button class="button" (click)="ModalMenu = 3; this.status = ''; this.SelectedArchive = this.Archivedt[i]">
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faWrench"></fa-icon>
+                  </span>
+                  <span>Edit</span>
+                </button>
+
+                <button class="button" (click)="ModalMenu = 4; this.status = ''">
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faFileExport"></fa-icon>
+                  </span>
+                  <span>Download Script</span>
+                </button>
+  
+                <a class="button" href="{{ EncodeURILink(dt.Link) }}" target="_blank">
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faEdit"></fa-icon>
+                  </span>
+                  <span>Open in Script Editor</span>
+                </a>
+  
+                <button class="button is-danger" (click)="ModalMenu = 5; this.status = ''; this.SelectedArchive = this.Archivedt[i]">
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faTrash"></fa-icon>
+                  </span>
+                  <span>Delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+       </ng-template>
+      </tbody>
+    </table>
+
+    <div style="display: flex; flex-direction: row; align-items: center;">
+      <button [disabled]="this.CurrentPage <= 1" class="button is-light is-small" (click)="PrevPage()" style="margin-right: 5px;">
+        <span class="icon is-left is-small">
+          <fa-icon [icon]="faArrowLeft"></fa-icon>
+        </span>
+        <span style="font-weight: bold;">Prev</span>
+      </button>
+      <label>( {{ (this.CurrentPage - 1)*30  }} - {{ (this.CurrentPage - 1)*30 + this.Archivedt.length }} out of {{ this.ArchiveLength }} archive(s) )</label>
+      <button [disabled]="(this.CurrentPage - 1)*30 + this.Archivedt.length >= this.ArchiveLength" class="button is-light is-small" (click)="NextPage()" style="margin-left: auto;">
+        <span style="font-weight: bold;">Next</span>
+        <span class="icon is-right is-small">
+          <fa-icon [icon]="faArrowRight"></fa-icon>
+        </span>
+      </button>
+    </div>
+  </div>
+  <!--==================== BODY ======================-->
+
+  <!---------------------- FOOTER ------------------------>
+  <div class="hero-foot" style="font-family: Ubuntu;">
+
+  </div>
+  <!--==================== FOOTER ======================-->
+</section>
+
+<!---------------------------------------------- MODALS ------------------------------------------------------->
+<!--
+1. Upload New
+2. Upload Revision
+3. Edit
+4. Download Script
+5. Delete
+-->
+<div class="modal" [ngClass]="{ 'is-active' : ModalMenu != 0 }">
+  <div class="modal-background" (click)="ModalMenu = 0"></div>
+
+  <div class="modal-content" [ngSwitch]="ModalMenu">
+    <div class="box" style="font-family: Ubuntu;">
+        
+      <!--  Upload New  -->
+      <div *ngSwitchCase="1">
+        <p class="title has-text-black has-text-centered pt-2">Upload</p>
+        <p class="has-text-centered" style="font-size: 1.5em;">Accepts .ass, .TTML, and .srt</p>
+        <div class="divider is-left is-black"></div>
+        <div class="field">
+          <div class="file has-name is-small" id="wrap">
+            <label class="file-label">
+              <input class="file-input" type="file" accept=".ass, .TTML, .srt" name="resume"
+                (change)="FileChange($event)">
+              <span class="file-cta">
+                <span class="file-icon">
+                  <fa-icon [icon]="faFileUpload"></fa-icon>
+                </span>
+                <span class="file-label">
+                  Choose a file…
+                </span>
+              </span>
+              <span class="file-name">
+                {{ filename }}
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="notification is-white has-text-danger has-text-centered">
+          {{ status }}</div>
+
+        <!------- ONLY SHOW MENU BELOW IF THE FILE IS PARSED WITHOUT ANY TROUBLE ------->
+        <div *ngIf="FileParsed">
+          <div class="field">
+            <label class="label">Archive Title</label>
+            <div class="control">
+              <input class="input is-rounded" type="text" placeholder="Archive Title"
+                [(ngModel)]="SelectedArchive.Nick">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label"><fa-icon [icon]="faTags"></fa-icon> Tags</label>
+            <div class="control">
+              <input class="input is-rounded" type="text" placeholder="Tags"
+                [(ngModel)]="SelectedArchive.Tags">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label"><fa-icon [icon]="faLink"></fa-icon> Stream Link</label>
+            <div class="control has-icons-left">
+              <input class="input is-rounded" type="text" placeholder="Stream Link"
+                [(ngModel)]="SelectedArchive.StreamLink">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Archive Note</label>
+            <p class="control">
+              <textarea class="textarea" placeholder="Note" maxlength="1024"
+                [(ngModel)]="SelectedArchive.Note"></textarea>
+            </p>
+          </div>
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="SelectedArchive.Pass">
+              <strong><fa-icon [icon]="faLock" style="margin-left: 10px;"></fa-icon> Password Protection</strong>
+            </label>
+            <div class="control" *ngIf="SelectedArchive.Pass">
+              <input class="input is-rounded" type="password" placeholder="Password"
+                [(ngModel)]="PassString">
+            </div>
+          </div>
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="SelectedArchive.Hidden">
+              <strong><fa-icon [icon]="faEyeSlash" style="margin-left: 10px;"></fa-icon> Hidden</strong>
+            </label>
+          </div>
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="SelectedArchive.ExtShare">
+              <strong><fa-icon [icon]="faShareAlt" style="margin-left: 10px;"></fa-icon> Third-Party Shared</strong>
+            </label>
+          </div>
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="SelectedArchive.Downloadable">
+              <strong> <fa-icon [icon]="faDownload" style="margin-left: 10px;"></fa-icon> Downloadable</strong>
+            </label>
+          </div>
+        </div>
+
+        <div class="field" style="display: flex; flex-direction: row; margin-top: 10px; margin-bottom: 10px;">
+          <button class="button is-dark" (click)="ModalMenu = 0">Cancel</button>
+          <button *ngIf="FileParsed" class="button is-success" style="margin-left: auto;" (click)="PushUpload()">Upload</button>
+        </div>
+
+      </div>
+
+      <!--  Upload Revision  -->
+      <div *ngSwitchCase="2">
+        <p class="title has-text-black has-text-centered pt-2">Upload Revision</p>
+        <article class="message is-info" style="margin-top: 10px;">
+          <div class="message-header">
+            <p>Archive info</p>
+          </div>
+          <div class="message-body" style="padding-left: 20px;">
+            Title : {{ this.SelectedArchive.Nick }}<br>
+            Link : {{ this.SelectedArchive.StreamLink }}<br>
+            Tags : {{ this.SelectedArchive.Tags }}
+          </div>
+        </article>
+
+        <p class="has-text-centered" style="font-size: 1.5em;">Accepts .ass, .TTML, and .srt</p>
+        <div class="divider is-left is-black"></div>
+        <div class="field">
+          <div class="file has-name is-small" id="wrap">
+            <label class="file-label">
+              <input class="file-input" type="file" accept=".ass, .TTML, .srt" name="resume"
+                (change)="FileChange($event)">
+              <span class="file-cta">
+                <span class="file-icon">
+                  <fa-icon [icon]="faFileUpload"></fa-icon>
+                </span>
+                <span class="file-label">
+                  Choose a file…
+                </span>
+              </span>
+              <span class="file-name">
+                {{ filename }}
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="notification is-white has-text-danger has-text-centered">
+          {{ status }}</div>
+
+        <!------- ONLY SHOW MENU BELOW IF THE FILE IS PARSED WITHOUT ANY TROUBLE ------->
+
+        <div class="field" style="display: flex; flex-direction: row; margin-top: 10px; margin-bottom: 10px;">
+          <button class="button is-dark" (click)="ModalMenu = 0">Cancel</button>
+          <button *ngIf="FileParsed" class="button is-success" style="margin-left: auto;" (click)="PushRevision()">Upload</button>
+        </div>
+      </div>
+
+      <!--  Edit  -->
+      <div *ngSwitchCase="3">
+        <p class="title has-text-black has-text-centered pt-2">Edit Archive Metadata</p>
+        <div class="divider is-left is-black"></div>
+        <div class="control">
+          <p class="has-text-centered has-text-danger">{{ status }}</p>
+        </div>
+        
+        <div class="section">
+          <div class="field">
+            <label class="label">Archive Title</label>
+            <div class="control">
+              <input class="input is-rounded" type="text" placeholder="Archive Title"
+                [(ngModel)]="SelectedArchive.Nick">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label"><fa-icon [icon]="faTags"></fa-icon> Tags</label>
+            <div class="control">
+              <input class="input is-rounded" type="text" placeholder="Tags"
+                [(ngModel)]="SelectedArchive.Tags">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label"><fa-icon [icon]="faLink"></fa-icon> Stream Link</label>
+            <div class="control has-icons-left">
+              <input class="input is-rounded" type="text" placeholder="Stream Link"
+                [(ngModel)]="SelectedArchive.StreamLink">
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Archive Note</label>
+            <p class="control">
+              <textarea class="textarea" placeholder="Note" maxlength="1024"
+                [(ngModel)]="SelectedArchive.Note"></textarea>
+            </p>
+          </div>
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="SelectedArchive.Pass">
+              <strong><fa-icon [icon]="faLock" style="margin-left: 10px;"></fa-icon> Password Protection</strong>
+            </label>
+            <div class="control" *ngIf="SelectedArchive.Pass">
+              <input class="input is-rounded" type="password" placeholder="Password"
+                [(ngModel)]="PassString">
+            </div>
+          </div>
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="SelectedArchive.Hidden">
+              <strong><fa-icon [icon]="faEyeSlash" style="margin-left: 10px;"></fa-icon> Hidden</strong>
+            </label>
+          </div>
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="SelectedArchive.ExtShare">
+              <strong><fa-icon [icon]="faShareAlt" style="margin-left: 10px;"></fa-icon> Third-Party Shared</strong>
+            </label>
+          </div>
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" [(ngModel)]="SelectedArchive.Downloadable">
+              <strong> <fa-icon [icon]="faDownload" style="margin-left: 10px;"></fa-icon> Downloadable</strong>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="buttons" style="display: flex; flex-direction: row; justify-content: space-between;">
+            <button class="button is-dark" (click)="ModalMenu = 0">Cancel</button>
+            <button class="button is-success" (click)="PushUpdate()">Update</button>
+          </div>
+        </div>
+      </div>
+
+      <!--  Download  -->
+      <div *ngSwitchCase="4">
+        <p class="title has-text-black has-text-centered pt-2">Export to file.</p>
+        <div class="divider is-left is-black"></div>
+        <div class="control">
+          <p class="has-text-centered has-text-danger">{{ status }}</p>
+        </div>
+        <div class="field">
+          <progress class="progress is-hidden" max="100" #show_hidden>30%</progress>
+        </div>
+        <div class="buttons has-addons is-centered" style="display: flex; flex-direction: row; justify-content: space-around; margin-top: 15px;">
+          <button class="button is-dark" (click)="LoadEntries('srt')">Export srt</button>
+          <button class="button is-dark" (click)="LoadEntries('ass')">Export ass</button>
+          <button class="button is-dark" (click)="LoadEntries('TTML')">Export TTML</button>
+        </div>
+        <div class="divider is-left is-black"></div>
+        <div style="display: flex; flex-direction: row; justify-content: space-around; width: 100%;">
+          <button class="button is-dark" (click)="ModalMenu = 0">Cancel</button>
+        </div>
+      </div>
+
+      <!--  Delete  -->
+      <div *ngSwitchCase="5">
+        <h1 class="Title has-text-centered has-text-black" style="font-weight: bold; font-size: 1.5em;">Are you sure you want to delete this script?</h1>
+
+        <article class="message is-info" style="margin-top: 10px;">
+          <div class="message-header">
+            <p>Archive info</p>
+          </div>
+          <div class="message-body" style="padding-left: 20px;">
+            Title : {{ this.SelectedArchive.Nick }}<br>
+            Link : {{ this.SelectedArchive.StreamLink }}<br>
+            Tags : {{ this.SelectedArchive.Tags }}
+          </div>
+        </article>
+
+        <div style="display: flex; flex-direction: row; margin-top: 10px; margin-bottom: 10px;">
+          <a class="button" (click)="this.Processing ? ModalMenu = 5 : ModalMenu = 0">CANCEL</a>
+          <a class="button is-danger" style="margin-left: auto;" (click)="PushDelete()">DELETE</a>
+        </div>
+
+        <h1 class="Title has-text-centered has-text-black" style="font-weight: bold; font-size: 1em;">{{ this.status }}</h1>
+      </div>
+
+     </div>
+   </div>
 </div>
+<!--============================================ MODALS =====================================================-->

@@ -144,16 +144,26 @@ export class ArchiveService {
 
   GetAllArchive(
     room: string,
-    token: string
+    token: string,
+    page: number | undefined = undefined
   ): Observable<any> {
 
     const headers = { 'Content-Type': 'application/json' };
 
-    return (this.httpclient.post(environment.DBConn + '/Archive/', {
-      Act: 'GetArchive',
-      Room: room,
-      Token: token
-    }, { headers, observe: 'response', responseType: 'text' }));
+    if (page) {
+      return (this.httpclient.post(environment.DBConn + '/Archive/', {
+        Act: 'GetArchive',
+        Room: room,
+        Page: page,
+        Token: token
+      }, { headers, observe: 'response', responseType: 'text' }));
+    } else {
+      return (this.httpclient.post(environment.DBConn + '/Archive/', {
+        Act: 'GetArchive',
+        Room: room,
+        Token: token
+      }, { headers, observe: 'response', responseType: 'text' }));
+    }
   }
 
   GetOneArchive(

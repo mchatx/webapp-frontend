@@ -696,6 +696,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         
         this.EntryList.splice(i, 0, dt);
+        this.ActiveEntry = i;
         this.ReloadDisplayCards();
         Inserted = true;
         return;
@@ -707,16 +708,24 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.EntryList[this.EntryList.length - 1].End = dt.Stime;
       }
       this.EntryList.push(dt);
+      this.ActiveEntry = this.EntryList.length - 1;
       this.ReloadDisplayCards();
       return;
     }
   }
 
   DeleteEntry(): void {
+    this.TimeCardIdx = [];
+    if (this.EntryList.length == 1){
+      this.ActiveEntry = -1;
+    } else if(this.ActiveEntry > 0){
+      this.ActiveEntry--;
+    }
+
     var dt: FullEntry = this.EntryList.splice(this.SelectedEntry, 1)[0];
     if (this.SelectedEntry > 0) {
       this.EntryList[this.SelectedEntry - 1].End = dt.End;
-    } else {
+    } else if (this.EntryList.length > 0) {
       this.EntryList[this.SelectedEntry].Stime = dt.Stime;
     }
     this.ReloadDisplayCards();
@@ -1080,7 +1089,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ScrollCalculator(): void {
-    if (Math.abs(this.TimerTime/1000/this.SecPerBar - this.BarCount) > 2) {
+    const DeltaBar: number = this.TimerTime/1000/this.SecPerBar - this.BarCount;
+    if ((DeltaBar > 3) || (DeltaBar < 0)) {
       const BarCountNew = Math.floor(this.TimerTime/1000/this.SecPerBar);
       if (BarCountNew > 0) {
         this.BarCount = BarCountNew - 1;
@@ -1089,15 +1099,29 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       }
       this.RerenderTimeline(); 
       this.ReloadDisplayCards();
-    } else {
-      if (this.TimerTime/1000 > (2.0 + this.BarCount)*this.SecPerBar){
-        this.BarCount++;
-        this.RenderForward();
-        this.ReloadDisplayCards();
-      } else if ((this.TimerTime/1000 < (1.0 + this.BarCount)*this.SecPerBar) && (this.BarCount > 0)) {
-        this.BarCount--;
-        this.RenderBackward();
-        this.ReloadDisplayCards();
+    } else if (DeltaBar > 2){
+      this.BarCount++;
+      this.RenderForward();
+      this.ReloadDisplayCards();
+    } else if ((DeltaBar < 1) && (this.BarCount > 0)) {
+      this.BarCount--;
+      this.RenderBackward();
+      this.ReloadDisplayCards();
+    }
+
+    if (this.VidLoad) {
+      if (this.ActiveEntry < 0){
+        if (this.EntryList.length > 0){
+          this.ActiveEntry = 0;
+        }
+      } else if (this.EntryList[this.ActiveEntry].Stime > this.TimerTime) {
+        if (this.ActiveEntry > 0){
+          this.ActiveEntry--;
+        }        
+      } else if (this.EntryList[this.ActiveEntry].End < this.TimerTime) {
+        if (this.ActiveEntry < this.EntryList.length - 1){
+          this.ActiveEntry++;
+        }
       }
     }
 
@@ -1207,6 +1231,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ReloadDisplayCards():void {
+    this.RefreshActiveEntry();
     this.TimeCardIdx = [];
     this.XtraMargin = 0;
     for (var i = 0; i < this.EntryList.length; i++) {
@@ -1246,6 +1271,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   //-------------------------- TIMER CONTROL --------------------------
+  ActiveEntry:number = -1;
 
   @HostListener('document:keydown.control.space', ['$event'])
   CtrlSpaceKeypress(event: KeyboardEvent):void {
@@ -1318,6 +1344,22 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   SendSeek(){
     if (this.VidLoad){
       this.player.seekTo(this.TimerTime/1000, true);
+    }
+  }
+
+  RefreshActiveEntry() {
+    if (this.EntryList.length == 0){
+      this.ActiveEntry = -1;
+      return;
+    }
+
+    for(var i:number = 0; i < this.EntryList.length; i++) {
+      if (this.EntryList[i].Stime > this.TimerTime) {
+        this.ActiveEntry = i - 1;
+        return;
+      } else if (i == this.EntryList.length - 1) {
+        this.ActiveEntry = i;
+      }
     }
   }
   //========================== TIMER CONTROL ==========================

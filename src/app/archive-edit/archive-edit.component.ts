@@ -6,7 +6,8 @@ import { AccountService } from '../services/account.service';
 import ArchiveData from '../models/ArchiveFullData';
 import Entries from '../models/Entries';
 import { saveAs } from 'file-saver';
-import { faLock, faUser, faTags, faUpload, faEdit, faFileExport, faTrash, faFileUpload } from '@fortawesome/free-solid-svg-icons';
+import { faLock, faUser, faUpload, faHome, faSignOutAlt, faArrowLeft, faArrowRight, faEyeSlash, faDownload, faShareAlt, faLink, faTags,
+         faWrench, faFileExport, faTrash, faEdit, faPenAlt, faFileUpload} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-archive-edit',
@@ -15,21 +16,18 @@ import { faLock, faUser, faTags, faUpload, faEdit, faFileExport, faTrash, faFile
 })
 export class ArchiveEditComponent implements OnInit {
   @ViewChild('loadstate') loadbutton!: ElementRef;
-  @ViewChild('loadstatesrt') loadbuttonsrt!: ElementRef;
-  @ViewChild('loadstateass') loadbuttonass!: ElementRef;
-  @ViewChild('loadstatettml') loadbuttonttml!: ElementRef;
-  @ViewChild('show_hidden') showhidden!: ElementRef;
-  @ViewChild('show_hidden1') showhidden1!: ElementRef;
-  @ViewChild('show_hidden2') showhidden2!: ElementRef;
-  @ViewChild('show_hidden3') showhidden3!: ElementRef;
-  @ViewChild('show_hidden4') showhidden4!: ElementRef;
-  @ViewChild('is_active1') isactive1!: ElementRef;
-  @ViewChild('is_active2') isactive2!: ElementRef;
-  @ViewChild('is_active3') isactive3!: ElementRef;
-  @ViewChild('is_active4') isactive4!: ElementRef;
-
+  
   SearchNick: string = "";
   SearchPass: string = "";
+
+  ModalMenu:number = 0;
+  /*
+    1. Upload New
+    2. Upload Revision
+    3. Edit
+    4. Download Script
+    5. Delete
+  */
 
   Room: string = "";
   status: string = "";
@@ -37,19 +35,14 @@ export class ArchiveEditComponent implements OnInit {
   LoginMode: boolean = false;
   Processing: boolean = false;
 
-  windowScrolled: boolean | undefined;
   filename: string = "No file uploaded";
-  mode: string = "";
-  /*
-    [empty] : Main menu
-    Export : Export menu
-    Edit : Edit menu
-    Delete : Delete menu
-    Upload : Add new archive menu
-    Update : upload prexisting archive
-  */
+
   removemarked: boolean = true;
+  
   Archivedt: ArchiveData[] = [];
+  ArchiveLength: number = 0;
+  CurrentPage: number = 1;
+
   Entriesdt: Entries[] = [];
   SelectedIndex: number = -1;
   TargetFile: File | null = null;
@@ -71,30 +64,11 @@ export class ArchiveEditComponent implements OnInit {
   }
   PassString: string = "";
 
-  constructor(@Inject(DOCUMENT) private document: Document,
+  constructor(
     private AService: ArchiveService,
     private TGEnc: TsugeGushiService,
     private AccService: AccountService
   ) { }
-
-  @HostListener("window:scroll", [])
-  onWindowScroll() {
-    if (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop > 100) {
-      this.windowScrolled = true;
-    }
-    else if (this.windowScrolled && window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop < 10) {
-      this.windowScrolled = false;
-    }
-  }
-  scrollToTop() {
-    (function smoothscroll() {
-      var currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
-      if (currentScroll > 0) {
-        window.requestAnimationFrame(smoothscroll);
-        window.scrollTo(0, currentScroll - (currentScroll / 8));
-      }
-    })();
-  }
 
   ngOnInit(): void {
     let test: string | null = localStorage.getItem("MChatToken");
@@ -112,6 +86,7 @@ export class ArchiveEditComponent implements OnInit {
               this.Room = TokenData["Room"];
               this.Token = TokenData["Token"];
               this.SearchNick = TokenData["Room"];
+              this.CurrentPage = 1;
               this.LoadArchive();
             }
           });
@@ -157,225 +132,147 @@ export class ArchiveEditComponent implements OnInit {
     }, 1000); //delay for button loading
   }
 
-  Setmode(modestring: string) {
-    this.mode = modestring;
-    this.SelectedArchive = {
-      Room: this.Room,
-      Link: "",
-      Nick: "",
-      Hidden: false,
-      Pass: false,
-      Tags: "",
-      StreamLink: "",
-      ExtShare: false,
-      Star: 0,
-      Note: "",
-      Downloadable: false
-    }
-    this.PassString = "";
-    this.Entriesdt = [];
-    this.SelectedIndex = -1;
-    this.status = "";
-    this.Processing = false;
-
-    switch (modestring) {
-      case 'Upload':
-        this.showhidden2.nativeElement.classList.add("is-hidden");
-        this.showhidden3.nativeElement.classList.add("is-hidden");
-        this.showhidden4.nativeElement.classList.add("is-hidden");
-        this.isactive1.nativeElement.classList.remove("is-outlined");
-        this.FileParsed = false;
-        this.Overwrite = false;
-        break;
-      case 'Export':
-        this.showhidden1.nativeElement.classList.add("is-hidden");
-        this.showhidden3.nativeElement.classList.add("is-hidden");
-        this.showhidden4.nativeElement.classList.add("is-hidden");
-        this.isactive2.nativeElement.classList.remove("is-outlined");
-
-        break;
-      case 'Edit':
-        this.showhidden1.nativeElement.classList.add("is-hidden");
-        this.showhidden2.nativeElement.classList.add("is-hidden");
-        this.showhidden4.nativeElement.classList.add("is-hidden");
-        this.isactive3.nativeElement.classList.remove("is-outlined");
-
-        break;
-      case 'Delete':
-        this.showhidden1.nativeElement.classList.add("is-hidden");
-        this.showhidden2.nativeElement.classList.add("is-hidden");
-        this.showhidden3.nativeElement.classList.add("is-hidden");
-        this.isactive4.nativeElement.classList.remove("is-outlined");
-        break;
-      case '':
-        this.showhidden1.nativeElement.classList.remove("is-hidden");
-        this.showhidden2.nativeElement.classList.remove("is-hidden");
-        this.showhidden3.nativeElement.classList.remove("is-hidden");
-        this.showhidden4.nativeElement.classList.remove("is-hidden");
-        this.isactive1.nativeElement.classList.add("is-outlined");
-        this.isactive2.nativeElement.classList.add("is-outlined");
-        this.isactive3.nativeElement.classList.add("is-outlined");
-        this.isactive4.nativeElement.classList.add("is-outlined");
-        this.filename = "No file uploaded";
-        break;
-    }
-    this.scrollToTop();
-  }
-
-  SetSelected(index: number) {
-    this.SelectedIndex = index;
-    if (this.mode == "Edit") {
-      this.SelectedArchive = {
-        Room: this.Archivedt[this.SelectedIndex].Room,
-        Link: this.Archivedt[this.SelectedIndex].Link,
-        Nick: this.Archivedt[this.SelectedIndex].Nick,
-        Hidden: this.Archivedt[this.SelectedIndex].Hidden,
-        Pass: this.Archivedt[this.SelectedIndex].Pass,
-        Tags: this.Archivedt[this.SelectedIndex].Tags,
-        StreamLink: this.Archivedt[this.SelectedIndex].StreamLink,
-        ExtShare: this.Archivedt[this.SelectedIndex].ExtShare,
-        Star: this.Archivedt[this.SelectedIndex].Star,
-        Note: this.Archivedt[this.SelectedIndex].Note,
-        Downloadable: this.Archivedt[this.SelectedIndex].Downloadable
-      };
-    }
+  LogOut():void {
+    localStorage.removeItem("MChatToken");
+    location.reload();
   }
 
   LoadArchive() {
+    this.SelectedIndex = -1;
     this.Archivedt = [];
-    this.AService.GetAllArchive(this.Room, this.Token).subscribe(
+    this.AService.GetAllArchive(this.Room, this.Token, this.CurrentPage).subscribe(
       (response) => {
         var dt = JSON.parse(response.body);
-        for (let i = 0; i < dt.length; i++) {
-          if (!dt[i].Downloadable){
-            dt[i].Downloadable = false;
+        this.ArchiveLength = dt.Total;
+
+        dt.Data.map((e: any) => {
+          if (!e.Downloadable){
+            e.Downloadable = false;
           }
-          this.Archivedt.push({
-            Room: dt[i].Room,
-            Link: dt[i].Link,
-            Nick: dt[i].Nick,
-            Hidden: dt[i].Hidden,
-            Pass: dt[i].Pass,
-            Tags: dt[i].Tags,
-            StreamLink: dt[i].StreamLink,
-            ExtShare: dt[i].ExtShare,
-            Star: dt[i].Star,
-            Note: dt[i].Note,
-            Downloadable: dt[i].Downloadable
-          });
-        }
-      });
+          this.Archivedt.push(e);
+        })
+    });
   }
 
-  PushUpdate() {
-    this.status = "";
-    this.loadbutton.nativeElement.classList.add('is-loading');
-    setTimeout(() => {
-      this.loadbutton.nativeElement.classList.remove('is-loading');
-      this.showhidden.nativeElement.classList.remove('is-hidden');
-      setTimeout(() => {
-        this.showhidden.nativeElement.classList.add('is-hidden');
-        if (!this.Processing) {
-          if (this.SelectedArchive.Room != undefined) {
-            this.AService.EditArchive(this.Room, this.Token, this.SelectedArchive.Link, this.SelectedArchive.Nick, this.SelectedArchive.Hidden, this.SelectedArchive.ExtShare, this.SelectedArchive.Tags, this.SelectedArchive.Pass, this.PassString, this.SelectedArchive.StreamLink, this.SelectedArchive.Note, this.SelectedArchive.Downloadable).subscribe({
-              error: error => {
-                this.status = error["error"];
-                this.LoginMode = false;
-                this.mode = '';
+  PrevPage(): void {
+    if (this.CurrentPage > 1){
+      this.CurrentPage--;
+      this.LoadArchive();
+    }
+  }
 
-                if (error["error"] == "ERROR : INVALID TOKEN") {
-                  localStorage.removeItem("MChatToken");
-                  location.reload();
-                }
-              },
-              next: data => {
-                this.status = "Archive Data Updated. Redirecting...";
-                this.Processing = true;
-                this.Archivedt[this.SelectedIndex] = {
-                  Room: this.SelectedArchive.Room,
-                  Link: this.SelectedArchive.Link,
-                  Nick: this.SelectedArchive.Nick,
-                  Hidden: this.SelectedArchive.Hidden,
-                  Pass: this.SelectedArchive.Pass,
-                  Tags: this.SelectedArchive.Tags,
-                  StreamLink: this.SelectedArchive.StreamLink,
-                  ExtShare: this.SelectedArchive.ExtShare,
-                  Star: this.SelectedArchive.Star,
-                  Note: this.SelectedArchive.Note,
-                  Downloadable: this.SelectedArchive.Downloadable
-                };
-
-                setTimeout(() => {
-                  this.mode = '';
-                  this.showhidden1.nativeElement.classList.remove("is-hidden");
-                  this.showhidden2.nativeElement.classList.remove("is-hidden");
-                  this.showhidden3.nativeElement.classList.remove("is-hidden");
-                  this.showhidden4.nativeElement.classList.remove("is-hidden");
-                  this.isactive1.nativeElement.classList.add("is-outlined");
-                  this.isactive2.nativeElement.classList.add("is-outlined");
-                  this.isactive3.nativeElement.classList.add("is-outlined");
-                  this.isactive4.nativeElement.classList.add("is-outlined");
-                  this.filename = "No file uploaded";
-                  this.scrollToTop();
-                }, 3000); //3s
-              }
-            });
-          }
-        }
-      }, 3000); //delay for progress bar
-    }, 1000); //delay for button loading 
+  NextPage(): void {
+    this.CurrentPage++;
+    this.LoadArchive();
   }
 
   PushDelete() {
-    this.status = "";
-    this.loadbutton.nativeElement.classList.add('is-loading');
-    setTimeout(() => {
-      this.loadbutton.nativeElement.classList.remove('is-loading');
-      this.showhidden.nativeElement.classList.remove('is-hidden');
-      setTimeout(() => {
-        this.showhidden.nativeElement.classList.add('is-hidden');
-        if (!this.Processing) {
-          if (this.SelectedArchive.Room != undefined) {
-            this.AService.DeleteArchive(this.Room, this.Token, this.Archivedt[this.SelectedIndex].Link).subscribe({
-              error: error => {
-                this.status = error["error"];
-                this.LoginMode = false;
-                this.mode = '';
+    if (!this.Processing) {
+      this.status = "DELETING...";
+      this.Processing = true;
+      if (this.SelectedArchive.Room != undefined) {
+        this.AService.DeleteArchive(this.Room, this.Token, this.Archivedt[this.SelectedIndex].Link).subscribe({
+          error: error => {
+            this.status = error["error"];
+            this.Processing = false;
 
-                if (error["error"] == "ERROR : INVALID TOKEN") {
-                  localStorage.removeItem("MChatToken");
-                  location.reload();
-                }
-              },
-              next: data => {
-                this.status = "Archive Deleted. Redirecting...";
-                this.Processing = true;
-                this.Archivedt.splice(this.SelectedIndex, 1);
+            if (error["error"] == "ERROR : INVALID TOKEN") {
+              localStorage.removeItem("MChatToken");
+              location.reload();
+            }
+          },
+          next: data => {
+            this.status = "Deleted!! Updating archive list...";
 
-                setTimeout(() => {
-                  this.mode = '';
-                  this.showhidden1.nativeElement.classList.remove("is-hidden");
-                  this.showhidden2.nativeElement.classList.remove("is-hidden");
-                  this.showhidden3.nativeElement.classList.remove("is-hidden");
-                  this.showhidden4.nativeElement.classList.remove("is-hidden");
-                  this.isactive1.nativeElement.classList.add("is-outlined");
-                  this.isactive2.nativeElement.classList.add("is-outlined");
-                  this.isactive3.nativeElement.classList.add("is-outlined");
-                  this.isactive4.nativeElement.classList.add("is-outlined");
-                  this.filename = "No file uploaded";
-                  this.scrollToTop();
-                }, 3000); //5s
-              }
-            });
+            setTimeout(() => {
+              this.status = "";
+              this.Processing = false;
+              this.ModalMenu = 0;
+              this.LoadArchive();
+            }, 2000);
           }
-        }
-      }, 3000); //delay for progress bar
-    }, 1000);  //delay for button loading 
-
+        });
+      }
+    }
   }
 
-  ResetSelectedIndex() {
-    this.SelectedIndex = -1;
+  PushUpdate() {
+    if (!this.Processing) {
+      this.status = "Updating...";
+      this.Processing = true;
+      if (this.SelectedArchive.Room != undefined) {
+        this.AService.EditArchive(this.Room, this.Token, this.SelectedArchive.Link, this.SelectedArchive.Nick, this.SelectedArchive.Hidden, this.SelectedArchive.ExtShare, this.SelectedArchive.Tags, this.SelectedArchive.Pass, this.PassString, this.SelectedArchive.StreamLink, this.SelectedArchive.Note, this.SelectedArchive.Downloadable).subscribe({
+          error: error => {
+            this.status = error["error"];
+            this.Processing = false;
+
+            if (error["error"] == "ERROR : INVALID TOKEN") {
+              localStorage.removeItem("MChatToken");
+              location.reload();
+            }
+          },
+          next: data => {
+            this.status = "Updated!! Updating local archive list...";
+            this.Archivedt[this.SelectedIndex] = {
+              Room: this.SelectedArchive.Room,
+              Link: this.SelectedArchive.Link,
+              Nick: this.SelectedArchive.Nick,
+              Hidden: this.SelectedArchive.Hidden,
+              Pass: this.SelectedArchive.Pass,
+              Tags: this.SelectedArchive.Tags,
+              StreamLink: this.SelectedArchive.StreamLink,
+              ExtShare: this.SelectedArchive.ExtShare,
+              Star: this.SelectedArchive.Star,
+              Note: this.SelectedArchive.Note,
+              Downloadable: this.SelectedArchive.Downloadable
+            };
+
+            setTimeout(() => {
+              this.status = "";
+              this.Processing = false;
+              this.ModalMenu = 0;
+              this.LoadArchive();
+            }, 2000);
+          }
+        });
+      }
+    }
+  }
+
+  EncodeURILink(link: string | undefined):string {
+    if (!link){
+      return '/ScriptEditor';
+    } else {
+      return '/ScriptEditor?archive=' + encodeURIComponent(link);
+    }    
+  }
+
+  //------------------------------------- UPLOAD MODULES -------------------------------------
+  OpenUploadModal(ModalMode: number): void {
+    this.ModalMenu = ModalMode;
+    this.status = "";
+    this.filename = "No file uploaded";
+    this.TargetFile = null;
+    this.FileParsed = false;
+    this.Entriesdt = [];
+
+    if (ModalMode == 1){
+      this.SelectedArchive = {
+        Room: "",
+        Link: "",
+        Nick: "",
+        Hidden: false,
+        Pass: false,
+        Tags: "",
+        StreamLink: "",
+        ExtShare: false,
+        Star: 0,
+        Note: "",
+        Downloadable: false
+      }
+    } else {
+      this.SelectedArchive = this.Archivedt[this.SelectedIndex];
+    }
   }
 
   StringifyTime(TimeStamp: number, mode: boolean): string {
@@ -469,88 +366,68 @@ export class ArchiveEditComponent implements OnInit {
     return (res);
   }
 
-  //------------------------------------- UPLOAD MODULES -------------------------------------
+  PushRevision() {
+    if (!this.Processing) {
+      this.Processing = true;
+      this.status = "Uploading..."
 
-  PushUpload(mode: boolean) {
-    this.status = "";
-    this.loadbutton.nativeElement.classList.add('is-loading');
-    setTimeout(() => {
-      this.loadbutton.nativeElement.classList.remove('is-loading');
-      this.showhidden.nativeElement.classList.remove('is-hidden');
-      setTimeout(() => {
-        this.showhidden.nativeElement.classList.add('is-hidden');
-        if (!this.Processing) {
-          if (mode) {
-            let d = new Date();
-            this.SelectedArchive.Link = this.Room + "_" + d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + "_" + d.getHours() + "-" + d.getMinutes() + "-" + d.getSeconds();
+      this.AService.UpdateArchive(this.Room, this.Token, this.Archivedt[this.SelectedIndex].Link, JSON.stringify(this.Entriesdt)).subscribe({
+        error: error => {
+          this.status = error["error"];
+          this.Processing = false;
 
-            if (this.SelectedArchive.Nick == "") {
-              this.SelectedArchive.Nick = this.SelectedArchive.Link;
-            }
-
-            this.AService.AddArchive(this.Room, this.Token, this.SelectedArchive.Nick, this.SelectedArchive.Link, this.SelectedArchive.Hidden, this.SelectedArchive.ExtShare, this.SelectedArchive.Tags, this.SelectedArchive.Pass, this.PassString, this.SelectedArchive.StreamLink, JSON.stringify(this.Entriesdt), this.SelectedArchive.Note, this.SelectedArchive.Downloadable).subscribe({
-              error: error => {
-                this.status = error["error"];
-                this.LoginMode = false;
-                this.mode = '';
-
-                if (error["error"] == "ERROR : INVALID TOKEN") {
-                  localStorage.removeItem("MChatToken");
-                  location.reload();
-                }
-              },
-              next: data => {
-                this.Processing = true;
-                this.status = "Archive Uploaded. Redirecting...";
-                this.Archivedt.push(this.SelectedArchive);
-                setTimeout(() => {
-                  this.mode = '';
-                  this.showhidden1.nativeElement.classList.remove("is-hidden");
-                  this.showhidden2.nativeElement.classList.remove("is-hidden");
-                  this.showhidden3.nativeElement.classList.remove("is-hidden");
-                  this.showhidden4.nativeElement.classList.remove("is-hidden");
-                  this.isactive1.nativeElement.classList.add("is-outlined");
-                  this.isactive2.nativeElement.classList.add("is-outlined");
-                  this.isactive3.nativeElement.classList.add("is-outlined");
-                  this.isactive4.nativeElement.classList.add("is-outlined");
-                  this.filename = "No file uploaded";
-                }, 3000); //3s
-              }
-            });
-          } else {
-            this.AService.UpdateArchive(this.Room, this.Token, this.Archivedt[this.SelectedIndex].Link, JSON.stringify(this.Entriesdt)).subscribe({
-              error: error => {
-                this.status = error["error"];
-                this.LoginMode = false;
-                this.mode = '';
-
-                if (error["error"] == "ERROR : INVALID TOKEN") {
-                  localStorage.removeItem("MChatToken");
-                  location.reload();
-                }
-              },
-              next: data => {
-                this.Processing = true;
-                this.status = "Archive Uploaded. Redirecting...";
-                setTimeout(() => {
-                  this.mode = '';
-                  this.showhidden1.nativeElement.classList.remove("is-hidden");
-                  this.showhidden2.nativeElement.classList.remove("is-hidden");
-                  this.showhidden3.nativeElement.classList.remove("is-hidden");
-                  this.showhidden4.nativeElement.classList.remove("is-hidden");
-                  this.isactive1.nativeElement.classList.add("is-outlined");
-                  this.isactive2.nativeElement.classList.add("is-outlined");
-                  this.isactive3.nativeElement.classList.add("is-outlined");
-                  this.isactive4.nativeElement.classList.add("is-outlined");
-                  this.filename = "No file uploaded";
-                }, 3000); //3s
-              }
-            });
+          if (error["error"] == "ERROR : INVALID TOKEN") {
+            localStorage.removeItem("MChatToken");
+            location.reload();
           }
+        },
+
+        next: data => {
+          this.status = "Uploaded!!...";
+
+          setTimeout(() => {
+            this.status = "";
+            this.Processing = false;
+            this.ModalMenu = 0;
+          }, 2000);
         }
-      }, 3000);  //delay for progress bar
-    }, 1000);    //delay for button loading 
-    this.scrollToTop();
+      });
+    }
+  }
+
+  PushUpload() {
+    if (!this.Processing) {
+      this.Processing = true;
+      this.status = "Uploading..."
+      let d = new Date();
+      this.SelectedArchive.Link = this.Room + "_" + d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + "_" + d.getHours() + "-" + d.getMinutes() + "-" + d.getSeconds();
+
+      if (this.SelectedArchive.Nick == "") {
+        this.SelectedArchive.Nick = this.SelectedArchive.Link;
+      }
+
+      this.AService.AddArchive(this.Room, this.Token, this.SelectedArchive.Nick, this.SelectedArchive.Link, this.SelectedArchive.Hidden, this.SelectedArchive.ExtShare, this.SelectedArchive.Tags, this.SelectedArchive.Pass, this.PassString, this.SelectedArchive.StreamLink, JSON.stringify(this.Entriesdt), this.SelectedArchive.Note, this.SelectedArchive.Downloadable).subscribe({
+        error: error => {
+          this.status = error["error"];
+          this.Processing = false;
+
+          if (error["error"] == "ERROR : INVALID TOKEN") {
+            localStorage.removeItem("MChatToken");
+            location.reload();
+          }
+        },
+        next: data => {
+          this.status = "Uploaded!! Updating archive list...";
+
+          setTimeout(() => {
+            this.status = "";
+            this.Processing = false;
+            this.ModalMenu = 0;
+            this.LoadArchive();
+          }, 2000);
+        }
+      });
+    }
   }
 
   FileChange(e: Event) {
@@ -1110,63 +987,37 @@ export class ArchiveEditComponent implements OnInit {
       */
     }
   }
-
   //===================================== UPLOAD MODULES =====================================
 
 
 
-  //------------------------------------- EXPORT MODULES -------------------------------------
+    //------------------------------------- EXPORT MODULES -------------------------------------
   LoadEntries(mode: string): void {
-    this.status = "";
-    switch (mode) {
-      case 'srt':
-        this.loadbuttonsrt.nativeElement.classList.add('is-loading');
-        break;
-      case 'ass':
-        this.loadbuttonass.nativeElement.classList.add('is-loading');
-        break;
-      case 'TTML':
-        this.loadbuttonttml.nativeElement.classList.add('is-loading');
-        break;
-      default:
-        break;
-    }
-    setTimeout(() => {
-      this.loadbuttonsrt.nativeElement.classList.remove('is-loading');
-      this.loadbuttonass.nativeElement.classList.remove('is-loading');
-      this.loadbuttonttml.nativeElement.classList.remove('is-loading');
-      this.showhidden.nativeElement.classList.remove('is-hidden');
-      setTimeout(() => {
-        this.showhidden.nativeElement.classList.add('is-hidden');
-        if (this.SelectedIndex != -1) {
-          this.Entriesdt = [];
-          this.AService.GetOneArchive(this.Room, this.Token, this.Archivedt[this.SelectedIndex].Link).subscribe(
-            (response) => {
-              var dt = JSON.parse(response.body);
-              for (let i = 0; i < dt.length; i++) {
-                this.Entriesdt.push({
-                  Stext: dt[i].Stext,
-                  Stime: dt[i].Stime,
-                  CC: dt[i].CC,
-                  OC: dt[i].OC
-                });
-              }
-
-              switch (mode) {
-                case 'srt':
-                  this.ExportSrt();
-                  break;
-                case 'ass':
-                  this.ExportAss();
-                  break;
-                case 'TTML':
-                  this.ExportTTML();
-                  break;
-              }
-            });
+    this.Entriesdt = [];
+    this.AService.GetOneArchive(this.Room, this.Token, this.Archivedt[this.SelectedIndex].Link).subscribe(
+      (response) => {
+        var dt = JSON.parse(response.body);
+        for (let i = 0; i < dt.length; i++) {
+          this.Entriesdt.push({
+            Stext: dt[i].Stext,
+            Stime: dt[i].Stime,
+            CC: dt[i].CC,
+            OC: dt[i].OC
+          });
         }
-      }, 3000);
-    }, 1000);
+
+        switch (mode) {
+          case 'srt':
+            this.ExportSrt();
+            break;
+          case 'ass':
+            this.ExportAss();
+            break;
+          case 'TTML':
+            this.ExportTTML();
+            break;
+        }
+      });
   }
 
   ExportSrt(): void {
@@ -1393,12 +1244,23 @@ export class ArchiveEditComponent implements OnInit {
   }
   //===================================== EXPORT MODULES =====================================
 
-  faUser = faUser;
+
   faLock = faLock;
-  faTags = faTags;
+  faUser = faUser;
+  faSignOutAlt = faSignOutAlt;
   faUpload = faUpload;
-  faFileUpload = faFileUpload;
-  faEdit = faEdit;
+  faHome = faHome;
+  faArrowLeft = faArrowLeft;
+  faArrowRight = faArrowRight;
+  faEyeSlash = faEyeSlash;
+  faDownload = faDownload;
+  faShareAlt = faShareAlt;
+  faLink = faLink;
+  faTags = faTags;
+  faWrench = faWrench;
+  faFileExport = faFileExport;
   faTrash = faTrash;
-  faFileExport = faFileExport
+  faEdit = faEdit;
+  faPenAlt = faPenAlt;
+  faFileUpload = faFileUpload;
 }

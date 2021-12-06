@@ -45,29 +45,32 @@
           <table style="width: 100%;" class="table is-striped">
             <thead style="position: sticky; top: 0; background-color: black;">
               <tr>
-                <th></th>
                 <th style="color: white;">#</th>
                 <th style="color: white;">Timestamp</th>
-                <th style="color: white;">End</th>
                 <th style="color: white;">Profile</th>
                 <th style="width: 100%; color: white;">Text</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let Entry of EntryList; index as i">
-                <td><fa-icon [icon]="faTimesCircle" (click)="ModalMenu = 3; SelectedEntry = i" style="cursor: pointer;"></fa-icon></td>
+              <tr *ngFor="let Entry of EntryList; index as i" (click)="this.SelectedEntry = i">
                 <td>{{ i + 1 }}</td>
                 <td>{{ Entry.Stime/1000 | timePrinter:true:true }}</td>
-                <td>{{ Entry.End/1000 | timePrinter:true:true }}</td>
                 <td>{{ this.ProfileList[Entry.Prfidx].Name }}</td>
-                <td><input [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200"/></td>
+                <td>
+                  <div *ngIf="this.SelectedEntry == i" style="display: flex; flex-direction: row;">
+                    <input style="background-color: transparent; width: 100%;" [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200"/>
+                    <fa-icon [icon]="faTimesCircle" (click)="ModalMenu = 3;" style="cursor: pointer;"></fa-icon>
+                  </div>
+                  <label *ngIf="this.SelectedEntry != i" style="background-color: transparent;" [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC"> {{ Entry.Stext }} </label>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
  
         <!-------------------- PROFILE LIST -------------------->
-        <div *ngIf="ProfileTab" style="position: absolute; right: 25px; bottom: 10px; z-index: 1; background-color: black; color: white; font-weight: bold;">
+        <div *ngIf="ProfileTab" style="position: absolute; bottom: 10px; z-index: 1; background-color: black; color: white; font-weight: bold;" 
+          [style.right]="VidLoad ? 'calc(50vw + 25px)' : '25px'">
           <div *ngFor="let prf of ProfileList; index as i;">
             <p *ngIf="i == SelectedProfile">> {{ i + 1 }}. {{prf.Name}}</p>
             <p *ngIf="i != SelectedProfile">{{ i + 1 }}. {{prf.Name}}</p>
@@ -82,6 +85,9 @@
           <div id="player" style="width: 100%; height: 100%;"></div>
         </div>
 
+        <label *ngIf="VidLoad && (this.ActiveEntry > -1)" style="background-color: transparent; text-align: center; margin-top: 2px; margin-bottom: 2px; border-radius: 5%; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-size: 21; font-weight: bolder;" 
+          [style.-webkit-text-fill-color]="this.ProfileList[this.EntryList[this.ActiveEntry].Prfidx].CC" 
+          [style.-webkit-text-stroke-color]="this.ProfileList[this.EntryList[this.ActiveEntry].Prfidx].OC"> {{ this.EntryList[this.ActiveEntry].Stext }} </label>
   
         <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 5px;">
           <a class="button" style="font-size: 12px;" (click)="StopTimer(true)"><fa-icon [icon]="faStop"></fa-icon></a>
@@ -101,12 +107,12 @@
       <!-------------------- TIMELINE -------------------->
       <div style="display: flex; flex-direction: column; padding-bottom: 7px; margin-bottom: 5px;">
         <div style="position: relative;">
-          <div style="position: absolute; left: calc(50vw - 2px); top: 0px; width: 4px; height: 100%; z-index: 1; background-color: rgba(255, 0, 0, 0.3);"> </div>
+          <div style="position: absolute; left: calc(40% - 2px); top: 0px; width: 4px; height: 100%; z-index: 1; background-color: rgba(255, 0, 0, 0.3);"> </div>
 
           <div style="overflow-x: hidden; display: flex; flex-direction: column; border-top: 2px solid white; padding-top: 7px; border-bottom: 2px solid white;"
             [style.scroll-behavior]="this.JumpScroll ? 'unset' : 'smooth'" #TimelineDiv>
             
-            <div style="display: flex; flex-direction: row; margin-left: 50vw;" [style.width]="(3*SecToPx*SecPerBar).toString() + 'px'"
+            <div style="display: flex; flex-direction: row; margin-left: 40%;" [style.width]="(3*SecToPx*SecPerBar).toString() + 'px'"
               (mouseleave)="RulerMouseLeave($event)" (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
               <canvas [style.height]="this.BarHeight.toString() + 'px'" [style.width]="(SecToPx*SecPerBar).toString() + 'px'" #TimeCanvas1></canvas>
               <canvas [style.height]="this.BarHeight.toString() + 'px'" [style.width]="(SecToPx*SecPerBar).toString() + 'px'" #TimeCanvas2></canvas>
@@ -114,7 +120,7 @@
             </div>
   
             <div style="display: flex; flex-direction: row; margin-top: 5px; margin-bottom: 5px;" [style.width]="(3*SecToPx*SecPerBar).toString() + 'px'" 
-              [style.margin-left]="'calc(50vw + 3px + ' + XtraMargin.toString() + 'px)'" (mouseleave)="RulerMouseLeave($event)" 
+              [style.margin-left]="'calc(40% + 3px + ' + XtraMargin.toString() + 'px)'" (mouseleave)="RulerMouseLeave($event)" 
               (mouseup)="RulerMouseUp($event)" (mousemove)="RulerMouseMove($event)">
 
               <div *ngFor="let i of this.TimeCardIdx" [style.width] = "CardWidthCalculator(i)"

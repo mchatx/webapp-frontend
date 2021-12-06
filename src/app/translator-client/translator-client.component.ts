@@ -1019,6 +1019,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     });
 
     if (this.EntryList.filter(e => (e.Stext.indexOf('- Stream Starts -') != -1)).length == 0) {
+      //this.NormalStart();
       if (this.VidID != ""){
         this.TryFetchStart();
       } else {
@@ -1078,7 +1079,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   }
 
   TryFetchStart():void {
-    this.TLService.CheckIfMemberOnly("beBzxqrrg8g").subscribe({
+    this.TLService.CheckIfMemberOnly(this.VidID).subscribe({
       next: data => {
         if (data["start_actual"]){
           var time: number = Date.parse(data["start_actual"]);
