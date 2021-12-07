@@ -1,8 +1,9 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
-import { faHome, faPause, faPlay, faStop, faLock, faUser, faSearchPlus, faSearchMinus, faTimesCircle, faDownload, faEyeSlash, faShareAlt, faLink, faTags, faFileUpload } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faPause, faPlay, faStop, faLock, faUser, faSearchPlus, faSearchMinus, faTimesCircle, faDownload, 
+         faArrowLeft, faArrowRight, faEyeSlash, faShareAlt, faLink, faTags, faFileUpload } from '@fortawesome/free-solid-svg-icons';
 import { faTwitch, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import { AccountService } from '../services/account.service';
 import { ArchiveService } from '../services/archive.service';
@@ -40,6 +41,8 @@ class ArchiveSetting {
 class ArchiveLink {
   Nick: string = "";
   Link: string = "";
+  StreamLink: string = "";
+  Tags: string = "";
 }
 
 @Component({
@@ -55,6 +58,14 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('HeroFoot') HeroFoot !: ElementRef;
   @ViewChild('TableContainer') TableContainer !: ElementRef;
   LoginMode: boolean = false;
+
+  /*
+    1.Reload page
+    2.Download
+    3.Upload
+  */
+  LoginRedirect: number = 0;
+
   OpenOption: boolean = false;
   SearchPass: string = "";
   status:string = "";
@@ -105,7 +116,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private TLService: TranslatorService,
     private AccService: AccountService,
     private AService: ArchiveService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) { }
 
   WinWidth: number = window.innerWidth;
@@ -153,12 +165,12 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
               error: error => {
                 localStorage.removeItem("MChatToken");
                 if (params.archive){
+                  this.LoginRedirect = 1;
                   this.ModalMenu = 11;
                 }
               },
               next: data => {
                 this.LoginMode = true;
-                this.RoomNick = TokenData["Room"];
                 this.Token = TokenData["Token"];
                 this.RoomNick = TokenData["Room"];
 
@@ -174,7 +186,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           localStorage.removeItem("MChatToken");
         }
       } else if (params.archive) {
+        this.LoginRedirect = 1;
         this.ModalMenu = 11;
+        this.SearchPass = "";
       }
   
       this.ProfileList.push({
@@ -190,33 +204,44 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   LoadParseArchive(ArchiveLink: string) {
     this.AService.GetOneArchiveInfo(this.RoomNick, this.Token, ArchiveLink).subscribe({
       next: data => {
-        const dt = JSON.parse(data.body);
-        this.SavedSetting = {
-          Link: dt["Link"],
-          StreamLink: dt["StreamLink"],
-          Tags: dt["Tags"],
-          Notes: dt["Note"],
-          PassCheck: dt["Pass"],
-          PassString: "",
-          ArchiveTitle: dt["Nick"],
-          ThirdPartySharing: dt["ExtShare"],
-          Hidden: dt["Hidden"],
-          Downloadable: dt["Downloadable"]
-        };
-        this.TempSetting = this.SavedSetting;
-      }
-    });
-
-    this.AService.GetOneArchive(this.RoomNick, this.Token, ArchiveLink).subscribe(
-      (response: any) => {
-        if (response.status != 200) {
-          console.log("TEST");
+        if (data.body == "") {
           this.ModalNotif = true;
           this.NotifText = "FAILED LOADING ARCHIVE " + ArchiveLink;
+          this.router.navigate(['/ScriptEditor', { }]);
         } else {
-          this.Entriesdt = JSON.parse(response.body);
-          this.EntriesParser();
+          const dt = JSON.parse(data.body);
+          this.SavedSetting = {
+            Link: dt["Link"],
+            StreamLink: dt["StreamLink"],
+            Tags: dt["Tags"],
+            Notes: dt["Note"],
+            PassCheck: dt["Pass"],
+            PassString: "",
+            ArchiveTitle: dt["Nick"],
+            ThirdPartySharing: dt["ExtShare"],
+            Hidden: dt["Hidden"],
+            Downloadable: dt["Downloadable"]
+          };
+          this.TempSetting = this.SavedSetting;
+  
+          this.AService.GetOneArchive(this.RoomNick, this.Token, ArchiveLink).subscribe(
+            (response: any) => {
+              if (response.status != 200) {
+                this.ModalNotif = true;
+                this.NotifText = "FAILED LOADING ARCHIVE " + ArchiveLink;
+                this.router.navigate(['/ScriptEditor', { }]);
+              } else {
+                this.Entriesdt = JSON.parse(response.body);
+                this.EntriesParser();
+              }
+          });
         }
+      },
+      error: err => {
+        this.ModalNotif = true;
+        this.NotifText = "FAILED LOADING ARCHIVE " + ArchiveLink;
+        this.router.navigate(['/ScriptEditor', { }]);
+      }
     });
   }
 
@@ -316,7 +341,23 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
               Role: "TL"
             })));
 
-            location.reload();
+            this.Token = data.body[0]["Token"];
+            this.LoginMode = true;
+
+            switch (this.LoginRedirect) {
+              case 1:
+                location.reload();
+                break;
+            
+              case 2:
+                this.SetModalMenu(9);
+                break;
+
+              case 3:
+                this.SetModalMenu(5);
+                break;
+            }
+            this.LoginRedirect = 0;            
           } else {
             this.status = "THIS ACCOUNT DOESN'T HAVE TL PRIVILEGE";
             this.RoomNick = "";
@@ -340,6 +381,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   
   DBScriptList:ArchiveLink [] = [];
   DBScriptSelectedIndex: number = 0;
+  DBScriptPage: number = 1;
+  DBScriptLength: number = 0;
 
   TargetFile: File | null = null;
   filename: string = "No file uploaded";
@@ -391,50 +434,133 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    this.ModalMenu = idx;
-    switch (this.ModalMenu) {
+    switch (idx) {
       case 1:
         this.ProfileName = "";        
+        this.ModalMenu = idx;
         break;
       
+      case 5:
+        if (this.LoginMode){
+          if (this.SavedSetting.Link != "") {
+            this.AService.GetOneArchiveInfo(this.RoomNick, this.Token, this.SavedSetting.Link).subscribe({
+              next: data => {
+                if (data.body == "") {
+                  this.status = "Can't find preexisting archive.";
+                  this.UploadNew = true;
+                  this.LockUploadNew = true;
+                  this.ModalMenu = idx;
+                  this.TempSetting = this.SavedSetting;
+                  this.TempSetting.ArchiveTitle = "";
+                } else {
+                  const dt = JSON.parse(data.body);
+                  this.SavedSetting = {
+                    Link: dt["Link"],
+                    StreamLink: dt["StreamLink"],
+                    Tags: dt["Tags"],
+                    Notes: dt["Note"],
+                    PassCheck: dt["Pass"],
+                    PassString: "",
+                    ArchiveTitle: dt["Nick"],
+                    ThirdPartySharing: dt["ExtShare"],
+                    Hidden: dt["Hidden"],
+                    Downloadable: dt["Downloadable"]
+                  };
+                  this.TempSetting = this.SavedSetting;
+                  this.ModalMenu = idx;
+                  this.UploadNew = false;
+                  this.status = "";
+                  this.LockUploadNew = false;
+                }
+              },
+              error: err => {
+                this.SearchPass = "";
+                this.status = "access to server denied";
+                this.ModalMenu = 11;
+                this.LoginRedirect = 3;
+              }
+            });
+          } else {
+            this.status = "Can't find preexisting archive.";
+            this.UploadNew = true;
+            this.LockUploadNew = true;
+            this.ModalMenu = idx;
+            this.TempSetting = this.SavedSetting;
+            this.TempSetting.ArchiveTitle = "";
+          }
+        } else {
+          this.status = "";
+          this.SearchPass = "";
+          this.ModalMenu = 11;
+          this.LoginRedirect = 3;
+        }
+        break;
+
       case 9:
-        this.DBScriptSelectedIndex = 0;
-        this.FetchDBScriptList();
+        if (this.LoginMode){
+          this.ModalMenu = idx;
+          this.DBScriptPage = 1;
+          this.DBScriptSelectedIndex = 0;
+          this.FetchDBScriptList();
+        } else {
+          this.SearchPass = "";
+          this.ModalMenu = 11;
+          this.LoginRedirect = 2;
+        }
+        break;
+      
+      default:
+        this.ModalMenu = idx;
         break;
     }
   }
 
-  SaveArchiveSetting():void {
-    if (!this.Processing) {
-      this.status = "Updating...";
-      this.Processing = true;
-      if (this.RoomNick != undefined) {
-        this.AService.EditArchive(this.RoomNick, this.Token, this.TempSetting.Link, this.TempSetting.ArchiveTitle, this.TempSetting.Hidden, this.TempSetting.ThirdPartySharing, this.TempSetting.Tags, this.TempSetting.PassCheck, this.TempSetting.PassString, this.TempSetting.StreamLink, this.TempSetting.Notes, this.TempSetting.Downloadable).subscribe({
-          error: error => {
-            this.status = error["error"];
-            this.Processing = false;
+  Logout(RedirectMode: number): void {
+    this.LoginMode = false;
+    this.Token = "";
+    this.RoomNick = "";
+    this.status = "";
+    localStorage.removeItem("MChatToken");
+    this.SearchPass = "";
+    this.ModalMenu = 11;
+    this.LoginRedirect = RedirectMode;
+  }
 
-            if (error["error"] == "ERROR : INVALID TOKEN") {
-              localStorage.removeItem("MChatToken");
-              location.reload();
-            }
-          },
-          next: data => {
-            this.status = "Updated!! Updating local setting...";
-            this.SavedSetting = this.TempSetting;
-            setTimeout(() => {
-              this.status = "";
+  SaveArchiveSetting():void {
+    if (this.LoginMode && (this.RoomNick != "") && (this.Token != "") && (this.SavedSetting.Link != "")) {
+      if (!this.Processing) {
+        this.status = "Updating...";
+        this.Processing = true;
+        if (this.RoomNick != undefined) {
+          this.AService.EditArchive(this.RoomNick, this.Token, this.TempSetting.Link, this.TempSetting.ArchiveTitle, this.TempSetting.Hidden, this.TempSetting.ThirdPartySharing, this.TempSetting.Tags, this.TempSetting.PassCheck, this.TempSetting.PassString, this.TempSetting.StreamLink, this.TempSetting.Notes, this.TempSetting.Downloadable).subscribe({
+            error: error => {
+              this.status = error["error"];
               this.Processing = false;
-              this.ModalMenu = 0;
-            }, 2000);
-          }
-        });
-      } else {
-        this.SavedSetting = this.TempSetting;
-        localStorage.setItem("MChatSessionSetting", JSON.stringify(this.TempSetting));
-        this.status = "";
-        this.ModalMenu = 0;
+  
+              if (error["error"] == "ERROR : INVALID TOKEN") {
+                localStorage.removeItem("MChatToken");
+                location.reload();
+              }
+            },
+            next: data => {
+              this.status = "Updated!! Updating local setting...";
+              this.SavedSetting = this.TempSetting;
+              setTimeout(() => {
+                this.status = "";
+                this.Processing = false;
+                this.ModalMenu = 0;
+              }, 2000);
+            }
+          });
+        } else {
+          this.SavedSetting = this.TempSetting;
+          localStorage.setItem("MChatSessionSetting", JSON.stringify(this.TempSetting));
+          this.status = "";
+          this.ModalMenu = 0;
+        }
       }
+    } else {
+      this.SavedSetting = this.TempSetting;
     }
   }
 
@@ -449,10 +575,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       End: 0
     });
 
-    this.ModalMenu = 0;
-  }
-
-  UploadToDB(): void {
     this.ModalMenu = 0;
   }
 
@@ -517,23 +639,120 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   DownloadScript() {
-
+    this.LoadParseArchive(this.DBScriptList[this.DBScriptSelectedIndex].Link);
+    this.ModalMenu = 0;
   }
 
   FetchDBScriptList(){
+    this.DBScriptSelectedIndex = -1;
     this.DBScriptList = [];
-    this.TLService.GetAllArchive(this.RoomNick, this.Token).subscribe(
+    this.AService.GetAllArchive(this.RoomNick, this.Token, this.DBScriptPage).subscribe(
       (response) => {
         var dt = JSON.parse(response.body);
-        for (let i = 0; i < dt.length; i++) {
+        this.DBScriptLength = dt.Total;
+
+        dt.Data.map((e: any) => {
           this.DBScriptList.push({
-            Link: dt[i].Link,
-            Nick: dt[i].Nick,
+            Link: e.Link,
+            Nick: e.Nick,
+            Tags: e.Tags,
+            StreamLink: e.StreamLink
           });
-        }
+        });
       });
   }
+
+  PrevPage(): void {
+    if (this.DBScriptPage > 1){
+      this.DBScriptPage--;
+      this.FetchDBScriptList();
+    }
+  }
+
+  NextPage(): void {
+    this.DBScriptPage++;
+    this.FetchDBScriptList();
+  }
+
   //========================== AUX CONTROL ==========================
+
+
+
+  //------------------------------------- UPLOAD MODULE AUX -------------------------------------
+  UploadNew: boolean = false;
+  LockUploadNew: boolean = false;
+
+  UploadData():void {
+    if (this.UploadNew) {
+      if (!this.Processing) {
+        this.Processing = true;
+        this.status = "Uploading..."
+        let d = new Date();
+        this.TempSetting.Link = this.RoomNick + "_" + d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + "_" + d.getHours() + "-" + d.getMinutes() + "-" + d.getSeconds();
+  
+        if (this.TempSetting.ArchiveTitle == "") {
+          this.TempSetting.ArchiveTitle = this.TempSetting.Link;
+        }
+  
+        this.AService.AddArchive(this.RoomNick, this.Token, this.TempSetting.ArchiveTitle, this.TempSetting.Link, this.TempSetting.Hidden, 
+          this.TempSetting.ThirdPartySharing, this.TempSetting.Tags, this.TempSetting.PassCheck, this.TempSetting.PassString, this.TempSetting.StreamLink, 
+          JSON.stringify(this.EntryList.map(e => {
+            return ({
+              Stext: e.Stext,
+              Stime: e.Stime,
+              CC: this.ProfileList[e.Prfidx].CC?.slice(1),
+              OC: this.ProfileList[e.Prfidx].OC?.slice(1)
+            })
+          })), this.TempSetting.Notes, this.TempSetting.Downloadable).subscribe({
+          error: error => {
+            this.status = error["error"];
+            this.Processing = false;
+          },
+          next: data => {
+            this.status = "Uploaded!!...";
+            this.SavedSetting = this.TempSetting;
+  
+            setTimeout(() => {
+              this.status = "";
+              this.Processing = false;
+              this.ModalMenu = 0;
+            }, 2000);
+          }
+        });
+      }
+    } else {
+      if (!this.Processing) {
+        this.Processing = true;
+        this.status = "Uploading..."
+  
+        this.AService.UpdateArchive(this.RoomNick, this.Token, this.SavedSetting.Link, 
+          JSON.stringify(this.EntryList.map(e => {
+            return ({
+              Stext: e.Stext,
+              Stime: e.Stime,
+              CC: this.ProfileList[e.Prfidx].CC?.slice(1),
+              OC: this.ProfileList[e.Prfidx].OC?.slice(1)
+            })
+          }))).subscribe({
+          error: error => {
+            this.status = error["error"];
+            this.Processing = false;
+          },
+  
+          next: data => {
+            this.status = "Uploaded!!...";
+  
+            setTimeout(() => {
+              this.status = "";
+              this.Processing = false;
+              this.ModalMenu = 0;
+            }, 2000);
+          }
+        });
+      }
+    }
+  }
+  //------------------------------------- UPLOAD MODULE AUX -------------------------------------
 
 
 
@@ -2374,4 +2593,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   faTwitch = faTwitch;
   faYoutube = faYoutube;
   faFileUpload = faFileUpload;
+  faArrowLeft = faArrowLeft;
+  faArrowRight = faArrowRight;
 }
