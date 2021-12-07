@@ -115,10 +115,17 @@
           <a class="button" routerLink="/" [routerLinkActive]="['is-active']" style="margin-right: 5px;">
             Exit
           </a>
-          <label style="color: black; margin-right: 5px;">Font Size</label>
-          <input style="width: 50px; margin-right: 5px;" type="number" min="1" [(ngModel)]="FFsize"/>
-          <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="ThirdPartySharing" (ngModelChange)="ThirdPartyChange()">
-          <span style="color: black; margin-right: 5px;">3rd Party Sharing</span>
+
+          <div style="display: flex; flex-direction: row; align-items: center; min-width: 130px;">
+            <label style="color: black; margin-right: 5px;">Font Size</label>
+            <input style="width: 50px; margin-right: 5px;" type="number" min="1" [(ngModel)]="FFsize"/>
+          </div>
+
+          <div style="display: flex; flex-direction: row; align-items: center; min-width: 160px;">
+            <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="ThirdPartySharing" (ngModelChange)="ThirdPartyChange()">
+            <span style="color: black; margin-right: 5px;">3rd Party Sharing</span>
+          </div>
+
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(3)">Extra Info (Stream Link, Tags, Note)</a>
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(2)">Host Open Session</a>
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(4)">Password</a>
@@ -172,12 +179,12 @@
       <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 5px;">
         <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
           <label style="margin-right: 10px;">Prefix </label>
-          <input style="width: 100px;" type="text" [(ngModel)]="Prefix" max="30"/>
+          <input style="width: 80px;" type="text" [(ngModel)]="Prefix" max="30"/>
         </div>
 
         <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
           <label style="margin-right: 10px;">Suffix </label>
-          <input style="width: 100px;" type="text" [(ngModel)]="Suffix" max="30"/>
+          <input style="width: 80px;" type="text" [(ngModel)]="Suffix" max="30"/>
         </div>
 
         <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
@@ -194,7 +201,7 @@
 
         <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
           <label style="margin-right: 10px;">Local Prefix :</label>
-          <input style="width: 100px;" type="text" [(ngModel)]="LocalPref" max="30"/>
+          <input style="width: 70px;" type="text" [(ngModel)]="LocalPref" max="30"/>
         </div>
       </div>
 

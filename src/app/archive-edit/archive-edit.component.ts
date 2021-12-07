@@ -990,7 +990,7 @@ export class ArchiveEditComponent implements OnInit {
 
 
 
-    //------------------------------------- EXPORT MODULES -------------------------------------
+  //------------------------------------- EXPORT MODULES -------------------------------------
   LoadEntries(mode: string): void {
     this.Entriesdt = [];
     this.AService.GetOneArchive(this.Room, this.Token, this.Archivedt[this.SelectedIndex].Link).subscribe(

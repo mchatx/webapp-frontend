@@ -2,9 +2,11 @@ import { Component, OnInit, ViewChild, ElementRef, HostListener, AfterViewInit, 
 import { ActivatedRoute } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
-import { faHome, faPause, faPlay, faStop, faLock, faUser, faSearchPlus, faSearchMinus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faPause, faPlay, faStop, faLock, faUser, faSearchPlus, faSearchMinus, faTimesCircle, faDownload, faEyeSlash, faShareAlt, faLink, faTags, faFileUpload } from '@fortawesome/free-solid-svg-icons';
+import { faTwitch, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import { AccountService } from '../services/account.service';
 import { ArchiveService } from '../services/archive.service';
+import Entries from '../models/Entries';
 
 class FullEntry {
   Stext: string = "";
@@ -59,7 +61,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   //  DISPLAY VARIABLES
   EntryList: FullEntry[] = [];
-  FFsize:number = 21;
+  FFsize:number = 15;
   BGColour:string = "#28282B";
   SelectedEntry: number = 0;
 
@@ -105,6 +107,13 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     private AService: ArchiveService,
     private route: ActivatedRoute
   ) { }
+
+  WinWidth: number = window.innerWidth;
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.WinWidth = window.innerWidth;
+  }
+
 
   InnerResize(wait: number | undefined = undefined):void {
     if (this.TableHeightRef) {
@@ -205,72 +214,84 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           this.ModalNotif = true;
           this.NotifText = "FAILED LOADING ARCHIVE " + ArchiveLink;
         } else {
-          this.EntryList = [];
-          this.ProfileList = [];
-          this.ProfileList.push({
-            Name: 'Default',
-            Prefix: '',
-            Suffix: '',
-            OC: undefined,
-            CC: undefined
-          });
-    
-          var dt = JSON.parse(response.body);
-          var CutOff:number = 0;
-
-          if (dt.length > 0){
-            if (dt[0].Stime > 1000*60*20){
-              CutOff = dt[0].Stime;
-            }
-          }
-
-          for (let i = 0; i < dt.length; i++) {
-            let PIdx = -1;
-
-            if (!dt[i].CC || !dt[i].OC) {
-              PIdx = 0;
-            } else {
-              for (let j = 0; j < this.ProfileList.length; j++){
-                if ((this.ProfileList[j].CC == '#' + dt[i].CC.toString()) && (this.ProfileList[j].OC == '#' + dt[i].OC.toString())){
-                  PIdx = j; 
-                  break;
-                }
-              }
-  
-              if (PIdx == -1){
-                PIdx = this.ProfileList.length;
-                this.ProfileList.push({
-                  Name: 'Profile' + PIdx.toString(),
-                  Prefix: '',
-                  Suffix: '',
-                  OC: '#' + dt[i].OC,
-                  CC: '#' + dt[i].CC
-                })
-              }
-            }
-
-            if (i != dt.length - 1){
-              this.EntryList.push({
-                Stext: dt[i].Stext,
-                Stime: dt[i].Stime - CutOff,
-                Prfidx: PIdx,
-                key: "",
-                End: dt[i + 1].Stime - CutOff
-              });
-            } else {
-              this.EntryList.push({
-                Stext: dt[i].Stext,
-                Stime: dt[i].Stime - CutOff,
-                Prfidx: PIdx,
-                key: "",
-                End: dt[i].Stime + 5000 - CutOff
-              });
-
-              this.ReloadDisplayCards();
-            }
-          }
+          this.Entriesdt = JSON.parse(response.body);
+          this.EntriesParser();
         }
     });
+  }
+
+  EntriesParser(): void {
+    this.EntryList = [];
+    this.ProfileList = [];
+    this.ProfileList.push({
+      Name: 'Default',
+      Prefix: '',
+      Suffix: '',
+      OC: undefined,
+      CC: undefined
+    });
+
+    var CutOff:number = 0;
+
+    if (this.Entriesdt.length > 0){
+      if (this.Entriesdt[0].Stime > 1000*60*20){
+        CutOff = this.Entriesdt[0].Stime;
+      }
+    }
+
+    for (let i = 0; i < this.Entriesdt.length; i++) {
+      let PIdx = -1;
+
+      if (!this.Entriesdt[i].CC || !this.Entriesdt[i].OC) {
+        PIdx = 0;
+      } else {
+        for (let j = 0; j < this.ProfileList.length; j++){
+          if ((this.ProfileList[j].CC == '#' + this.Entriesdt[i].CC?.toString()) && (this.ProfileList[j].OC == '#' + this.Entriesdt[i].OC?.toString())){
+            PIdx = j; 
+            break;
+          }
+        }
+
+        if (PIdx == -1){
+          PIdx = this.ProfileList.length;
+          this.ProfileList.push({
+            Name: 'Profile' + PIdx.toString(),
+            Prefix: '',
+            Suffix: '',
+            OC: '#' + this.Entriesdt[i].OC,
+            CC: '#' + this.Entriesdt[i].CC
+          })
+        }
+      }
+
+      if (i != this.Entriesdt.length - 1){
+        var a = this.Entriesdt[i].Stext;
+        if (a != undefined){
+          this.EntryList.push({
+            Stext: a,
+            Stime: this.Entriesdt[i].Stime - CutOff,
+            Prfidx: PIdx,
+            key: "",
+            End: this.Entriesdt[i + 1].Stime - CutOff
+          });
+        }
+      } else {
+        var a = this.Entriesdt[i].Stext;
+        if (a != undefined){
+          this.EntryList.push({
+            Stext: a,
+            Stime: this.Entriesdt[i].Stime - CutOff,
+            Prfidx: PIdx,
+            key: "",
+            End: this.Entriesdt[i].Stime + 5000 - CutOff
+          });  
+        }
+
+        this.Entriesdt = [];
+        this.ProfileTempContainer = [];
+        this.ReloadDisplayCards();
+      }
+    }
   }
 
   LoginRoom() {
@@ -324,6 +345,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   filename: string = "No file uploaded";
 
   ModalMenu:number = 0;
+  Processing: boolean = false;
   /*
     1 => Add New Profile
     2 => Script Setting
@@ -383,8 +405,37 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   SaveArchiveSetting():void {
-    this.ModalMenu = 0;
-    this.SavedSetting = this.TempSetting;
+    if (!this.Processing) {
+      this.status = "Updating...";
+      this.Processing = true;
+      if (this.RoomNick != undefined) {
+        this.AService.EditArchive(this.RoomNick, this.Token, this.TempSetting.Link, this.TempSetting.ArchiveTitle, this.TempSetting.Hidden, this.TempSetting.ThirdPartySharing, this.TempSetting.Tags, this.TempSetting.PassCheck, this.TempSetting.PassString, this.TempSetting.StreamLink, this.TempSetting.Notes, this.TempSetting.Downloadable).subscribe({
+          error: error => {
+            this.status = error["error"];
+            this.Processing = false;
+
+            if (error["error"] == "ERROR : INVALID TOKEN") {
+              localStorage.removeItem("MChatToken");
+              location.reload();
+            }
+          },
+          next: data => {
+            this.status = "Updated!! Updating local setting...";
+            this.SavedSetting = this.TempSetting;
+            setTimeout(() => {
+              this.status = "";
+              this.Processing = false;
+              this.ModalMenu = 0;
+            }, 2000);
+          }
+        });
+      } else {
+        this.SavedSetting = this.TempSetting;
+        localStorage.setItem("MChatSessionSetting", JSON.stringify(this.TempSetting));
+        this.status = "";
+        this.ModalMenu = 0;
+      }
+    }
   }
 
   SendEdit():void {
@@ -438,13 +489,17 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       Downloadable: false
     };
 
-    this.ProfileList.push({
+    this.TempSetting = this.SavedSetting;
+
+    this.ProfileList = [{
       Name: 'Default',
       Prefix: '',
       Suffix: '',
       OC: undefined,
       CC: undefined
-    });
+    }];  
+
+    localStorage.removeItem("MChatSessionSetting");
 
     /*
     this.AddEntry({
@@ -457,27 +512,11 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     */
   }
 
-  ImportFile() {
-    this.NewScript();
-    //PARSED ENTRY TO LOCAL ENTRY
-  }
-
-  FileChange(e: Event) {
-    let ef = (e.target as HTMLInputElement);
-    if (ef.files != null) {
-      this.filename = ef.files[0].name;
-      this.TargetFile = ef.files[0];
-    }
-
-    //this.ParseFile();
-  }
-
   SaveLocal(){
 
   }
 
-  DownloadScript(){
-    this.NewScript();
+  DownloadScript() {
 
   }
 
@@ -493,9 +532,860 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           });
         }
       });
-
   }
   //========================== AUX CONTROL ==========================
+
+
+
+  //------------------------------------- UPLOAD MODULES -------------------------------------
+  FileParsed: boolean = false;
+  Entriesdt: Entries[] = [];
+  ProfileTempContainer: Profile[] = [];
+
+  ImportFile(): void {
+    this.ModalMenu = 0;
+    this.NewScript();
+    this.ProfileTempContainer.unshift({
+      Name: 'Default',
+      Prefix: '',
+      Suffix: '',
+      OC: undefined,
+      CC: undefined
+    });
+    this.ProfileList = this.ProfileTempContainer;
+    this.EntriesParser();
+  }
+
+  OpenUploadModal(): void {
+    this.ModalMenu = 7;
+    this.status = "";
+    this.Entriesdt = [];
+    this.ProfileTempContainer = [];
+    this.filename = "No file uploaded";
+    this.TargetFile = null;
+    this.FileParsed = false;
+  }
+
+  StringifyTime(TimeStamp: number, mode: boolean): string {
+    let Timestring: string = "";
+    let Stime: number = 0;
+    let SString: string = "";
+
+    Stime = Math.floor(TimeStamp / 3600000);
+    SString = Stime.toString();
+    if (SString.length < 2) {
+      SString = "0" + SString;
+    }
+    Timestring += SString + ":";
+    TimeStamp -= Stime * 3600000;
+
+    Stime = Math.floor(TimeStamp / 60000);
+    SString = Stime.toString();
+    if (SString.length < 2) {
+      SString = "0" + SString;
+    }
+    Timestring += SString + ":";
+    TimeStamp -= Stime * 60000;
+
+    Stime = Math.floor(TimeStamp / 1000);
+    SString = Stime.toString();
+    if (SString.length < 2) {
+      SString = "0" + SString;
+    }
+    Timestring += SString;
+    TimeStamp -= Stime * 1000;
+
+    if (mode) {
+      Timestring += ",";
+    } else {
+      Timestring += ".";
+    }
+    Timestring += TimeStamp.toString();
+
+    return (Timestring);
+  }
+
+  CheckTimeString(teststring: string): boolean {
+    let Timesplit: string[] = teststring.split(":");
+    if (Timesplit.length != 3) {
+      return (false);
+    }
+
+    if (Number.parseInt(Timesplit[0]) == NaN) {
+      return (false);
+    }
+
+    if ((Number.parseInt(Timesplit[1]) == NaN) || (Number.parseInt(Timesplit[1]) > 60)) {
+      return (false);
+    }
+
+    Timesplit = Timesplit[2].split(",");
+
+    if (Timesplit.length != 2) {
+      return (false);
+    }
+
+    if ((Number.parseInt(Timesplit[0]) == NaN) || (Number.parseInt(Timesplit[0]) > 60)) {
+      return (false);
+    }
+
+    if ((Number.parseInt(Timesplit[1]) == NaN) || (Number.parseInt(Timesplit[1]) > 1000)) {
+      return (false);
+    }
+
+    return (true);
+  }
+
+  SRTTimeCheck(timestring: string): boolean {
+    if (timestring.split("-->").length != 2) {
+      return (false);
+    } else if ((this.CheckTimeString(timestring.split("-->")[0].trim())) && (this.CheckTimeString(timestring.split("-->")[1].trim()))) {
+      return (true);
+    } else {
+      return (false);
+    }
+  }
+
+  ParseTimeString(TargetString: string): number {
+    let res: number = 0;
+    let Timesplit: string[] = TargetString.split(":");
+
+    res += Number.parseInt(Timesplit[0]) * 3600000 + Number.parseInt(Timesplit[1]) * 60000;
+    Timesplit = Timesplit[2].split(",");
+    res += Number.parseInt(Timesplit[0]) * 1000 + Number.parseInt(Timesplit[1]);
+
+    return (res);
+  }
+
+  FileChange(e: Event) {
+    let ef = (e.target as HTMLInputElement);
+    if (ef.files != null) {
+      this.filename = ef.files[0].name;
+      this.TargetFile = ef.files[0];
+    }
+    this.ParseFile();
+  }
+
+  ParseFile() {
+    this.FileParsed = false;
+    this.status = "PARSING FILE";
+    this.Entriesdt = [];
+    this.ProfileTempContainer = [];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if ((reader.result != null) && (this.TargetFile != null)) {
+        let mode: number = -1;
+        if (this.TargetFile.name.search(/.ass/gi) != -1) {
+          mode = 0;
+        } else if (this.TargetFile.name.search(/.ttml/gi) != -1) {
+          mode = 1;
+        } else if (this.TargetFile.name.search(/.srt/gi) != -1) {
+          mode = 2;
+        }
+
+        if (mode == -1) {
+          this.status = "UNABLE TO PARSE (UNRECOGNIZED FILE EXTENSION)";
+        } else {
+          switch (mode) {
+            case 0:
+              this.ParseAss(reader.result.toString());
+              break;
+            case 1:
+              this.ParseTTML(reader.result.toString());
+              break;
+            case 2:
+              this.ParseSRT(reader.result.toString());
+              break;
+          }
+
+        }
+
+      }
+    }
+
+    if (this.TargetFile != null) {
+      reader.readAsText(this.TargetFile);
+    }
+  }
+
+  ParseAss(Feed: string): void {
+    let res: string[] = Feed.split("\n");
+    let fail: Boolean = true;
+
+    for (let index: number = 0; index < res.length; index++) {
+      if (res[index].search(/\[V4\+ Styles\]/gi) != -1) {
+        if (res[++index].search(/Format:/gi) != -1) {
+          let Linesplit = res[index].split(":")[1].split(",");
+          let LocationIndex: number[] = [];
+          let DataLength = Linesplit.length;
+
+          for (let index2: number = 0; index2 < Linesplit.length; index2++) {
+            if (Linesplit[index2].trim() == "Name") {
+              LocationIndex.push(index2);
+            } else if (Linesplit[index2].trim() == "PrimaryColour") {
+              LocationIndex.push(index2);
+            } else if (Linesplit[index2].trim() == "OutlineColour") {
+              LocationIndex.push(index2);
+            }
+          }
+
+          if (LocationIndex.length == 3) {
+            fail = false;
+            for (index++; index < res.length; index++) {
+              if (res[index].search(/Style/gi) != -1) {
+                Linesplit = res[index].split(":")[1].split(",");
+                if (Linesplit.length == DataLength) {
+                  if ((Linesplit[LocationIndex[1]].length == 10) && (Linesplit[LocationIndex[2]].length == 10)) {
+                    this.ProfileTempContainer.push({
+                      Name: Linesplit[LocationIndex[0]].trim(),
+                      Prefix: "",
+                      Suffix: "",
+                      CC: Linesplit[LocationIndex[1]].trim().substr(8, 2) + Linesplit[LocationIndex[1]].trim().substr(6, 2) + Linesplit[LocationIndex[1]].trim().substr(4, 2),
+                      OC: Linesplit[LocationIndex[2]].trim().substr(8, 2) + Linesplit[LocationIndex[2]].trim().substr(6, 2) + Linesplit[LocationIndex[2]].trim().substr(4, 2)
+                    });
+                  } else {
+                    fail = true;
+                    index = res.length;
+                    //this.status = "ERROR5";
+                  }
+                } else {
+                  fail = true;
+                  index = res.length;
+                  //this.status = "ERROR4";
+                }
+              } else {
+                index = res.length;
+              }
+            }
+          } else {
+            //this.status = "ERROR2";
+            index = res.length;
+          }
+        } else {
+          //this.status = "ERROR1";
+          index = res.length;
+        }
+      }
+    }
+
+    if (fail) {
+      this.status = "UNABLE TO PARSE THE FILE (FILE CORRUPTED?)";
+      return (undefined);
+    } else {
+      fail = true;
+    }
+
+    for (let index: number = 0; index < res.length; index++) {
+      if (res[index].search(/\[Events\]/gi) != -1) {
+        if (res[++index].search(/Format:/gi) != -1) {
+          let Linesplit = res[index].split(":")[1].split(",");
+          let LocationIndex: number[] = [];
+          let DataLength = Linesplit.length;
+
+          for (let index2: number = 0; index2 < Linesplit.length; index2++) {
+            if (Linesplit[index2].trim() == "Start") {
+              LocationIndex.push(index2);
+            } else if (Linesplit[index2].trim() == "Style") {
+              LocationIndex.push(index2);
+            } else if (Linesplit[index2].trim() == "Text") {
+              LocationIndex.push(index2);
+            }
+          }
+
+          if (LocationIndex.length == 3) {
+            fail = false;
+            for (index++; index < res.length; index++) {
+              if (res[index].search(/Dialogue/gi) != -1) {
+                Linesplit = res[index].split("Dialogue:")[1].split(",");
+                if (Linesplit.length >= DataLength) {
+                  for (let index2 = 0; index2 < this.ProfileTempContainer.length; index2++) {
+                    if (Linesplit[LocationIndex[1]].trim() == this.ProfileTempContainer[index2].Name) {
+                      let Textsend: string = Linesplit[LocationIndex[2]];
+                      for (let z = LocationIndex[2] + 1; z < Linesplit.length; z++) {
+                        Textsend += "," + Linesplit[z];
+                      }
+
+                      let TimeSplit: string[] = Linesplit[LocationIndex[0]].trim().split(":");
+                      let msshift: string = TimeSplit[2].split(".")[1];
+                      if (msshift.length == 2) {
+                        msshift += "0";
+                      } else if (msshift.length == 1){
+                        msshift += "00";
+                      }
+
+                      this.Entriesdt.push({
+                        Stext: Textsend,
+                        Stime: Number.parseInt(TimeSplit[0]) * 60*60*1000 + Number.parseInt(TimeSplit[1]) * 60*1000 + Number.parseInt(TimeSplit[2].split(".")[0]) * 1000 + Number.parseInt(msshift),
+                        CC: this.ProfileTempContainer[index2].CC,
+                        OC: this.ProfileTempContainer[index2].OC
+                      });
+                      break;
+                    }
+                  }
+                } else {
+                  index = res.length;
+                  //this.status = "ERROR4";
+                }
+              } else {
+                index = res.length;
+              }
+            }
+          } else {
+            index = res.length;
+            //this.status = "ERROR2";
+          }
+        } else {
+          index = res.length;
+          //this.status = "ERROR1";
+        }
+      }
+    }
+
+    if (fail) {
+      this.status = "UNABLE TO PARSE THE FILE (FILE CORRUPTED?)";
+    } else {
+      this.status = "ASS file, " + this.ProfileTempContainer.length.toString() + " colour profiles, " + this.Entriesdt.length.toString() + " Entries.";
+
+      this.FileParsed = true;
+      /*
+      this.status = "";
+      for(let index:number = 0; index < this.this.Entriesdt.length; index++){
+        this.status += this.this.Entriesdt[index].Stext + " " + this.this.Entriesdt[index].Time + " " + this.this.Entriesdt[index].CC + " " + this.this.Entriesdt[index].OC + " | ";
+      }
+      */
+    }
+  }
+
+  ParseSRT(Feed: string): void {
+    let res: string[] = Feed.split("\n");
+    var write: boolean = false;
+
+    for (let index: number = 0; index < res.length; index++) {
+      if (this.SRTTimeCheck(res[index])) {
+        let Timestamp: number = this.ParseTimeString(res[index].split("-->")[0].trim());
+        let SText: string = "";
+        write = true;
+
+        for (index++; index < res.length; index++) {
+          if (this.SRTTimeCheck(res[index])) {
+            index--;
+            write = false;
+            this.Entriesdt.push({
+              Stext: SText,
+              Stime: Timestamp,
+              CC: undefined,
+              OC: undefined
+            });
+            break;
+          } else if (res[index] == "") {
+            write = false;
+            this.Entriesdt.push({
+              Stext: SText,
+              Stime: Timestamp,
+              CC: undefined,
+              OC: undefined
+            });
+            break;
+          } else if (index == res.length - 1) {
+            if (res[index].trim() != "") {
+              SText += res[index];
+            }
+            write = false;
+            this.Entriesdt.push({
+              Stext: SText,
+              Stime: Timestamp,
+              CC: undefined,
+              OC: undefined
+            });
+            break;
+          } else {
+            if (res[index].trim() != "") {
+              if (write == true) {
+                if (SText != "") {
+                  SText += " ";
+                }
+                SText += res[index];
+              }
+            } else {
+              write = false;
+            }
+          }
+        }
+      }
+
+      if (index == res.length - 1) {
+        this.status = "SRT file, " + this.Entriesdt.length.toString() + " Entries.";
+
+        this.FileParsed = true;
+      }
+    }
+  }
+
+  ParseTTML(Feed: string): void {
+    let fail: Boolean = true;
+
+    if ((Feed.indexOf("<head>") != - 1) && (Feed.indexOf("<\/head>") != -1)) {
+      let startindex: number = Feed.indexOf("<head>");
+      let endindex: number = Feed.indexOf("<\/head>");
+
+      fail = false;
+
+      for (let PenStart: number = Feed.indexOf("<pen", startindex); PenStart < endindex; PenStart = Feed.indexOf("<pen", PenStart)) {
+        if (PenStart == -1) {
+          break;
+        }
+
+        let Penend: number = Feed.indexOf(">", PenStart);
+        let target: number = -1;
+        let endtarget: number = -1;
+        let profilecontainer: Profile = {
+          Name: "",
+          Prefix: "",
+          Suffix: "",
+          CC: "",
+          OC: ""
+        };
+
+        if ((Penend > endindex) || (Penend == -1)) {
+          fail = true;
+          break;
+        }
+
+        target = Feed.indexOf("id=\"", PenStart);
+        if ((target > Penend) || (target == -1)) {
+          fail = true;
+          break;
+        }
+        endtarget = Feed.indexOf("\"", target + 4);
+        if ((endtarget > Penend) || (endtarget == -1)) {
+          fail = true;
+          break;
+        }
+        profilecontainer.Name = Feed.substring(target + 4, endtarget);
+
+        target = Feed.indexOf("fc=\"", PenStart);
+        if ((target == -1) || (target > Penend)) {
+          profilecontainer.CC = "#FFFFFF";
+        } else {
+          endtarget = Feed.indexOf("\"", target + 5);
+          if ((endtarget > Penend) || (endtarget == -1)) {
+            fail = true;
+            break;
+          }
+          profilecontainer.CC = Feed.substring(target + 5, endtarget);
+        }
+
+        target = Feed.indexOf("ec=\"", PenStart);
+        if ((target == -1) || (target > Penend)) {
+          profilecontainer.OC = "#000000";
+        } else {
+          endtarget = Feed.indexOf("\"", target + 5);
+          if ((endtarget > Penend) || (endtarget == -1)) {
+            fail = true;
+            break;
+          }
+          profilecontainer.OC = Feed.substring(target + 5, endtarget);
+        }
+
+        this.ProfileTempContainer.push(profilecontainer);
+        PenStart = Penend;
+      }
+    }
+
+    if (fail) {
+      //this.status = "UNABLE TO PARSE THE FILE (FILE CORRUPTED?)";
+      return (undefined);
+    } else {
+      fail = true;
+    }
+
+    if ((Feed.indexOf("<body>") != - 1) && (Feed.indexOf("<\/body>") != -1)) {
+      let startindex: number = Feed.indexOf("<body>");
+      let endindex: number = Feed.indexOf("<\/body>");
+      let EntryContainer: Entries = {
+        Stext: "",
+        Stime: 0,
+        CC: undefined,
+        OC: undefined
+      };
+
+      fail = false;
+
+      for (let PStart: number = Feed.indexOf("<p", startindex); PStart < endindex; PStart = Feed.indexOf("<p", PStart)) {
+        if (PStart == -1) {
+          break;
+        }
+
+        let PEnd: number = Feed.indexOf("</p>", PStart);
+
+        if ((PEnd > endindex) || (PEnd == -1)) {
+          fail = true;
+          break;
+        }
+
+        let StartClosure: number = -1;
+        let EndClosure: number = -1;
+        let target: number = -1;
+        let endtarget: number = -1;
+
+        //  GET TIME
+        StartClosure = PStart;
+        EndClosure = Feed.indexOf(">", StartClosure);
+        if ((EndClosure == -1) || (EndClosure > PEnd)) {
+          fail = true;
+          break;
+        }
+
+        target = Feed.indexOf("t=\"", StartClosure);
+        if ((target > EndClosure) || (target == -1)) {
+          fail = true;
+          break;
+        }
+        endtarget = Feed.indexOf("\"", target + 3);
+        if ((endtarget > EndClosure) || (endtarget == -1)) {
+          fail = true;
+          break;
+        }
+
+        if (isNaN(Number.parseInt(Feed.substring(target + 3, endtarget)))) {
+          fail = true;
+          break;
+        } else {
+          if (EntryContainer.Stime != Number.parseInt(Feed.substring(target + 3, endtarget))) {
+            EntryContainer.Stime = Number.parseInt(Feed.substring(target + 3, endtarget));
+
+            // LOOK FOR NON EMPTY SPAN
+            StartClosure = EndClosure;
+            for (StartClosure = Feed.indexOf("<s", StartClosure); StartClosure < PEnd; StartClosure = Feed.indexOf("<s", StartClosure)) {
+              if (StartClosure == -1) {
+                break;
+              }
+
+              EndClosure = Feed.indexOf(">", StartClosure);
+              if ((EndClosure == -1) || (EndClosure > PEnd)) {
+                PStart = endindex;
+                fail = true;
+                break;
+              }
+
+              let SpanEnd: number = Feed.indexOf("</s>", EndClosure);
+              if ((SpanEnd == -1) || (SpanEnd > PEnd)) {
+                PStart = endindex;
+                fail = true;
+                break;
+              }
+
+              if (Feed.substring(EndClosure + 1, SpanEnd).trim().length > 1) {
+                EntryContainer.Stext = Feed.substring(EndClosure + 1, SpanEnd).trim();
+
+                target = Feed.indexOf("p=\"", StartClosure);
+                if ((target > EndClosure) || (target == -1)) {
+                  fail = true;
+                  break;
+                }
+                endtarget = Feed.indexOf("\"", target + 3);
+                if ((endtarget > EndClosure) || (endtarget == -1)) {
+                  fail = true;
+                  break;
+                }
+
+                for (let i: number = 0; i < this.ProfileTempContainer.length; i++) {
+                  if (this.ProfileTempContainer[i].Name == Feed.substring(target + 3, endtarget)) {
+                    this.Entriesdt.push({
+                      Stext: Feed.substring(EndClosure + 1, SpanEnd).trim(),
+                      Stime: EntryContainer.Stime,
+                      CC: this.ProfileTempContainer[i].CC,
+                      OC: this.ProfileTempContainer[i].OC
+                    });
+                    EndClosure = PEnd;
+                    break;
+                  }
+                }
+              }
+              StartClosure = EndClosure;
+            }
+
+          }
+        }
+
+        if (PStart != endindex) {
+          PStart = PEnd;
+        }
+      }
+    }
+
+    if (fail) {
+      this.status = "UNABLE TO PARSE THE FILE (FILE CORRUPTED?)";
+    } else {
+      this.status = "TTML file, " + this.ProfileTempContainer.length.toString() + " colour profiles, " + this.Entriesdt.length.toString() + " Entries.";
+
+      this.FileParsed = true;
+      /*
+      this.status = this.this.Entriesdt.length.toString() + " = ";
+      for(let index:number = 0; index < this.this.Entriesdt.length; index++){
+        this.status += this.this.Entriesdt[index].Stext + " " + this.this.Entriesdt[index].Time + " " + this.this.Entriesdt[index].CC + " " + this.this.Entriesdt[index].OC + " | ";
+      }
+      */
+    }
+  }
+  //===================================== UPLOAD MODULES =====================================
+
+
+
+  //------------------------------------- EXPORT MODULES -------------------------------------
+  ExportSrt(): void {
+    var WriteStream = "";
+
+    for (let i: number = 0; i < this.EntryList.length; i++) {
+      WriteStream += (i + 1).toString() + "\n";
+      WriteStream += this.StringifyTime(this.EntryList[i].Stime - this.EntryList[0].Stime, true) + " --> ";
+      if (i == this.EntryList.length - 1) {
+        WriteStream += this.StringifyTime(this.EntryList[i].Stime + 3000 - this.EntryList[0].Stime, true) + "\n";
+      } else {
+        WriteStream += this.StringifyTime(this.EntryList[i + 1].Stime - this.EntryList[0].Stime, true) + "\n";
+      }
+      WriteStream += this.EntryList[i].Stext + "\n\n";
+    }
+
+    const blob = new Blob([WriteStream], { type: 'text/plain' });
+
+    if (this.SavedSetting.ArchiveTitle == "") {
+      let d = new Date();
+      this.SavedSetting.ArchiveTitle = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + "_" + d.getHours() + "-" + d.getMinutes() + "-" + d.getSeconds();
+
+      if (this.RoomNick != "") {
+        this.SavedSetting.ArchiveTitle = this.RoomNick + "_" + this.SavedSetting.ArchiveTitle;
+      }
+    }
+
+    saveAs(blob, this.SavedSetting.ArchiveTitle + ".srt");
+    this.status = "Generated file " + this.SavedSetting.ArchiveTitle + ".srt ( " + this.EntryList.length.toString() + " Entries)";  
+  }
+
+  ExportAss(): void {
+    var WriteStream = "";
+    let ProfileName: string[] = [];
+    let ProfileData: (string | undefined)[][] = [];
+    let ProfileContainer: (string | undefined)[] = ["", ""];
+
+    ProfileName.push("Default");
+    ProfileData.push(["FFFFFF", "000000"]);
+
+    for (let i: number = 0; i < this.EntryList.length; i++) {
+      if (this.ProfileList[this.EntryList[i].Prfidx].CC != undefined) {
+        ProfileContainer[0] = this.ProfileList[this.EntryList[i].Prfidx].CC?.slice(1);
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+
+      if (this.ProfileList[this.EntryList[i].Prfidx].OC != undefined) {
+        ProfileContainer[1] = this.ProfileList[this.EntryList[i].Prfidx].OC?.slice(1);
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+
+      let find: boolean = false;
+      for (let j: number = 0; j < ProfileData.length; j++) {
+        if ((ProfileData[j][0] == ProfileContainer[0]) && (ProfileData[j][1] == ProfileContainer[1])) {
+          find = true;
+          break;
+        } else if ((!find) && (j == ProfileData.length - 1)) {
+          ProfileData.push([ProfileContainer[0], ProfileContainer[1]]);
+          ProfileName.push("Profile" + (ProfileData.length - 1).toString());
+        }
+      }
+    }
+
+    WriteStream += "[V4+ Styles]\n";
+    WriteStream += "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n";
+
+    for (let i: number = 0; i < ProfileName.length; i++) {
+      WriteStream += "Style: " + ProfileName[i] + ",Arial,20,&H00"
+        + ProfileData[i][0]?.substring(4, 6) + ProfileData[i][0]?.substring(2, 4) + ProfileData[i][0]?.substring(0, 2)
+        + ",&H00000000,&H00"
+        + ProfileData[i][1]?.substring(4, 6) + ProfileData[i][1]?.substring(2, 4) + ProfileData[i][1]?.substring(0, 2)
+        + ",&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n";
+    }
+    WriteStream += "\n[Events]\n";
+    WriteStream += "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
+
+    for (let i: number = 0; i < this.EntryList.length; i++) {
+      WriteStream += "Dialogue: 0," + this.StringifyTime(this.EntryList[i].Stime - this.EntryList[0].Stime, false) + ",";
+
+      if (i == this.EntryList.length - 1) {
+        WriteStream += this.StringifyTime(this.EntryList[i].Stime + 3000 - this.EntryList[0].Stime, false) + ",";
+      } else {
+        WriteStream += this.StringifyTime(this.EntryList[i + 1].Stime - this.EntryList[0].Stime, false) + ",";
+      }
+
+      if (this.ProfileList[this.EntryList[i].Prfidx].CC != undefined) {
+        ProfileContainer[0] = this.ProfileList[this.EntryList[i].Prfidx].CC;
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+      if (this.ProfileList[this.EntryList[i].Prfidx].OC != undefined) {
+        ProfileContainer[1] = this.ProfileList[this.EntryList[i].Prfidx].OC;
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+
+      let find: boolean = false;
+      for (let j: number = 0; j < ProfileData.length; j++) {
+        if ((ProfileData[j][0] == ProfileContainer[0]) && (ProfileData[j][1] == ProfileContainer[1])) {
+          find = true;
+          WriteStream += ProfileName[j] + ",";
+          break;
+        } else if ((!find) && (j == ProfileData.length - 1)) {
+          WriteStream += "Default,";
+        }
+      }
+
+      WriteStream += ",0,0,0,," + this.EntryList[i].Stext + "\n";
+    }
+
+    const blob = new Blob([WriteStream], { type: 'text/plain' });
+
+    if (this.SavedSetting.ArchiveTitle == "") {
+      let d = new Date();
+      this.SavedSetting.ArchiveTitle = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + "_" + d.getHours() + "-" + d.getMinutes() + "-" + d.getSeconds();
+
+      if (this.RoomNick != "") {
+        this.SavedSetting.ArchiveTitle = this.RoomNick + "_" + this.SavedSetting.ArchiveTitle;
+      }
+    }
+
+    saveAs(blob, this.SavedSetting.ArchiveTitle + ".ass");
+    this.status = "Generated file " + this.SavedSetting.ArchiveTitle + ".ass ( " + this.EntryList.length.toString() + " Entries)";
+  }
+
+  ExportTTML(): void {
+    var WriteStream = "";
+    let ProfileData: (string | undefined)[][] = [];
+    let ProfileContainer: (string | undefined)[] = ["", ""];
+
+    ProfileData.push(["FFFFFF", "000000"]);
+
+    for (let i: number = 0; i < this.EntryList.length; i++) {
+      if (this.ProfileList[this.EntryList[i].Prfidx].CC != undefined) {
+        ProfileContainer[0] = this.ProfileList[this.EntryList[i].Prfidx].CC?.slice(1);
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+
+      if (this.ProfileList[this.EntryList[i].Prfidx].OC != undefined) {
+        ProfileContainer[1] = this.ProfileList[this.EntryList[i].Prfidx].OC?.slice(1);
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+
+      let find: boolean = false;
+      for (let j: number = 0; j < ProfileData.length; j++) {
+        if ((ProfileData[j][0] == ProfileContainer[0]) && (ProfileData[j][1] == ProfileContainer[1])) {
+          find = true;
+          break;
+        } else if ((!find) && (j == ProfileData.length - 1)) {
+          ProfileData.push([ProfileContainer[0], ProfileContainer[1]]);
+        }
+      }
+    }
+
+    WriteStream += "<?xml version=\"1.0\" encoding=\"utf-8\"?><timedtext format=\"3\">\n"
+      + "\t<head>"
+      + "\t\t<wp id=\"0\" ap=\"7\" ah=\"0\" av=\"0\" />\n"
+      + "\t\t<wp id=\"1\" ap=\"7\" ah=\"50\" av=\"100\" />\n"
+      + "\t\t<ws id=\"0\" ju=\"2\" pd=\"0\" sd=\"0\" />\n"
+      + "\t\t<ws id=\"1\" ju=\"2\" pd=\"0\" sd=\"0\" />\n\n"
+      + "\t\t<pen id=\"0\" sz=\"100\" fc=\"#000000\" fo=\"0\" bo=\"0\" />\n"
+      + "\t\t<pen id=\"1\" sz=\"0\" fc=\"#A0AAB4\" fo=\"0\" bo=\"0\" />\n";
+
+    for (let i: number = 0; i < ProfileData.length; i++) {
+      WriteStream += "\t\t<pen id=\"" + ((i * 2) + 2).toString() + "\" sz=\"100\" fc=\"#" + ProfileData[i][0] + "\" fo=\"254\" et=\"4\" ec=\"#" + ProfileData[i][1] + "\" />\n";
+      WriteStream += "\t\t<pen id=\"" + ((i * 2) + 3).toString() + "\" sz=\"100\" fc=\"#" + ProfileData[i][0] + "\" fo=\"254\" et=\"3\" ec=\"#" + ProfileData[i][1] + "\" />\n";
+    }
+
+    WriteStream += "\t</head>\n\n\t<body>\n";
+
+    for (let i: number = 0; i < this.EntryList.length; i++) {
+      WriteStream += "\t\t<p t=\""
+        + (this.EntryList[i].Stime + 1 - this.EntryList[0].Stime).toString()
+        + "\" d=\"";
+
+      if (i == this.EntryList.length - 1) {
+        WriteStream += (this.EntryList[i].Stime + 3001 - this.EntryList[0].Stime).toString() + "\"";
+      } else {
+        WriteStream += (this.EntryList[i + 1].Stime + 1 - this.EntryList[0].Stime).toString() + "\"";
+      }
+
+      WriteStream += " wp=\"1\" ws=\"1\"><s p=\"1\">​</s>​<s p=\"";
+
+      if (this.ProfileList[this.EntryList[i].Prfidx].CC != undefined) {
+        ProfileContainer[0] = this.ProfileList[this.EntryList[i].Prfidx].CC;
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+      if (this.ProfileList[this.EntryList[i].Prfidx].OC != undefined) {
+        ProfileContainer[1] = this.ProfileList[this.EntryList[i].Prfidx].OC;
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+
+      let find: boolean = false;
+      let idnum: number = 0;
+      for (let j: number = 0; j < ProfileData.length; j++) {
+        if ((ProfileData[j][0] == ProfileContainer[0]) && (ProfileData[j][1] == ProfileContainer[1])) {
+          find = true;
+          idnum = j;
+          break;
+        } else if ((!find) && (j == ProfileData.length - 1)) {
+          idnum = 0;
+        }
+      }
+
+      WriteStream += ((idnum * 2) + 2).toString() + "\">​ " + this.EntryList[i].Stext + "​ ​</s><s p=\"1\">​</s></p>\n";
+
+      WriteStream += "\t\t<p t=\""
+        + (this.EntryList[i].Stime + 1 - this.EntryList[0].Stime).toString()
+        + "\" d=\"";
+
+      if (i == this.EntryList.length - 1) {
+        WriteStream += (this.EntryList[i].Stime + 3001 - this.EntryList[0].Stime).toString() + "\"";
+      } else {
+        WriteStream += (this.EntryList[i + 1].Stime + 1 - this.EntryList[0].Stime).toString() + "\"";
+      }
+
+      WriteStream += " wp=\"1\" ws=\"1\"><s p=\"1\">​</s>​<s p=\"";
+
+      if (this.ProfileList[this.EntryList[i].Prfidx].CC != undefined) {
+        ProfileContainer[0] = this.ProfileList[this.EntryList[i].Prfidx].CC;
+      } else {
+        ProfileContainer[0] = "FFFFFF";
+      }
+      if (this.ProfileList[this.EntryList[i].Prfidx].OC != undefined) {
+        ProfileContainer[1] = this.ProfileList[this.EntryList[i].Prfidx].OC;
+      } else {
+        ProfileContainer[1] = "000000";
+      }
+
+      find = false;
+      WriteStream += ((idnum * 2) + 3).toString() + "\">​ " + this.EntryList[i].Stext + "​ ​</s><s p=\"1\">​</s></p>\n";
+    }
+    WriteStream += "\t</body>\n</timedtext>";
+
+    const blob = new Blob([WriteStream], { type: 'text/plain' });
+
+    if (this.SavedSetting.ArchiveTitle == "") {
+      let d = new Date();
+      this.SavedSetting.ArchiveTitle = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + "_" + d.getHours() + "-" + d.getMinutes() + "-" + d.getSeconds();
+
+      if (this.RoomNick != "") {
+        this.SavedSetting.ArchiveTitle = this.RoomNick + "_" + this.SavedSetting.ArchiveTitle;
+      }
+    }
+
+    saveAs(blob, this.SavedSetting.ArchiveTitle + ".TTML");
+    this.status = "Generated file " + this.SavedSetting.ArchiveTitle + ".TTML ( " + this.EntryList.length.toString() + " Entries)";
+  }
+  //===================================== EXPORT MODULES =====================================
 
 
 
@@ -964,14 +1854,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   //===========================  VIDEO LOADER HANDLER  ===========================
-
-
-
-  //-----------------------------------  EXPORT HANDLER  -----------------------------------
-  ExportToFile(mode:number):void {
-    this.ModalMenu = 0;
-  }
-  //===================================  EXPORT HANDLER  ===================================
 
 
 
@@ -1484,4 +2366,12 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   faStop = faStop;
   faPlay = faPlay;
   faPause = faPause;
+  faDownload = faDownload;
+  faEyeSlash = faEyeSlash;
+  faShareAlt = faShareAlt;
+  faLink = faLink;
+  faTags = faTags;
+  faTwitch = faTwitch;
+  faYoutube = faYoutube;
+  faFileUpload = faFileUpload;
 }
