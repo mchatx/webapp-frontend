@@ -355,6 +355,20 @@
               </div>
             </div>
             <div class="field">
+              <label class="label">Extra Collab Links</label>
+              <div class="control has-icons-left" style="display: flex; flex-direction: row; align-items: center;">
+                <input class="input is-rounded" type="text" placeholder="Collabs Link"
+                  [(ngModel)]="AuxLinkInpt">
+                <fa-icon [icon]="faPlusSquare" style="margin-left: 10px; font-size: 2em; cursor: pointer;" (click)="AddAuxLink()"></fa-icon>
+              </div>
+              <div class="control">
+                <div *ngFor="let dt of this.TempSetting.AuxLink; let i = index" style="display: flex; flex-direction: row; align-items: center;">
+                  <span style="font-weight: bold;">• {{ dt }}</span>
+                  <fa-icon [icon]="faWindowClose" style="margin-left: auto; cursor: pointer;" (click)="this.TempSetting.AuxLink.splice(i, 1);"></fa-icon>
+                </div>
+              </div>
+            </div>
+            <div class="field">
               <label class="label">Archive Note</label>
               <p class="control">
                 <textarea class="textarea" style="border: solid 2px black;" placeholder="Note" maxlength="1024"
@@ -490,6 +504,20 @@
               <div class="control has-icons-left">
                 <input class="input is-rounded" type="text" placeholder="Stream Link"
                   [(ngModel)]="TempSetting.StreamLink">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Extra Collab Links</label>
+              <div class="control has-icons-left" style="display: flex; flex-direction: row; align-items: center;">
+                <input class="input is-rounded" type="text" placeholder="Collabs Link"
+                  [(ngModel)]="AuxLinkInpt">
+                <fa-icon [icon]="faPlusSquare" style="margin-left: 10px; font-size: 2em; cursor: pointer;" (click)="AddAuxLink()"></fa-icon>
+              </div>
+              <div class="control">
+                <div *ngFor="let dt of this.TempSetting.AuxLink; let i = index" style="display: flex; flex-direction: row; align-items: center;">
+                  <span style="font-weight: bold;">• {{ dt }}</span>
+                  <fa-icon [icon]="faWindowClose" style="margin-left: auto; cursor: pointer;" (click)="this.TempSetting.AuxLink.splice(i, 1);"></fa-icon>
+                </div>
               </div>
             </div>
             <div class="field">

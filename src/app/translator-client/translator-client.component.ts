@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
-import { faHome, faLock, faUser, faLink } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faLock, faUser, faLink, faWindowClose, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { saveAs } from 'file-saver';
 import { LCEntries } from '../../constants/LanguageCode';
 
@@ -33,6 +33,7 @@ class RoomData {
   Note: string = "";
   SessPass: string = "";
   PassList: string = "";
+  AuxLink: string[] = [];
 }
 
 @Component({
@@ -97,6 +98,9 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
 
   LangCode:string = "";
 
+  AuxLinkInpt:string = "";
+  AuxLink:string[] = [];
+
   constructor(
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
@@ -154,6 +158,10 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         }))).subscribe({
           next: data => {
             const dt = JSON.parse(this.TGEnc.TGDecoding(JSON.parse(data.body).BToken));
+            if (!dt["AuxLink"]) {
+              dt["AuxLink"] = [];
+            }
+
             this.RoomDt.Empty = dt["Empty"];
             this.RoomDt.EntryPass = dt["EntryPass"];
             this.RoomDt.ExtSharing = dt["ExtSharing"];
@@ -163,10 +171,12 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
             this.RoomDt.SessPass = dt["SessPass"];
             this.RoomDt.StreamLink = dt["StreamLink"];
             this.RoomDt.Tags = dt["Tags"];
+            this.RoomDt.AuxLink = dt["AuxLink"];
             this.ThirdPartySharing = this.RoomDt.ExtSharing;
 
             if (!Token) {
               this.StreamLink = this.RoomDt.StreamLink;
+              this.AuxLink = JSON.parse(JSON.stringify(this.RoomDt.AuxLink));
             }
             const CodeList:string[] = LCEntries.map(e => {return e.C});
             const TagList:string[] = this.RoomDt.Tags.split(",").map(e => {return e.trim().toLowerCase()});
@@ -332,6 +342,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         this.StreamLink = this.RoomDt.StreamLink;
         this.Tags = this.RoomDt.Tags;
         this.Notes = this.RoomDt.Note;
+        this.AuxLink = this.RoomDt.AuxLink;
         break;
   
       case 4:
@@ -348,6 +359,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         this.PassCheck = this.RoomDt.EntryPass;
         this.PassString = this.RoomDt.PassList;
         this.StreamLink = this.RoomDt.StreamLink;
+        this.AuxLink = this.RoomDt.AuxLink;
         this.Tags = this.RoomDt.Tags;
         this.ThirdPartySharing = this.RoomDt.ExtSharing;
         this.Hidden = this.RoomDt.Hidden;
@@ -414,13 +426,15 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       data: {
         Link: this.StreamLink,
         Tags: this.Tags,
-        Note: this.Notes
+        Note: this.Notes,
+        AuxLink: this.AuxLink
       }
     }))).subscribe({
       next: data => {
         this.RoomDt.StreamLink = this.StreamLink;
         this.RoomDt.Tags = this.Tags;
         this.RoomDt.Note = this.Notes;
+        this.RoomDt.AuxLink = this.AuxLink;
         this.ModalMenu = 0;
         this.ModalNotif = false;
 
@@ -507,7 +521,8 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         ExtShare: this.ThirdPartySharing,
         Hidden: this.Hidden,
         Note: this.RoomDt.Note,
-        Downloadable: this.Downloadable
+        Downloadable: this.Downloadable,
+        AuxLink: this.AuxLink
       }
     }))).subscribe({
       next: data => {
@@ -934,12 +949,15 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       }
 
       if ((this.RoomDt.ExtSharing) && (this.HolodexBounce)) {
+        var IDList = JSON.parse(JSON.stringify(this.AuxID));
+        IDList.push(this.VidID);
+
         this.TLService.HolodexBounce(this.TGEnc.TGEncoding(JSON.stringify({
           nick: this.RoomNick,
           Stext: TempEntry["Stext"],
           Stime: Date.now(),
           Lang: this.LangCode,
-          VidID: this.VidID
+          VidID: IDList
         }))).subscribe({
           next: data => {
             if (data.body != "OK"){
@@ -998,7 +1016,8 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       act: "Broadcast",
       data: {
         Link: this.RoomDt.StreamLink,
-        Tag: this.RoomDt.Tags
+        Tag: this.RoomDt.Tags,
+        AuxLink: this.RoomDt.AuxLink
       }
     }))).subscribe({
       next: data => {
@@ -1619,6 +1638,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   HolodexBounce: boolean = false;
   VidID: string = "";
   HolodexBounceErrCount: number = 0;
+  AuxID: string[] = [];
 
   CheckLinkMember():void {
     this.VidID = "";
@@ -1648,7 +1668,9 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         this.VidID = this.VidID.slice(0, this.VidID.indexOf("?"));
       }
 
-      this.HolodexBounce = true;
+      if (!this.HolodexBounce) {
+        this.HolodexBounce = true;
+      }
       /*
       this.TLService.CheckIfMemberOnly(this.VidID).subscribe({
         next: data => {
@@ -1660,6 +1682,46 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       })
       */
     }
+  }
+
+  CheckAuxID(): void {
+    this.AuxID = [];
+    this.RoomDt.AuxLink.forEach(e => {
+      if (e.match(/youtu\.be\/|youtube\.com\/watch\?v=/gi)){
+        let stemp: string = e;
+  
+        if (stemp.indexOf("youtube.com/watch?v=") != - 1){
+          stemp = stemp.substr(stemp.indexOf("youtube.com/watch?v=") + ("youtube.com/watch?v=").length);
+        }
+  
+        if (stemp.indexOf("youtu.be/") != -1){
+          stemp = stemp.substr(stemp.indexOf("youtu.be/") + ("youtu.be/").length);
+        }
+  
+        if (stemp.indexOf("&") != -1){
+          stemp = stemp.slice(0, stemp.indexOf("&"));
+        }
+  
+        if (stemp.indexOf("?") != -1){
+          stemp = stemp.slice(0, stemp.indexOf("?"));
+        }
+        
+        this.AuxID.push(stemp);
+        if (!this.HolodexBounce) {
+          this.HolodexBounce = true;
+        }
+        /*
+        this.TLService.CheckIfMemberOnly(this.VidID).subscribe({
+          next: data => {
+            this.HolodexBounce = true;
+          },
+          error: err => {
+            this.HolodexBounce = false;
+          }
+        })
+        */
+      }
+    });
   }
   //===================================== HOLO BOUNCE =====================================
 
@@ -1694,6 +1756,17 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       }
     }
 
+    if (this.AuxLink.length != this.RoomDt.AuxLink.length) {
+      Changes = true;
+    } else {
+      for (var i = 0; i < this.AuxLink.length; i++) {
+        if (this.AuxLink[i] != this.RoomDt.AuxLink[i]) {
+          Changes = true;
+          break;
+        }
+      }
+    }
+
     if (Changes == true) {
       this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
         act: "Update Metadata",
@@ -1701,13 +1774,15 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         data: {
           Link: this.StreamLink,
           Tags: this.Tags,
-          Note: this.RoomDt.Note
+          Note: this.RoomDt.Note,
+          AuxLink: this.AuxLink
         }
       }))).subscribe({
         next: data => {
           this.RoomDt.StreamLink = this.StreamLink;
           this.RoomDt.Tags = this.Tags;
           this.RoomDt.Note = this.Notes;
+          this.RoomDt.AuxLink = this.AuxLink;
           this.ModalMenu = 0;
 
           this.CheckLinkMember();
@@ -1746,9 +1821,18 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     }
   }
 
+  AddAuxLink(): void {
+    if (this.AuxLinkInpt.trim() != "") {
+      this.AuxLink.push(this.AuxLinkInpt);
+      this.AuxLinkInpt = "";
+    }
+  }
+
   LCEntries = LCEntries;
   faLink = faLink;
   faUser = faUser;
   faLock = faLock;
   faHome = faHome;
+  faWindowClose = faWindowClose;
+  faPlusSquare = faPlusSquare;
 }

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
 import { faHome, faPause, faPlay, faStop, faLock, faUser, faSearchPlus, faSearchMinus, faTimesCircle, faDownload, 
-         faArrowLeft, faArrowRight, faEyeSlash, faShareAlt, faLink, faTags, faFileUpload } from '@fortawesome/free-solid-svg-icons';
+         faArrowLeft, faArrowRight, faEyeSlash, faShareAlt, faLink, faTags, faFileUpload, faWindowClose, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { faTwitch, faYoutube } from '@fortawesome/free-brands-svg-icons';
 import { AccountService } from '../services/account.service';
 import { ArchiveService } from '../services/archive.service';
@@ -36,6 +36,7 @@ class ArchiveSetting {
   ThirdPartySharing:boolean = true;
   Hidden:boolean = false;
   Downloadable:boolean = false;
+  AuxLink:string[] = [];
 }
 
 class ArchiveLink {
@@ -103,6 +104,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   SelectedProfile: number = 0;
   ProfileList:Profile[] = [];
 
+  AuxLinkInpt:string = "";
+
   //  TIMER VARIABLES
   TimerTime: number = 0;
   TimerDelegate: any | undefined = undefined;
@@ -142,15 +145,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.InnerResize(100);
-  }
-
-  ngOnDestroy(): void {
-    if (this.TimerDelegate) {
-      clearInterval(this.TimerDelegate);
-    }
-    if(this.TrackerDelegate) {
-      clearInterval(this.TrackerDelegate);
-    }
   }
 
   ngOnInit(): void {
@@ -201,6 +195,13 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  AddAuxLink(): void {
+    if (this.AuxLinkInpt.trim() != "") {
+      this.TempSetting.AuxLink.push(this.AuxLinkInpt);
+      this.AuxLinkInpt = "";
+    }
+  }
+
   LoadParseArchive(ArchiveLink: string) {
     this.AService.GetOneArchiveInfo(this.RoomNick, this.Token, ArchiveLink).subscribe({
       next: data => {
@@ -210,6 +211,10 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           this.router.navigate(['/ScriptEditor', { }]);
         } else {
           const dt = JSON.parse(data.body);
+          if (!dt["AuxLink"]){
+            dt["AuxLink"] = [];
+          }
+
           this.SavedSetting = {
             Link: dt["Link"],
             StreamLink: dt["StreamLink"],
@@ -220,7 +225,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             ArchiveTitle: dt["Nick"],
             ThirdPartySharing: dt["ExtShare"],
             Hidden: dt["Hidden"],
-            Downloadable: dt["Downloadable"]
+            Downloadable: dt["Downloadable"],
+            AuxLink: dt["AuxLink"]
           };
           this.TempSetting = this.SavedSetting;
   
@@ -411,7 +417,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     ThirdPartySharing: true,
     Hidden: false,
     Link: "",
-    Downloadable: false
+    Downloadable: false,
+    AuxLink: []
   };
 
   SavedSetting: ArchiveSetting = {
@@ -424,7 +431,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     ThirdPartySharing: true,
     Hidden: false,
     Link: "",
-    Downloadable: false
+    Downloadable: false,
+    AuxLink: []
   };
 
   SetModalMenu(idx: number):void {
@@ -454,6 +462,11 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
                   this.TempSetting.ArchiveTitle = "";
                 } else {
                   const dt = JSON.parse(data.body);
+
+                  if (!dt["AuxLink"]) {
+                    dt["AuxLink"] = [];
+                  }
+
                   this.SavedSetting = {
                     Link: dt["Link"],
                     StreamLink: dt["StreamLink"],
@@ -464,7 +477,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
                     ArchiveTitle: dt["Nick"],
                     ThirdPartySharing: dt["ExtShare"],
                     Hidden: dt["Hidden"],
-                    Downloadable: dt["Downloadable"]
+                    Downloadable: dt["Downloadable"],
+                    AuxLink: dt["AuxLink"]
                   };
                   this.TempSetting = this.SavedSetting;
                   this.ModalMenu = idx;
@@ -532,7 +546,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.status = "Updating...";
         this.Processing = true;
         if (this.RoomNick != undefined) {
-          this.AService.EditArchive(this.RoomNick, this.Token, this.TempSetting.Link, this.TempSetting.ArchiveTitle, this.TempSetting.Hidden, this.TempSetting.ThirdPartySharing, this.TempSetting.Tags, this.TempSetting.PassCheck, this.TempSetting.PassString, this.TempSetting.StreamLink, this.TempSetting.Notes, this.TempSetting.Downloadable).subscribe({
+          this.AService.EditArchive(this.RoomNick, this.Token, this.TempSetting.Link, this.TempSetting.ArchiveTitle, this.TempSetting.Hidden, 
+            this.TempSetting.ThirdPartySharing, this.TempSetting.Tags, this.TempSetting.PassCheck, this.TempSetting.PassString, 
+            this.TempSetting.StreamLink, this.TempSetting.Notes, this.TempSetting.Downloadable, this.TempSetting.AuxLink).subscribe({
             error: error => {
               this.status = error["error"];
               this.Processing = false;
@@ -608,7 +624,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       ThirdPartySharing: true,
       Hidden: false,
       Link: "",
-      Downloadable: false
+      Downloadable: false,
+      AuxLink: []
     };
 
     this.TempSetting = this.SavedSetting;
@@ -703,7 +720,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
               CC: this.ProfileList[e.Prfidx].CC?.slice(1),
               OC: this.ProfileList[e.Prfidx].OC?.slice(1)
             })
-          })), this.TempSetting.Notes, this.TempSetting.Downloadable).subscribe({
+          })), this.TempSetting.Notes, this.TempSetting.Downloadable, this.TempSetting.AuxLink).subscribe({
           error: error => {
             this.status = error["error"];
             this.Processing = false;
@@ -2576,6 +2593,38 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
 
+  //------------------------ AUTO SAVE MODULE ------------------------
+  @HostListener('window:beforeunload')
+  async ngOnDestroy() {
+    if (this.TimerDelegate) {
+      clearInterval(this.TimerDelegate);
+    }
+    if(this.TrackerDelegate) {
+      clearInterval(this.TrackerDelegate);
+    }
+
+
+    await this.AService.Autosave({
+      Data: this.EntryList.map(e => { 
+        return {
+          s: e.Stext,
+          t: e.Stime,
+          p: e.Prfidx
+        };
+      }),
+      Profile: this.ProfileList.map(e => {
+        return {
+          N: e.Name,
+          CC: e.CC,
+          OC: e.OC
+        }
+      })
+    }, this.Token, this.RoomNick, this.SavedSetting.Link).subscribe();
+  }
+  //======================== AUTO SAVE MODULE ========================
+
+
+
   faTimesCircle = faTimesCircle;
   faSearchPlus = faSearchPlus;
   faSearchMinus = faSearchMinus;
@@ -2595,4 +2644,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   faFileUpload = faFileUpload;
   faArrowLeft = faArrowLeft;
   faArrowRight = faArrowRight;
+  faWindowClose = faWindowClose;
+  faPlusSquare = faPlusSquare;
 }

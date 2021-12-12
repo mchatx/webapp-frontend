@@ -6,7 +6,7 @@ import ArchiveData from '../models/ArchiveFullData';
 import Entries from '../models/Entries';
 import { saveAs } from 'file-saver';
 import { faLock, faUser, faUpload, faHome, faSignOutAlt, faArrowLeft, faArrowRight, faEyeSlash, faDownload, faShareAlt, faLink, faTags,
-         faWrench, faFileExport, faTrash, faEdit, faPenAlt, faFileUpload} from '@fortawesome/free-solid-svg-icons';
+         faWrench, faFileExport, faTrash, faEdit, faPenAlt, faFileUpload, faPlusSquare, faWindowClose} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-archive-edit',
@@ -48,6 +48,8 @@ export class ArchiveEditComponent implements OnInit {
   FileParsed: Boolean = false;
   Overwrite: Boolean = false;
 
+  AuxLinkInpt: string = "";
+
   SelectedArchive: ArchiveData = {
     Room: "",
     Link: "",
@@ -59,7 +61,8 @@ export class ArchiveEditComponent implements OnInit {
     ExtShare: false,
     Star: 0,
     Note: "",
-    Downloadable: false
+    Downloadable: false,
+    AuxLink: []
   }
   PassString: string = "";
 
@@ -165,6 +168,13 @@ export class ArchiveEditComponent implements OnInit {
     this.LoadArchive();
   }
 
+  AddAuxLink(): void {
+    if (this.AuxLinkInpt.trim() != "") {
+      this.SelectedArchive.AuxLink.push(this.AuxLinkInpt);
+      this.AuxLinkInpt = "";
+    }
+  }
+
   PushDelete() {
     if (!this.Processing) {
       this.status = "DELETING...";
@@ -200,7 +210,9 @@ export class ArchiveEditComponent implements OnInit {
       this.status = "Updating...";
       this.Processing = true;
       if (this.SelectedArchive.Room != undefined) {
-        this.AService.EditArchive(this.Room, this.Token, this.SelectedArchive.Link, this.SelectedArchive.Nick, this.SelectedArchive.Hidden, this.SelectedArchive.ExtShare, this.SelectedArchive.Tags, this.SelectedArchive.Pass, this.PassString, this.SelectedArchive.StreamLink, this.SelectedArchive.Note, this.SelectedArchive.Downloadable).subscribe({
+        this.AService.EditArchive(this.Room, this.Token, this.SelectedArchive.Link, this.SelectedArchive.Nick, this.SelectedArchive.Hidden, 
+          this.SelectedArchive.ExtShare, this.SelectedArchive.Tags, this.SelectedArchive.Pass, this.PassString, this.SelectedArchive.StreamLink, 
+          this.SelectedArchive.Note, this.SelectedArchive.Downloadable, this.SelectedArchive.AuxLink).subscribe({
           error: error => {
             this.status = error["error"];
             this.Processing = false;
@@ -223,7 +235,8 @@ export class ArchiveEditComponent implements OnInit {
               ExtShare: this.SelectedArchive.ExtShare,
               Star: this.SelectedArchive.Star,
               Note: this.SelectedArchive.Note,
-              Downloadable: this.SelectedArchive.Downloadable
+              Downloadable: this.SelectedArchive.Downloadable,
+              AuxLink: this.SelectedArchive.AuxLink
             };
 
             setTimeout(() => {
@@ -267,7 +280,8 @@ export class ArchiveEditComponent implements OnInit {
         ExtShare: false,
         Star: 0,
         Note: "",
-        Downloadable: false
+        Downloadable: false,
+        AuxLink: []
       }
     } else {
       this.SelectedArchive = this.Archivedt[this.SelectedIndex];
@@ -405,7 +419,9 @@ export class ArchiveEditComponent implements OnInit {
         this.SelectedArchive.Nick = this.SelectedArchive.Link;
       }
 
-      this.AService.AddArchive(this.Room, this.Token, this.SelectedArchive.Nick, this.SelectedArchive.Link, this.SelectedArchive.Hidden, this.SelectedArchive.ExtShare, this.SelectedArchive.Tags, this.SelectedArchive.Pass, this.PassString, this.SelectedArchive.StreamLink, JSON.stringify(this.Entriesdt), this.SelectedArchive.Note, this.SelectedArchive.Downloadable).subscribe({
+      this.AService.AddArchive(this.Room, this.Token, this.SelectedArchive.Nick, this.SelectedArchive.Link, this.SelectedArchive.Hidden, 
+        this.SelectedArchive.ExtShare, this.SelectedArchive.Tags, this.SelectedArchive.Pass, this.PassString, this.SelectedArchive.StreamLink, 
+        JSON.stringify(this.Entriesdt), this.SelectedArchive.Note, this.SelectedArchive.Downloadable, this.SelectedArchive.AuxLink).subscribe({
         error: error => {
           this.status = error["error"];
           this.Processing = false;
@@ -646,7 +662,8 @@ export class ArchiveEditComponent implements OnInit {
         ExtShare: false,
         Star: 0,
         Note: "",
-        Downloadable: false
+        Downloadable: false,
+        AuxLink: []
       }
       /*
       this.status = "";
@@ -739,7 +756,8 @@ export class ArchiveEditComponent implements OnInit {
           ExtShare: false,
           Star: 0,
           Note: "",
-          Downloadable: false
+          Downloadable: false,
+          AuxLink: []
         }
       }
     }
@@ -976,7 +994,8 @@ export class ArchiveEditComponent implements OnInit {
         ExtShare: false,
         Star: 0,
         Note: "",
-        Downloadable: false
+        Downloadable: false,
+        AuxLink: []
       }
       /*
       this.status = this.Entriesdt.length.toString() + " = ";
@@ -1262,4 +1281,6 @@ export class ArchiveEditComponent implements OnInit {
   faEdit = faEdit;
   faPenAlt = faPenAlt;
   faFileUpload = faFileUpload;
+  faPlusSquare = faPlusSquare;
+  faWindowClose = faWindowClose;
 }

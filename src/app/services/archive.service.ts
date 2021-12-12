@@ -38,7 +38,8 @@ export class ArchiveService {
     streamlink: string | undefined,
     entries: any,
     note : string | undefined,
-    downloadable: boolean
+    downloadable: boolean,
+    auxlink: string[]
   ): Observable<any> {
 
     const headers = { 'Content-Type': 'application/json' };
@@ -57,7 +58,8 @@ export class ArchiveService {
       StreamLink: streamlink,
       Entries: entries,
       Note: note,
-      Downloadable: downloadable
+      Downloadable: downloadable,
+      AuxLink: auxlink
     }, { headers, observe: 'response', responseType: 'text' }));
   }
 
@@ -90,7 +92,8 @@ export class ArchiveService {
     passstr: string,
     streamlink: string | undefined,
     note: string | undefined,
-    downloadable: boolean
+    downloadable: boolean,
+    auxlink: string[]
   ): Observable<any> {
     const headers = { 'Content-Type': 'application/json' };
     if (!link){
@@ -122,7 +125,8 @@ export class ArchiveService {
       Tags: tags,
       StreamLink: streamlink,
       Note : note,
-      Downloadable: downloadable
+      Downloadable: downloadable,
+      AuxLink: auxlink
     }, { headers, observe: 'response', responseType: 'text' }));
   }
 
@@ -200,4 +204,20 @@ export class ArchiveService {
 
   //=========================================== ARCHIVE EDIT HANDLER ===========================================
 
+
+
+  //-------------------- SESSION SAVER -------------------
+  Autosave(data: any, Token: string, room: string, link: string) {
+    const headers = {
+      'Content-Type': 'application/json',
+      'authorization': 'Bearer ' + Token
+    }
+  
+    return (this.httpclient.post(environment.DBConn + '/AutoSave', {
+      Room: room,
+      Link: link,
+      ...data
+    }, { headers, observe: 'response', responseType: 'text' }));
+  }
+  
 }

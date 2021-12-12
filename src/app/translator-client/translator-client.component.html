@@ -284,6 +284,21 @@
         </div>
 
         <div class="field">
+          <label class="label">Extra Collab Links</label>
+          <div class="control has-icons-left" style="display: flex; flex-direction: row; align-items: center;">
+            <input class="input is-rounded" type="text" placeholder="Collabs Link"
+              [(ngModel)]="AuxLinkInpt">
+            <fa-icon [icon]="faPlusSquare" style="margin-left: 10px; font-size: 2em; cursor: pointer;" (click)="AddAuxLink()"></fa-icon>
+          </div>
+          <div class="control">
+            <div *ngFor="let dt of this.AuxLink; let i = index" style="display: flex; flex-direction: row; align-items: center;">
+              <span style="font-weight: bold;">• {{ dt }}</span>
+              <fa-icon [icon]="faWindowClose" style="margin-left: auto; cursor: pointer;" (click)="this.AuxLink.splice(i, 1);"></fa-icon>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
           <label class="label">Tags</label>
           <div class="control">
             <input class="input" type="text" [(ngModel)]="Tags" max="255"/>
@@ -363,6 +378,21 @@
           <label class="label">Link to stream</label>
           <div class="control">
             <input class="input" type="text" [(ngModel)]="StreamLink" max="255"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Extra Collab Links</label>
+          <div class="control has-icons-left" style="display: flex; flex-direction: row; align-items: center;">
+            <input class="input is-rounded" type="text" placeholder="Collabs Link"
+              [(ngModel)]="AuxLinkInpt">
+            <fa-icon [icon]="faPlusSquare" style="margin-left: 10px; font-size: 2em; cursor: pointer;" (click)="AddAuxLink()"></fa-icon>
+          </div>
+          <div class="control">
+            <div *ngFor="let dt of this.AuxLink; let i = index" style="display: flex; flex-direction: row; align-items: center;">
+              <span style="font-weight: bold;">• {{ dt }}</span>
+              <fa-icon [icon]="faWindowClose" style="margin-left: auto; cursor: pointer;" (click)="this.AuxLink.splice(i, 1);"></fa-icon>
+            </div>
           </div>
         </div>
 
@@ -485,6 +515,20 @@
               <select [(ngModel)]="LangCode">
                 <option *ngFor="let LC of LCEntries;" [value]="LC.C" [selected]="LangCode == LC.C">{{ LC.D }} ({{ LC.C }})</option>
               </select>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Extra Collab Links</label>
+          <div class="control has-icons-left" style="display: flex; flex-direction: row; align-items: center;">
+            <input class="input is-rounded" type="text" placeholder="Collabs Link"
+              [(ngModel)]="AuxLinkInpt">
+            <fa-icon [icon]="faPlusSquare" style="margin-left: 10px; font-size: 2em; cursor: pointer;" (click)="AddAuxLink()"></fa-icon>
+          </div>
+          <div class="control">
+            <div *ngFor="let dt of this.AuxLink; let i = index" style="display: flex; flex-direction: row; align-items: center;">
+              <span style="font-weight: bold;">• {{ dt }}</span>
+              <fa-icon [icon]="faWindowClose" style="margin-left: auto; cursor: pointer;" (click)="this.AuxLink.splice(i, 1);"></fa-icon>
             </div>
           </div>
         </div>
