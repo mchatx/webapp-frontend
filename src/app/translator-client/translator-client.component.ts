@@ -531,6 +531,9 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         this.RoomDt.SessPass = "";
         this.RoomDt.Empty = true;
         this.RoomDt.Note = "";
+        this.RoomDt.AuxLink = [];
+        this.RoomDt.Tags = "";
+        this.RoomDt.StreamLink = "";
       },
       error: err => {
         this.NotifText = "ERROR FLUSHING ROOM...";

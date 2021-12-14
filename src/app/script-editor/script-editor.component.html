@@ -1,12 +1,12 @@
 <!--============================================ LOGIN PAGE =====================================================-->
-<section class="hero is-dark is-fullheight">
+<section class="hero is-dark is-fullheight" [style.border]="AutoSaveMode ? '4px solid green' : '4px solid rgb(160, 0, 0)'" style="font-style: Ubuntu;">
   <!---------------------- MENU ------------------------>
   <div class="hero-head" #HeroHead>
     <button *ngIf="!OpenOption" class="button is-small is-fullwidth is-primary" (click)="OpenOption = true; InnerResize(10)">Menu</button>
   
     <div [ngClass]="BGColour == '#28282B' ? 'has-background-primary-light' : 'has-background-black'" *ngIf="OpenOption" style="width: 100%;">
       <!--                SMALL MENU                   -->
-      <div *ngIf="WinWidth < 1480" style="width: 100%; display: flex; align-items: stretch; padding-left: 30px; padding-right: 30px; padding-top: 10px; padding-bottom: 10px;">
+      <div style="width: 100%; display: flex; align-items: stretch; padding-left: 30px; padding-right: 30px; padding-top: 10px; padding-bottom: 10px;">
         <div style="display: flex; flex-direction: row; align-items: center;">
           <a class="button is-small is-link" style="height: 77px; width: 77px; margin-right: 5px;" routerLink="/" [routerLinkActive]="['is-active']">
             <fa-icon style="font-size: 30px;" [icon]="faHome"></fa-icon>
@@ -27,8 +27,12 @@
         </div>
 
         <div style="display: flex; flex-direction: column; margin-right: 5px;">
-          <a class="button" style="margin-bottom: 5px;" (click)="SetModalMenu(2)">Script Setting</a>        
+          <button class="button" (click)="SessionLoader()" style="margin-bottom: 5px;" [disabled]="!AutoSaveMode">Load Last Session</button>
           <a class="button" (click)="SaveLocal()">Save Session</a>
+        </div>
+
+        <div style="display: flex; flex-direction: column; margin-right: 5px;">
+          <a class="button" style="margin-bottom: 5px;" (click)="SetModalMenu(2)">Script Setting</a>        
         </div>
 
         <div style="display: flex; flex-direction: column; margin-right: 5px;">
@@ -36,34 +40,16 @@
           <a class="button" (click)="SetModalMenu(5)">Upload To DB</a>
         </div>
 
-        <div style="display: flex; flex-direction: column; margin-right: 5px;">
+        <div style="display: flex; flex-direction: column; margin-right: 5px; margin-right: auto;">
           <a class="button" style="margin-bottom: 5px;" (click)="SetModalMenu(4)" >Load Video</a>
           <a class="button" (click)="UnSync()">Unload Video</a>
         </div>
-      </div>
 
-      <!--                BIG MENU                   -->
-      <div *ngIf="this.WinWidth >= 1480" class="BigMenu" style="width: 100%; display: flex; align-items: center; flex-direction: row; padding-left: 30px; padding-right: 30px; padding-top: 10px; padding-bottom: 10px;">
-        <a class="button is-small is-link" routerLink="/" [routerLinkActive]="['is-active']">
-          <fa-icon style="font-size: 15px;" [icon]="faHome"></fa-icon>
-        </a>        
-
-        <div style="display: flex; flex-direction: row; align-items: center; min-width: 130px;">
-          <label style="color: black;">Font Size</label>
-          <input style="width: 50px; margin-left: 10px;" type="number" min="1" [(ngModel)]="FFsize"/>
+        <div>
+          <a *ngIf="!AutoSaveMode" style="height: 100%;" class="button" (click)="ReLoginAutosave()">Login</a>
+          <a *ngIf="AutoSaveMode" style="height: 100%; font-weight: bold;" class="button is-warning" (click)="Logout(4)">Logout</a>
         </div>
-
-        <a class="button" (click)="SetModalMenu(6)">New Script</a>
-        <a class="button" (click)="SetModalMenu(2)">Script Setting</a>        
-        <a class="button" (click)="SetModalMenu(8)">Export Script</a>
-        <a class="button" (click)="OpenUploadModal()">Import Script</a>
-        <a class="button" (click)="SaveLocal()">Save Session</a>
-        <a class="button" (click)="SetModalMenu(9)">Download From DB</a>
-        <a class="button" (click)="SetModalMenu(5)">Upload To DB</a>
-        <a class="button" (click)="SetModalMenu(4)" >Load Video</a>
-        <a class="button" style="margin-right: auto;" (click)="UnSync()">Unload Video</a>
       </div>
-
     </div>
   </div>
   <!--==================== MENU ======================-->
@@ -76,7 +62,7 @@
       <!-- ENTRY VIEWER -->
       <div style="-webkit-text-stroke-width: 1px; font-family: Ubuntu; font-weight: bolder; width: 100%; padding-right: 5px;" [style.font-size]="this.FFsize.toString() + 'px'">
         <div style="width: 100%; overflow-y: auto;" [style.max-height]="TableHeight + 'px'" (window:resize)="InnerResize()" #TableContainer>
-          <table style="width: 100%; color: white;" class="table has-background-dark is-bordered">
+          <table style="width: 100%; color: white;" class="table has-background-dark is-bordered" #EntryTable>
             <thead style="position: sticky; top: 0;" class="has-background-light has-text-dark" >
               <tr>
                 <th>#</th>
@@ -86,20 +72,43 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let Entry of EntryList; index as i" (click)="this.SelectedEntry = i">
-                <td>{{ i + 1 }}</td>
-                <td>{{ Entry.Stime/1000 | timePrinter:true:true }}</td>
-                <td>{{ this.ProfileList[Entry.Prfidx].Name }}</td>
-                <td>
-                  <div *ngIf="this.SelectedEntry == i" style="display: flex; flex-direction: row;" [style.font-size]="(this.FFsize - 2).toString() + 'px'">
-                    <input style="background-color: transparent; width: 100%;" [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC ? this.ProfileList[Entry.Prfidx].CC : 'white'" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC ? this.ProfileList[Entry.Prfidx].OC : 'white'" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="200"/>
-                    <fa-icon [icon]="faTimesCircle" (click)="ModalMenu = 3;" style="cursor: pointer;"></fa-icon>
-                  </div>
-                  <label *ngIf="this.SelectedEntry != i" style="background-color: transparent;"
-                    [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC ? this.ProfileList[Entry.Prfidx].CC : 'white'"
-                    [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC ? this.ProfileList[Entry.Prfidx].OC : 'white'"> {{ Entry.Stext }} </label>
-                </td>
-              </tr>
+              <ng-template ngFor let-Entry [ngForOf]="EntryList" let-i="index">
+                <tr (click)="this.SelectedEntry = i">
+                  <td>{{ i + 1 }}</td>
+                  <td>{{ Entry.Stime/1000 | timePrinter:true:true }}</td>
+                  <td>
+                    <span *ngIf="this.SelectedEntry != i">{{ this.ProfileList[Entry.Prfidx].Name }}</span>
+                    <select *ngIf="this.SelectedEntry == i" [(ngModel)]="Entry.Prfidx">
+                      <option *ngFor="let prf of ProfileList; index as j;" [value]="j" [selected]="Entry.Prfidx==j">{{ prf.Name }}</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input *ngIf="this.SelectedEntry == i" style="background-color: transparent; width: 100%; caret-color: white;" [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC ? this.ProfileList[Entry.Prfidx].CC : 'white'" [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC ? this.ProfileList[Entry.Prfidx].OC : 'white'" class="EntryEdit" type="text" [(ngModel)]="Entry.Stext" max="500"/>
+                    <label *ngIf="this.SelectedEntry != i" style="background-color: transparent;"
+                      [style.-webkit-text-fill-color]="this.ProfileList[Entry.Prfidx].CC ? this.ProfileList[Entry.Prfidx].CC : 'white'"
+                      [style.-webkit-text-stroke-color]="this.ProfileList[Entry.Prfidx].OC ? this.ProfileList[Entry.Prfidx].OC : 'white'"> {{ Entry.Stext }} </label>
+                  </td>
+                </tr>
+
+                <tr *ngIf="i == this.SelectedEntry">
+                  <td class="has-background-primary has-text-white" colspan="4">
+                    <div style="width: 100%; display: flex; flex-direction: row; justify-content: space-between;">
+                      
+                      <button class="button" (click)="ModalMenu = 13;">
+                        <span>Set As Start</span>
+                      </button>
+                      
+                      <button class="button is-danger" (click)="ModalMenu = 3;">
+                        <span class="icon is-left is-small">
+                          <fa-icon [icon]="faTimesCircle"></fa-icon>
+                        </span>
+                        <span>Delete entry</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+              </ng-template>
             </tbody>
           </table>
         </div>
@@ -118,7 +127,12 @@
       <!--  VIDEO CONTAINER  -->
       <div style="display: flex; flex-direction: column; padding-left: 5px; padding-bottom: 5px;" [style.border-left]="VidLoad ? '2px solid white' : ''" #TableHeightRef >
         <div *ngIf="VidLoad" style="width: 50vw; height: 100%;">
-          <div id="player" style="width: 100%; height: 100%;"></div>
+          <iframe src="https://twitcasting.tv/akirosenthal/embeddedplayer/692950588?auto_play=false&default_mute=false" width="64px" height="36px" frameborder="0" allowfullscreen></iframe>
+          <div id="player" style="width: 100%; height: 100%;">
+            <div *ngIf="LoadLocalVideo" style="display: flex; flex-direction: row; width: 100%; height: 100%; background-color: black;">
+              <video style="align-self: center;" width="100%" height="100%" controls #LocalVid></video>
+            </div>
+          </div>
         </div>
 
         <label *ngIf="VidLoad && (this.ActiveEntry > -1)" style="background-color: transparent; text-align: center; margin-top: 2px; margin-bottom: 2px; border-radius: 5%; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-weight: bolder;" 
@@ -140,7 +154,7 @@
 
   <!---------------------- TL TOOL ------------------------>
   <div class="hero-foot" #HeroFoot>
-    <div class="container is-fluid" style="display: flex; flex-direction: column;">
+    <div class="container is-fluid" style="display: flex; flex-direction: column; padding-left: 8px; padding-right: 8px;">
 
       <!-------------------- TIMELINE -------------------->
       <div style="display: flex; flex-direction: column; padding-bottom: 7px; margin-bottom: 5px;">
@@ -163,11 +177,23 @@
 
               <div *ngFor="let i of this.TimeCardIdx" [style.width] = "CardWidthCalculator(i)" [style.font-size]="this.FFsize.toString() + 'px'"
                 style="display: flex; flex-direction: row; -webkit-text-stroke-width: 1px; font-family: Ubuntu; font-weight: bolder; border: solid 1px white;">
-  
+
+                <textarea *ngIf="this.SelectedEntry == i"  style="padding: 5px 1em 5px 1em; border-radius: 4%; text-align: center; caret-color: white;" (keypress)="TextAreaEnterCanceller($event)"
+                  [style.-webkit-text-fill-color]="this.ProfileList[this.EntryList[i].Prfidx].CC ? this.ProfileList[this.EntryList[i].Prfidx].CC : 'white'"
+                  [style.-webkit-text-stroke-color]="this.ProfileList[this.EntryList[i].Prfidx].OC ? this.ProfileList[this.EntryList[i].Prfidx].OC : 'white'"
+                  class="EntryEditCard has-background-dark" [(ngModel)]="this.EntryList[i].Stext" (mousedown)="RulerMouseDown($event, i, false)"></textarea>
+
+                <label *ngIf="this.SelectedEntry != i"  style="padding: 5px 1em 5px 1em; border-radius: 4%; text-align: center; align-self: center;"
+                  [style.-webkit-text-fill-color]="this.ProfileList[this.EntryList[i].Prfidx].CC ? this.ProfileList[this.EntryList[i].Prfidx].CC : 'white'"
+                  [style.-webkit-text-stroke-color]="this.ProfileList[this.EntryList[i].Prfidx].OC ? this.ProfileList[this.EntryList[i].Prfidx].OC : 'white'"
+                  class="EntryEditCard has-background-dark" (mousedown)="RulerMouseDown($event, i, false); this.InnerResize(200)">{{ this.EntryList[i].Stext }}</label>
+
+                <!--
                 <input style="padding: 5px 1em 5px 1em; border-radius: 4%; text-align: center;"
                   [style.-webkit-text-fill-color]="this.ProfileList[this.EntryList[i].Prfidx].CC ? this.ProfileList[this.EntryList[i].Prfidx].CC : 'white'"
                   [style.-webkit-text-stroke-color]="this.ProfileList[this.EntryList[i].Prfidx].OC ? this.ProfileList[this.EntryList[i].Prfidx].OC : 'white'"
                   class="EntryEditCard has-background-dark" type="text" [(ngModel)]="this.EntryList[i].Stext" max="200" (mousedown)="RulerMouseDown($event, i, false)"/>
+                -->
   
                 <div style="width: 6px; background-color: white; height: 100%; cursor: ew-resize;" (mousedown)="RulerMouseDown($event, i, true);"></div>
               </div>
@@ -179,7 +205,7 @@
       <!--================== TIMELINE ==================-->
 
       <!--     SMALL MENU     -->
-      <div *ngIf="this.WinWidth < 1570" style="display: flex; flex-direction: column;">
+      <div style="display: flex; flex-direction: column;">
         <div style="display: flex; flex-direction: row; margin-bottom: 5px;">
           <input type="text" [(ngModel)]="TLEntry.Stext" (keydown.enter)="SendEntry()" max="200" style="width: 100%;"/>
           <div class="control" style="margin-left: auto;">
@@ -211,80 +237,42 @@
           </div>
         </div>
         
-        <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px; margin-top: 10px;">
-          <a class="button" (click)="SetModalMenu(1)" style="margin-right: 5px;">Add Profile</a>
-          <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
-          <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
-          <a class="button" (click)="SetModalMenu(10)" style="margin-right: 5px;">Delete Profile</a>
-    
-          <button class="button" (click)="TimelineZoomin()" style="margin-left: auto; margin-right: 5px;">
-            <span class="icon is-left is-small">
-              <fa-icon [icon]="faSearchPlus"></fa-icon>
-            </span>
-            <span>Zoom in</span>
-          </button>
-          <button class="button" (click)="TimelineZoomout()">
-            <span class="icon is-left is-small">
-              <fa-icon [icon]="faSearchMinus"></fa-icon>
-            </span>
-            <span>Zoom out</span>
-          </button>
-        </div>
-      </div>
+        <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px; margin-top: 10px; justify-content: space-between;">
+          <div id="BottomMenu" style="display: flex; flex-direction: row; align-items: center;">
+            <a class="button" (click)="SetModalMenu(1)" style="margin-right: 5px;">Add Profile</a>
+            <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
+            <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
+            <a class="button" (click)="SetModalMenu(10)" style="margin-right: 5px;">Delete Profile</a>
 
-      <!--     BIG MENU     -->
-      <div *ngIf="this.WinWidth >= 1570" style="display: flex; flex-direction: column;">
-        <div style="display: flex; flex-direction: row; margin-bottom: 5px;">
-          <input type="text" [(ngModel)]="TLEntry.Stext" (keydown.enter)="SendEntry()" max="200" style="width: 100%;"/>
-          <div class="control" style="margin-left: auto;">
-            <a class="button" (click)="SendEntry()" style="margin-left: 10px;">Enter</a>
-          </div>        
-        </div>
-  
-        <div style="display: flex; flex-direction: row; align-items: center; margin-bottom: 20px; margin-top: 10px;">
-          <a class="button" (click)="SetModalMenu(1)" style="margin-right: 5px;">Add Profile</a>
-          <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
-          <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
-          <a class="button" (click)="SetModalMenu(10)" style="margin-right: 5px;">Delete Profile</a>
-  
-          <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
-            <label style="margin-right: 10px;">Prefix </label>
-            <input style="width: 100px;" type="text" [(ngModel)]="Prefix" max="30"/>
+            <a class="button" (click)="TimePing()" style="margin-right: 5px;">Ping</a>
+
+            <div style="border-left: solid 2px white; padding-left: 5px; border-right: solid 2px white; padding-right: 5px; margin-right: 5px;">
+              <a class="button" (click)="SetModalMenu(12)">Shift Time All</a>
+            </div>
+
+            <a *ngIf="AutoSaveMode" class="button is-success" style="cursor: default; font-family: Ubuntu; font-weight: bolder;">Auto-save ON</a>
+            <a *ngIf="!AutoSaveMode" class="button is-danger" style="font-family: Ubuntu; font-weight: bolder;" (click)="ReLoginAutosave()">Auto-save OFF</a>
           </div>
-  
-          <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
-            <label style="margin-right: 10px;">Suffix </label>
-            <input style="width: 100px;" type="text" [(ngModel)]="Suffix" max="30"/>
+
+          <div id="BottomMenu" style="display: flex; flex-direction: row; align-items: center;">
+            <button class="button" (click)="TimelineZoomin()" style="margin-right: 5px;">
+              <span class="icon is-left is-small">
+                <fa-icon [icon]="faSearchPlus"></fa-icon>
+              </span>
+              <span>Zoom in</span>
+            </button>
+            <button class="button" (click)="TimelineZoomout()">
+              <span class="icon is-left is-small">
+                <fa-icon [icon]="faSearchMinus"></fa-icon>
+              </span>
+              <span>Zoom out</span>
+            </button>
           </div>
-  
-          <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
-            <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="CCcheck" (ngModelChange)="SaveActiveProfile(0)"/>
-            <label style="margin-right: 10px;">Character Colour </label>
-            <input type="color" [(ngModel)]="CCcolour" (ngModelChange)="SaveActiveProfile(0)"/>
-          </div>
-  
-          <div class="control" style="margin-right: 10px; display: flex; flex-direction: row; align-items: center;">
-            <input style="margin-right: 5px;" type="checkbox" [(ngModel)]="OCcheck" (ngModelChange)="SaveActiveProfile(1)"/>
-            <label style="margin-right: 10px;">Outline Colour </label>
-            <input type="color" [(ngModel)]="OCcolour" (ngModelChange)="SaveActiveProfile(1)"/>
-          </div>
-  
-          <button class="button" (click)="TimelineZoomin()" style="margin-left: auto; margin-right: 5px;">
-            <span class="icon is-left is-small">
-              <fa-icon [icon]="faSearchPlus"></fa-icon>
-            </span>
-            <span>Zoom in</span>
-          </button>
-          <button class="button" (click)="TimelineZoomout()">
-            <span class="icon is-left is-small">
-              <fa-icon [icon]="faSearchMinus"></fa-icon>
-            </span>
-            <span>Zoom out</span>
-          </button>
         </div>
       </div>
 
     </div>
+
   </div>
   <!--==================== TL TOOL ======================-->
 </section>
@@ -303,6 +291,7 @@
     9 => Download Script From DB
     10 => Profile Delete
     11 => Login
+    12 => Shift Time All
   -->
   <!---------------------------------------------- MODALS ------------------------------------------------------->
   <div class="modal" [ngClass]="{ 'is-active' : ModalMenu != 0 }" style="font-family: Ubuntu;">
@@ -435,26 +424,64 @@
                 <input class="input is-rounded" type="text" placeholder="Enter URL link here" [(ngModel)]="TempSetting.StreamLink"/>
               </div>
             </div>
-          </div>
+          
   
-          <article class="message is-warning">
-            <div class="message-body">
-              Supported streaming platform
-              <ul>
-                <li>          
-                  <span class="icon is-left is-small">
-                    <fa-icon [icon]="faYoutube"></fa-icon>
+            <article class="message is-warning">
+              <div class="message-body">
+                Supported streaming platform
+                <ul>
+                  <li>          
+                    <span class="icon is-left is-small">
+                      <fa-icon [icon]="faYoutube"></fa-icon>
+                    </span>
+                    <span> Youtube</span>
+                  </li>
+                  <li>          
+                    <span class="icon is-left is-small">
+                      <fa-icon [icon]="faTwitch"></fa-icon>
+                    </span>
+                    <span> Twitch</span>
+                  </li>
+                </ul>
+              </div>
+            </article>
+  
+            <div class="divider is-left is-black"></div>
+            <div class="field">
+              <label class="checkbox">
+                <input type="checkbox" [(ngModel)]="LoadLocalVideo">
+                <strong> Load Local Video.</strong>
+              </label>  
+            </div>
+  
+            <div class="field">
+              <label class="label" >Depending on your browser, it accepts one or more of the following formats: .Ogg, .MP4, and .WebM</label>
+              <div class="file has-name is-small" id="wrap">
+                <label class="file-label">
+                  <input class="file-input" type="file" accept=".Ogg, .MP4, .WebM" name="resume"
+                    (change)="FileChangeVid($event)">
+                  <span class="file-cta">
+                    <span class="file-icon">
+                      <fa-icon [icon]="faFileUpload"></fa-icon>
+                    </span>
+                    <span class="file-label">
+                      Choose a file…
+                    </span>
                   </span>
-                  <span> Youtube</span></li>
-              </ul>
+                  <span class="file-name">
+                    {{ TargetVideoFile ? TargetVideoFile.name : '' }}
+                  </span>
+                </label>
+              </div>
             </div>
-          </article>
+  
+            <div class="field">
+              <div class="buttons" style="display: flex; flex-direction: row; justify-content: space-between;">
+                <a class="button" (click)="ModalMenu = 0; TempSetting.StreamLink = SavedSetting.StreamLink">Cancel</a>
+                <a class="button is-success" (click)="LoadVideo(); SavedSetting.StreamLink = TempSetting.StreamLink">Load</a>
+              </div>
+            </div>
 
-          <div class="field">
-            <div class="buttons" style="display: flex; flex-direction: row; justify-content: space-between;">
-              <a class="button" (click)="ModalMenu = 0; TempSetting.StreamLink = SavedSetting.StreamLink">Cancel</a>
-              <a class="button is-success" (click)="LoadVideo(); SavedSetting.StreamLink = TempSetting.StreamLink">Load</a>
-            </div>
           </div>
         </div>
 
@@ -760,6 +787,37 @@
               </div>
               <!-- --------------- Enter Button ---------------->
             </div>
+          </div>
+        </div>
+
+        <!--  Shif Time All  -->
+        <div *ngSwitchCase="12">
+          <p class="title has-text-black has-text-centered pt-2">Time Shift All</p>
+
+          <label class="checkbox">
+            <input type="checkbox" [(ngModel)]="ShiftFirst">
+            <strong> Shift first entry too</strong>
+          </label>
+
+          <div class="field">
+            <label class="label">Timeshift in miliseconds</label>
+            <div class="control">
+              <input class="input is-rounded" type="number" [(ngModel)]="TimeShift"/>
+            </div>
+          </div>
+
+          <div class="field" style="display: flex; flex-direction: row; margin-top: 10px; margin-bottom: 10px; width: 100%;">
+            <button class="button is-dark" (click)="ModalMenu = 0">Cancel</button>
+            <button class="button is-success" style="margin-left: auto;" (click)="TimeShiftAll()">TimeShift</button>
+          </div>
+        </div>
+
+        <div *ngSwitchCase="13">
+          <p class="title has-text-black has-text-centered pt-2">Set as starting point? (All preceding entries will be deleted)</p>
+
+          <div class="field" style="display: flex; flex-direction: row; margin-top: 10px; margin-bottom: 10px; width: 100%;">
+            <button class="button is-dark" (click)="ModalMenu = 0">Cancel</button>
+            <button class="button is-success" style="margin-left: auto;" (click)="SetAsStart()">Set As Start</button>
           </div>
         </div>
 

@@ -404,6 +404,13 @@
         </div>
 
         <div class="field">
+          <label class="label">Note</label>
+          <div class="control">
+            <input class="input" type="text" [(ngModel)]="RoomDt.Note" max="1024"/>
+          </div>
+        </div>
+
+        <div class="field">
           <div style="display: flex; flex-direction: row; align-items: center;">
             <input type="checkbox" [(ngModel)]="ThirdPartySharing" style="margin-right: 5px;">
             <label class="label">3rd Party Sharing</label>

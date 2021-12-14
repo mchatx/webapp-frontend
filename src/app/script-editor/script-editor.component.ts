@@ -58,6 +58,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('HeroHead') HeroHead !: ElementRef;
   @ViewChild('HeroFoot') HeroFoot !: ElementRef;
   @ViewChild('TableContainer') TableContainer !: ElementRef;
+  @ViewChild('EntryTable') EntryTable !: ElementRef<HTMLTableElement>;
   LoginMode: boolean = false;
 
   /*
@@ -75,7 +76,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   EntryList: FullEntry[] = [];
   FFsize:number = 15;
   BGColour:string = "#28282B";
-  SelectedEntry: number = 0;
+  SelectedEntry: number = -1;
 
   TableHeight: number = 100;
   DocumentHeight: number = window.innerHeight;
@@ -109,7 +110,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   //  TIMER VARIABLES
   TimerTime: number = 0;
   TimerDelegate: any | undefined = undefined;
-  VidLoad: boolean = false;
+  VidLoad: boolean = true;
 
   ModalNotif:boolean = false;
   NotifText:string = "";
@@ -134,17 +135,17 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.TableHeightRef) {
       if (wait) {
         setTimeout(() => {
-          this.TableHeight = window.innerHeight - this.HeroFoot.nativeElement.offsetHeight - this.HeroHead.nativeElement.offsetHeight - 17; 
+          this.TableHeight = window.innerHeight - this.HeroFoot.nativeElement.offsetHeight - this.HeroHead.nativeElement.offsetHeight - 27; 
         }, wait);
       } else {
-        this.TableHeight = window.innerHeight - this.HeroFoot.nativeElement.offsetHeight - this.HeroHead.nativeElement.offsetHeight - 17;
+        this.TableHeight = window.innerHeight - this.HeroFoot.nativeElement.offsetHeight - this.HeroHead.nativeElement.offsetHeight - 27;
       }
     }
     this.RerenderTimeline();
   }
 
   ngAfterViewInit(): void {
-    this.InnerResize(100);
+    this.InnerResize(300);
   }
 
   ngOnInit(): void {
@@ -167,6 +168,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.LoginMode = true;
                 this.Token = TokenData["Token"];
                 this.RoomNick = TokenData["Room"];
+                this.InitAutoSave();
 
                 if (params.archive) {
                   this.LoadParseArchive(params.archive);
@@ -229,6 +231,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
             AuxLink: dt["AuxLink"]
           };
           this.TempSetting = this.SavedSetting;
+          this.LoadVideo();
   
           this.AService.GetOneArchive(this.RoomNick, this.Token, ArchiveLink).subscribe(
             (response: any) => {
@@ -362,7 +365,13 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
               case 3:
                 this.SetModalMenu(5);
                 break;
+              
+              case 4:
+                this.ModalMenu = 0;
+                break;
             }
+
+            this.InitAutoSave();
             this.LoginRedirect = 0;            
           } else {
             this.status = "THIS ACCOUNT DOESN'T HAVE TL PRIVILEGE";
@@ -447,6 +456,13 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         this.ProfileName = "";        
         this.ModalMenu = idx;
         break;
+
+      case 4:
+        this.UnSync();
+        this.TargetVideoFile = null;
+        this.LoadLocalVideo = false;
+        this.ModalMenu = idx;
+        break;
       
       case 5:
         if (this.LoginMode){
@@ -523,6 +539,12 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         }
         break;
       
+      case 12:
+        this.TimeShift = 0;
+        this.ShiftFirst = true;
+        this.ModalMenu = idx;
+        break;
+
       default:
         this.ModalMenu = idx;
         break;
@@ -530,6 +552,12 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   Logout(RedirectMode: number): void {
+    this.AutoSave(true);
+    if (this.AutoSaveTimer) {
+      clearInterval(this.AutoSaveTimer);
+    }
+
+    this.AutoSaveMode = false;
     this.LoginMode = false;
     this.Token = "";
     this.RoomNick = "";
@@ -601,6 +629,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     this.TimeCardIdx = [];
     this.XtraMargin = 0;
     this.TimerTime = 0;
+    this.SelectedEntry = -1;
     if (this.TimerDelegate) {
       clearInterval(this.TimerDelegate);
       this.TimerDelegate = undefined;
@@ -609,6 +638,10 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       clearInterval(this.TrackerDelegate);
       this.TrackerDelegate = undefined;
     }
+    if (this.AutoSaveTimer) {
+      clearInterval(this.AutoSaveTimer);
+    }
+
 
     this.RerenderTimeline(); 
     this.ReloadDisplayCards();
@@ -693,6 +726,60 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   //========================== AUX CONTROL ==========================
 
+
+
+  //---------------------- TIME SHIFT MODULE ----------------------
+  TimeShift:number = 0;
+  ShiftFirst: boolean = false;
+
+  SetAsStart() {
+    const idx: number = this.SelectedEntry;
+    const timestart: number = this.EntryList[idx].Stime;
+    this.SelectedEntry = -1;
+    this.TimeCardIdx = [];
+    this.EntryList = this.EntryList.slice(idx);
+    
+    for (let i = 0; i < this.EntryList.length; i++) {
+      this.EntryList[i].Stime -= timestart;
+      this.EntryList[i].End -= timestart;
+      if (i == this.EntryList.length - 1){
+        this.ReloadDisplayCards();
+      }
+    }
+    
+
+    this.ModalMenu = 0;
+  }
+
+  TimeShiftAll(){
+    this.ModalMenu = 0;
+    if (this.ShiftFirst) {
+      if (this.EntryList.length > 0) {
+        if (this.EntryList[0].Stime + this.TimeShift >= 0) {
+          for (let i = 0; i < this.EntryList.length; i++) {
+            this.EntryList[i].Stime += this.TimeShift;
+            this.EntryList[i].End += this.TimeShift;
+            if (i == this.EntryList.length - 1) {
+              this.ReloadDisplayCards();
+            }
+          }
+        }
+      }
+    } else {
+      if (this.EntryList.length > 1) {
+        if (this.EntryList[1].Stime + this.TimeShift >= 0) {
+          for (let i = 1; i < this.EntryList.length; i++) {
+            this.EntryList[i].Stime += this.TimeShift;
+            this.EntryList[i].End += this.TimeShift;
+            if (i == this.EntryList.length - 1) {
+              this.ReloadDisplayCards();
+            }
+          }
+        }
+      }
+    }
+  }
+  //====================== TIME SHIFT MODULE ======================
 
 
   //------------------------------------- UPLOAD MODULE AUX -------------------------------------
@@ -1972,27 +2059,27 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   //---------------------------  VIDEO LOADER HANDLER  ---------------------------
   public reframed: Boolean = false;
   isRestricted = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  public YT: any;
+  TrackerDelegate: any;
+  PauseTracker: boolean = false;
+  SeekBlock: boolean = false;
+  VidType:string = "";
   public video: any;
   public player: any;
 
-  TrackerDelegate: any;
-  PauseTracker: boolean = false;
 
+  //-----------------  YT  -----------------
   LoadvideoYT() {
     if (window['YT']) {
       this.startVideoYT();
       return;
     }
-
+    
     var tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     var firstScriptTag = document.getElementsByTagName('script')[0];
     if (firstScriptTag.parentNode){
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     }    
-
     window['onYouTubeIframeAPIReady'] = () => this.startVideoYT();
   }
 
@@ -2011,14 +2098,14 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onPlayerStateChangeYT(event:any) {
-    this.TogglePlayPause();
+    this.TogglePlayPauseYT();
   };
 
   ReadyStateYT() {
     this.PauseTracker = false;
   }
 
-  TogglePlayPause(){
+  TogglePlayPauseYT(){
     switch (this.player.getPlayerState()) {
       case 1:
         break;
@@ -2032,7 +2119,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  StartTracker(): void {
+  StartTrackerYT(): void {
     this.PauseTracker = true;
     if (this.TrackerDelegate) {
       clearInterval(this.TrackerDelegate);
@@ -2047,41 +2134,203 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 20);
 
   }
+  //=================  YT  =================
+
+
+
+  //-----------------  TW  -----------------
+  LoadvideoTW() {
+    if (window['Twitch']) {
+      this.startVideoTW();
+      return;
+    }
+
+    var tag = document.createElement('script');
+    tag.src = 'https://player.twitch.tv/js/embed/v1.js';
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    if (firstScriptTag.parentNode){
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    } 
+    
+    var Checker = setInterval(() => {
+      if (window['Twitch']){
+        clearInterval(Checker);
+        this.startVideoTW();
+      }
+    }, 1000);
+  }
+
+  startVideoTW() {
+    this.reframed = false;
+    var options = {
+      width: '100%',
+      height: '100%',
+      video: this.video,
+      autoplay: false,
+      time: '0h0m0s'
+    };
+    this.player = new window['Twitch'].Player('player', options);
+
+    //this.player.addEventListener(window['Twitch'].Player.READY, () => {});
+    //this.player.addEventListener(window['Twitch'].Player.PLAYING, () => {});
+
+    this.player.addEventListener(window['Twitch'].Player.PAUSE, () => { 
+      this.PauseTracker = true;
+      //this.TimerTime = this.player.getCurrentTime()*1000;
+    });
+
+    this.player.addEventListener(window['Twitch'].Player.PLAY, () => {
+      this.PauseTracker = false;
+      //this.TimerTime = this.player.getCurrentTime()*1000;  
+    });
+
+    this.player.addEventListener(window['Twitch'].Player.SEEK, (e: any) => { 
+      this.TimerTime = e.position*1000;
+      this.ScrollCalculator();
+    });
+  }
+
+  StartTrackerTW(): void {
+    this.PauseTracker = true;
+    if (this.TrackerDelegate) {
+      clearInterval(this.TrackerDelegate);
+      this.TrackerDelegate = undefined;
+    }
+
+    this.TimeSaddle = Date.now();
+    this.TrackerDelegate = setInterval(() => {
+      if ((Date.now() - this.TimeSaddle < 1000) && (!this.PauseTracker)) {
+        this.TimerTime += Date.now() - this.TimeSaddle;
+      }
+      this.TimeSaddle = Date.now();
+      this.ScrollCalculator();  
+     }, 20);
+  }
+  //=================  TW  =================
+
+  
+
+  //-----------------  TC  -----------------
+  TimePing(): void {
+  }
+  //=================  TW  =================
+  
+
+
+  //-----------------  Local  -----------------
+  TargetVideoFile: File | null = null;
+  LoadLocalVideo: boolean = false;
+  @ViewChild('LocalVid') LocalVidPlayer !: ElementRef<HTMLVideoElement>;
+
+  FileChangeVid(e: Event) {
+    let ef = (e.target as HTMLInputElement);
+    if (ef.files != null) {
+      this.TargetVideoFile = ef.files[0];
+      this.LoadLocalVideo = true;
+    }
+  }
+
+  startVideoLocal() {
+    if (this.LocalVidPlayer && this.TargetVideoFile) {
+      this.LocalVidPlayer.nativeElement.src = URL.createObjectURL(this.TargetVideoFile);
+      this.player = this.LocalVidPlayer.nativeElement;
+      this.LocalVidPlayer.nativeElement.onpause = () => {
+        this.StopTimer(false);
+      }
+    }
+  }
+
+  StartTrackerLocal(): void {
+    if (this.TrackerDelegate) {
+      clearInterval(this.TrackerDelegate);
+      this.TrackerDelegate = undefined;
+    }
+
+    this.TrackerDelegate = setInterval(() => {
+      if (!this.PauseTracker) {
+        this.TimerTime = this.LocalVidPlayer.nativeElement.currentTime*1000;  
+      }      
+      this.ScrollCalculator();  
+    }, 20);
+
+  }
+  //=================  Local  =================
+
+
 
   LoadVideo(): void {
-    if (this.TempSetting.StreamLink.indexOf("https://www.youtube.com/watch?v=") == 0){
+    if (this.LoadLocalVideo){
+      if (this.TargetVideoFile != null) {
+        if (this.TargetVideoFile.name.match(/\.ogg|\.mp4|\.webm/gi) != null){
+          this.VidLoad = true;
+          this.VidType = "LL";
+
+          setTimeout(() => {
+            this.startVideoLocal();
+            this.RerenderTimeline();
+          }, 100);
+    
+          this.StopTimer(false);
+          this.StartTrackerLocal();
+          this.ModalMenu = 0;
+        }
+      }
+    } else if (this.TempSetting.StreamLink.indexOf("https://www.youtube.com/watch?v=") == 0){
       var YTID:string = this.TempSetting.StreamLink.replace("https://www.youtube.com/watch?v=", "");
       if (YTID.indexOf("&") != -1){
         YTID = YTID.substring(0,YTID.indexOf("&"));
       }
       this.video = YTID;
+      this.VidType = "YT";
   
       setTimeout(() => {
         this.LoadvideoYT();
         this.RerenderTimeline();
       }, 100);
-      this.UnSync();
       this.StopTimer(false);
       this.VidLoad = true;
-      this.StartTracker();
+      this.StartTrackerYT();
       this.ModalMenu = 0;
     } else if (this.TempSetting.StreamLink.indexOf("https://youtu.be/") == 0) {
       var YTID:string = this.TempSetting.StreamLink.replace("https://youtu.be/", "");
       this.video = YTID;
+      this.VidType = "YT";
   
       setTimeout(() => {
         this.LoadvideoYT();
         this.RerenderTimeline();
       }, 100);
-      this.UnSync();
       this.StopTimer(false);
       this.VidLoad = true;
-      this.StartTracker();
+      this.StartTrackerYT();
+      this.ModalMenu = 0;
+    } else if (this.TempSetting.StreamLink.indexOf("https://www.twitch.tv/videos/") == 0) {
+      var TWID: string = this.TempSetting.StreamLink.replace("https://www.twitch.tv/videos/", "");
+      this.video = TWID;
+      this.VidType = "TW";
+      
+      setTimeout(() => {
+        this.LoadvideoTW();
+        this.RerenderTimeline();
+      }, 100);
+      this.StopTimer(false);
+      this.VidLoad = true;
+      this.StartTrackerTW();
       this.ModalMenu = 0;
     }
   }
 
   UnSync():void {
+    if (this.LocalVidPlayer) {
+      this.LocalVidPlayer.nativeElement.src = "";
+    }
+
+    var contr = document.getElementById("player");    
+    if (contr) {
+      while (contr.firstChild) {
+        contr.removeChild(contr.firstChild);
+      }
+    }
     this.VidLoad = false;
     if(this.TrackerDelegate) {
       clearInterval(this.TrackerDelegate);
@@ -2106,8 +2355,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // TIMELINE VARIABLES
   TimelineDur: number = 3600;
-  SecToPx: number = 140;
-  SecPerBar: number = 20;
+  SecToPx: number = 100;
+  SecPerBar: number = 120;
   BarHeight: number = 25;
   XtraMargin: number = 0;
   JumpScroll: boolean = true;
@@ -2165,6 +2414,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   RulerMouseDown(event: any, idx: number, ResizeSwitch: boolean) {
     if (!this.TimelineActive) {
       this.SelectedEntry = idx;
+      this.JumpScrollEntry(idx);
       this.TimelineActive = true;
       this.XPos = event.clientX;
       this.ResizeMode = ResizeSwitch;
@@ -2287,29 +2537,60 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           this.ctx.fillStyle = 'white';
           this.ctx.font = '14px Ubuntu';
           this.ctx.lineWidth = 0.35;
-      
-          for (let x = 0; x/10 < this.SecPerBar; x += 1) {
-            if (x % 10 == 0) {
+
+          if (this.SecToPx <= 60) {
+            for (let x = 0; x/10 < this.SecPerBar; x += 10) {
               this.ctx.beginPath();
               this.ctx.moveTo(x*this.SecToPx/10, 0);
               this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight);
               this.ctx.stroke();
               
               this.ctx.fillText(this.SectoTimestring(x/10 + i*this.SecPerBar + this.BarCount*this.SecPerBar, false, false), x*this.SecToPx/10 + 5, this.BarHeight);
-            } else if (x % 2 == 0) {
-              this.ctx.beginPath();
-              this.ctx.moveTo(x*this.SecToPx/10, 0);
-              this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*2.0/3.0);
-              this.ctx.stroke();
-            } else {
-              this.ctx.beginPath();
-              this.ctx.moveTo(x*this.SecToPx/10, 0);
-              this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*1.0/3.0);
-              this.ctx.stroke();
             }
+        
+            this.ctx.restore();
+          } else if (this.SecToPx <= 100) {
+            for (let x = 0; x/10 < this.SecPerBar; x += 2) {
+              if (x % 10 == 0) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(x*this.SecToPx/10, 0);
+                this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight);
+                this.ctx.stroke();
+                
+                this.ctx.fillText(this.SectoTimestring(x/10 + i*this.SecPerBar + this.BarCount*this.SecPerBar, false, false), x*this.SecToPx/10 + 5, this.BarHeight);
+              } else {
+                this.ctx.beginPath();
+                this.ctx.moveTo(x*this.SecToPx/10, 0);
+                this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*2.0/3.0);
+                this.ctx.stroke();
+              } 
+            }
+        
+            this.ctx.restore();
+          } else {
+            for (let x = 0; x/10 < this.SecPerBar; x += 1) {
+              if (x % 10 == 0) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(x*this.SecToPx/10, 0);
+                this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight);
+                this.ctx.stroke();
+                
+                this.ctx.fillText(this.SectoTimestring(x/10 + i*this.SecPerBar + this.BarCount*this.SecPerBar, false, false), x*this.SecToPx/10 + 5, this.BarHeight);
+              } else if (x % 2 == 0) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(x*this.SecToPx/10, 0);
+                this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*2.0/3.0);
+                this.ctx.stroke();
+              } else {
+                this.ctx.beginPath();
+                this.ctx.moveTo(x*this.SecToPx/10, 0);
+                this.ctx.lineTo(x*this.SecToPx/10, this.BarHeight*1.0/3.0);
+                this.ctx.stroke();
+              }
+            }
+        
+            this.ctx.restore();
           }
-      
-          this.ctx.restore();
         }
       }
     }
@@ -2493,24 +2774,53 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       return (((this.EntryList[idx].End - this.EntryList[idx].Stime)/1000*this.SecToPx).toString() + 'px');
     }
   }
+
+  JumpScrollEntry(idx: number): void {
+    this.EntryTable.nativeElement.rows[idx].scrollIntoView({behavior: "smooth", block: "center"});
+  }
+
+  TextAreaEnterCanceller(event: KeyboardEvent):void {
+    if (event.keyCode == 13) {
+      event.preventDefault();
+    }
+  }
   //========================== RULER HANDLER ==========================
 
 
 
   //-------------------------- TIMER CONTROL --------------------------
   ActiveEntry:number = -1;
+  TimeSaddle: number = Date.now();
 
   @HostListener('document:keydown.control.space', ['$event'])
   CtrlSpaceKeypress(event: KeyboardEvent):void {
     event.preventDefault();
     if (this.VidLoad){
       if (this.player){
-        if (this.player){
-          if (this.player.getPlayerState() != 1) {
-            this.player.playVideo();
-          } else if (this.player.getPlayerState() == 1) {
-            this.player.pauseVideo();
-          }
+        switch (this.VidType) {
+          case "YT":
+            if (this.player.getPlayerState() != 1) {
+              this.player.playVideo();
+            } else if (this.player.getPlayerState() == 1) {
+              this.player.pauseVideo();
+            }
+            break;
+
+          case "TW":
+            if (this.player.isPaused()) {
+              this.player.play();
+            } else {
+              this.player.pause();
+            }
+            break;
+          
+          case "LL":
+            if (this.player.paused) {
+              this.player.play();
+            } else {
+              this.player.pause();
+            }
+            break;
         }
       }
     } else {
@@ -2546,12 +2856,28 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   StartTimer(propagate:boolean):void {
     if (this.VidLoad) {
       if (propagate){
-        this.player.playVideo();
+        switch (this.VidType) {
+          case "YT":
+            this.player.playVideo();            
+            break;
+          
+          case "TW":
+            this.player.play();
+            break;
+
+          case "LL":
+            this.player.play();
+            break;
+        }
       }
     } else {
       if (!this.TimerDelegate){
+        this.TimeSaddle = Date.now();
         this.TimerDelegate = setInterval(() => {
-          this.TimerTime += 20;
+          if (Date.now() - this.TimeSaddle < 1000) {
+            this.TimerTime += Date.now() - this.TimeSaddle;
+          }
+          this.TimeSaddle = Date.now();
           this.ScrollCalculator();  
         }, 20);
       }
@@ -2564,13 +2890,37 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.TimerDelegate = undefined;
     }
     if (propagate && this.VidLoad){
-      this.player.pauseVideo();
+      switch (this.VidType) {
+        case "YT":
+          this.player.pauseVideo();
+          break;
+        
+        case "TW":
+          this.player.pause();
+          break;
+
+        case "LL":
+          this.player.pause();
+          break;
+      }      
     }
   }
 
   SendSeek(){
-    if (this.VidLoad){
-      this.player.seekTo(this.TimerTime/1000, true);
+    if (this.player){
+      switch (this.VidType) {
+        case "YT":
+          this.player.seekTo(this.TimerTime/1000, true);          
+          break;
+
+        case "TW":
+          this.player.seek(this.TimerTime/1000);
+          break;
+
+        case "LL":
+          this.player.currentTime = this.TimerTime/1000;
+          break;
+      }
     }
   }
 
@@ -2594,6 +2944,10 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   //------------------------ AUTO SAVE MODULE ------------------------
+  AutoSaveMode: Boolean = false;
+  CDCtrigger: boolean = true;
+  AutoSaveTimer: any | undefined = undefined;
+
   @HostListener('window:beforeunload')
   async ngOnDestroy() {
     if (this.TimerDelegate) {
@@ -2602,24 +2956,82 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if(this.TrackerDelegate) {
       clearInterval(this.TrackerDelegate);
     }
+    if (this.AutoSaveTimer) {
+      clearInterval(this.AutoSaveTimer);
+    }
 
+    if (this.AutoSaveMode && this.CDCtrigger) {
+      if (this.EntryList.length > 0) {
+        await this.AService.Autosave({
+          data: {
+            Entries: this.EntryList,
+            Profile: this.ProfileList,
+            Setting: this.SavedSetting,
+            Link: this.SavedSetting.Link
+        }}, this.Token, this.RoomNick, "SAVE").subscribe();
+      }
+    }
+  }
 
-    await this.AService.Autosave({
-      Data: this.EntryList.map(e => { 
-        return {
-          s: e.Stext,
-          t: e.Stime,
-          p: e.Prfidx
-        };
-      }),
-      Profile: this.ProfileList.map(e => {
-        return {
-          N: e.Name,
-          CC: e.CC,
-          OC: e.OC
+  ReLoginAutosave(): void {
+    this.SearchPass = "";
+    this.ModalMenu = 11;
+    this.LoginRedirect = 4;
+  }
+
+  InitAutoSave(): void {
+    this.AutoSaveMode = false;
+    this.AService.Autosave({}, this.Token, this.RoomNick, "INIT").subscribe({
+      next:data => {
+        this.AutoSaveMode = true;
+        if (this.AutoSaveTimer) {
+          clearInterval(this.AutoSaveTimer);
+          this.AutoSaveTimer = undefined;
         }
-      })
-    }, this.Token, this.RoomNick, this.SavedSetting.Link).subscribe();
+
+        this.AutoSaveTimer = setInterval(() => {
+          this.AutoSave(true);
+        }, 1000*60*5);
+      },
+      error: err => {
+        this.AutoSaveMode = false;
+        if (this.AutoSaveTimer) {
+          clearInterval(this.AutoSaveTimer);
+          this.AutoSaveTimer = undefined;
+        }
+      }
+    });
+  }
+
+  SessionLoader(): void {
+    this.AService.LoadLastSession(this.Token, this.RoomNick).subscribe({
+      next:data => {
+        if (data.body != null){
+          const dt = JSON.parse(data.body);
+          this.SavedSetting = dt.Setting;
+          this.ProfileList = dt.Profile;
+          this.EntryList = dt.Entries;
+          this.LoadVideo();
+        }
+      },
+      error: err => {
+      }
+    });
+  }
+
+  AutoSave(SafeBox: boolean) {
+    if (this.AutoSaveMode && this.CDCtrigger) {
+      if (this.EntryList.length > 0){
+        this.AService.Autosave({
+          data: {
+            Entries: this.EntryList,
+            Profile: this.ProfileList,
+            Setting: this.SavedSetting,
+            Link: this.SavedSetting.Link
+        }}, this.Token, this.RoomNick, "SAVE").subscribe();
+      }
+    }
+    //this.CDCtrigger = false;
   }
   //======================== AUTO SAVE MODULE ========================
 

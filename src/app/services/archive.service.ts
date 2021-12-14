@@ -207,7 +207,7 @@ export class ArchiveService {
 
 
   //-------------------- SESSION SAVER -------------------
-  Autosave(data: any, Token: string, room: string, link: string) {
+  Autosave(data: any, Token: string, room: string, act: string) {
     const headers = {
       'Content-Type': 'application/json',
       'authorization': 'Bearer ' + Token
@@ -215,8 +215,19 @@ export class ArchiveService {
   
     return (this.httpclient.post(environment.DBConn + '/AutoSave', {
       Room: room,
-      Link: link,
+      Act: act,
       ...data
+    }, { headers, observe: 'response', responseType: 'text' }));
+  }
+
+  LoadLastSession(Token: string, room: string) {
+    const headers = {
+      'Content-Type': 'application/json',
+      'authorization': 'Bearer ' + Token
+    }
+  
+    return (this.httpclient.post(environment.DBConn + '/LastSession', {
+      Room: room,
     }, { headers, observe: 'response', responseType: 'text' }));
   }
   
