@@ -110,7 +110,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   //  TIMER VARIABLES
   TimerTime: number = 0;
   TimerDelegate: any | undefined = undefined;
-  VidLoad: boolean = true;
+  VidLoad: boolean = false;
 
   ModalNotif:boolean = false;
   NotifText:string = "";
@@ -672,7 +672,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }];  
 
     localStorage.removeItem("MChatSessionSetting");
-
     /*
     this.AddEntry({
       Stext: "--- Stream Starts ---",
@@ -682,10 +681,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       End: 1000
     })
     */
-  }
-
-  SaveLocal(){
-
   }
 
   DownloadScript() {
@@ -2066,7 +2061,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   public video: any;
   public player: any;
 
-
   //-----------------  YT  -----------------
   LoadvideoYT() {
     if (window['YT']) {
@@ -2136,8 +2130,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   //=================  YT  =================
 
-
-
   //-----------------  TW  -----------------
   LoadvideoTW() {
     if (window['Twitch']) {
@@ -2171,17 +2163,12 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     };
     this.player = new window['Twitch'].Player('player', options);
 
-    //this.player.addEventListener(window['Twitch'].Player.READY, () => {});
-    //this.player.addEventListener(window['Twitch'].Player.PLAYING, () => {});
-
     this.player.addEventListener(window['Twitch'].Player.PAUSE, () => { 
       this.PauseTracker = true;
-      //this.TimerTime = this.player.getCurrentTime()*1000;
     });
 
     this.player.addEventListener(window['Twitch'].Player.PLAY, () => {
       this.PauseTracker = false;
-      //this.TimerTime = this.player.getCurrentTime()*1000;  
     });
 
     this.player.addEventListener(window['Twitch'].Player.SEEK, (e: any) => { 
@@ -2208,13 +2195,134 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   //=================  TW  =================
 
-  
+  //-----------------  TC  -----------------
+  SetupIframeTC(MID: string, UID: string): void {
+    if (this.IframeRef) {
+      this.IframeRef.parentNode?.removeChild(this.IframeRef);
+    }
+
+    this.IframeRef = document.createElement('iframe');
+    this.IframeRef.src = "https://twitcasting.tv/" + UID + "/embeddedplayer/" + MID + "?auto_play=false&default_mute=false"
+    this.IframeRef.width = "100%";
+    this.IframeRef.height = "100%";
+    this.IframeRef.frameBorder = "0";
+    
+    this.LoadIframe("TC");
+  }
+  //=================  TC  =================
 
   //-----------------  TC  -----------------
-  TimePing(): void {
+  SetupIframeBL(VID: string): void {
+    if (this.IframeRef) {
+      this.IframeRef.parentNode?.removeChild(this.IframeRef);
+    }
+    
+    switch (VID.slice(0, 2).toLowerCase()) {
+      case "bv":
+        VID = "bvid=" + VID.slice(2);
+        break;
+    
+      case "av":
+        VID = "aid=" + VID.slice(2);
+        break;
+    }
+
+    this.IframeRef = document.createElement('iframe');
+    this.IframeRef.src = "https://player.bilibili.com/player.html?" + VID + "&page=1&as_wide=1&high_quality=0&danmaku=0"
+    this.IframeRef.width = "100%";
+    this.IframeRef.height = "100%";
+    this.IframeRef.frameBorder = "0";
+    
+    this.LoadIframe("BL");
   }
-  //=================  TW  =================
+  //=================  TC  =================
+
+  //-----------------  NC  -----------------
+  SetupIframeNC(VID: string): void {
+    if (this.IframeRef) {
+      this.IframeRef.parentNode?.removeChild(this.IframeRef);
+    }
+    
+    this.IframeRef = document.createElement('iframe');
+    this.IframeRef.src = "https://embed.nicovideo.jp/watch/" + VID + "?autoplay=0";
+    this.IframeRef.width = "100%";
+    this.IframeRef.height = "100%";
+    this.IframeRef.frameBorder = "0";
+    this.IframeRef.allow= "encrypted-media;";
+    
+    this.LoadIframe("NC");
+  }
   
+  //=================  NC  =================
+
+  //-----------------  IFRAME  -----------------
+  IframeRef: HTMLIFrameElement | undefined;
+
+  TimePing(timestamp: number): void {
+    window.postMessage({
+      n: "MChatXXMSync",
+      d: timestamp
+    },"*");
+  }
+
+  StartPing(): void {
+    window.postMessage({
+      n: "MChatXXMSync",
+      d: "s"
+    }, "*");
+  }
+
+  ModePing(Mode: string): void {
+    window.postMessage({
+      n: "MChatXXMSync",
+      d: Mode
+    }, "*");
+  }
+
+  PausePing(): void {
+    window.postMessage({
+      n: "MChatXXMSync",
+      d: "p"
+    }, "*");
+  }
+
+  LoadIframe(Mode: string): void {
+    if (this.IframeRef) {
+      var PlayerDiv = document.getElementById('player');
+      if (PlayerDiv){
+        PlayerDiv.append(this.IframeRef);
+
+        this.ModePing(Mode);
+
+        window.addEventListener("message", (e:any) => {
+          this.SessionStorageListener(e);
+        });
+      } 
+    }
+  }
+
+  SessionStorageListener(e: any):void {
+    if (e.data.n == "MSyncXMChatX") {
+      switch (e.data.d) {
+        case "p":
+          this.PauseTracker = true;
+          break;
+
+        case "s":
+          this.PauseTracker = false;
+          break;
+      
+        default:
+          if (typeof e.data.d == "number") {
+            this.TimerTime = e.data.d;
+            this.ScrollCalculator();
+          }
+          break;
+      }
+    }
+  }
+  //=================  IFRAME  =================
+
 
 
   //-----------------  Local  -----------------
@@ -2275,6 +2383,42 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           this.ModalMenu = 0;
         }
       }
+    } else if (this.TempSetting.StreamLink.indexOf("https://www.bilibili.com/video/") == 0) {
+      var VID  = this.TempSetting.StreamLink.slice("https://www.bilibili.com/video/".length);
+      if (VID.indexOf("?") != -1) {
+        VID = VID.slice(0, VID.indexOf("?"));
+      }
+      setTimeout(() => {
+        this.SetupIframeBL(VID);
+      }, 100);
+      this.StopTimer(false);
+      this.VidLoad = true;
+      this.VidType = "IF";
+      this.ModalMenu = 0;
+    } else if (this.TempSetting.StreamLink.indexOf("https://www.nicovideo.jp/watch/") == 0) {
+      var VID  = this.TempSetting.StreamLink.slice("https://www.nicovideo.jp/watch/".length);
+      if (VID.indexOf("?") != -1) {
+        VID = VID.slice(0, VID.indexOf("?"));
+      }
+      setTimeout(() => {
+        this.SetupIframeNC(VID);
+      }, 100);
+      this.StopTimer(false);
+      this.VidLoad = true;
+      this.VidType = "IF";
+      this.ModalMenu = 0;
+    } else if (this.TempSetting.StreamLink.match(/twitcasting.tv\/(.*)\/movie\//g) != null) {
+      var MID = this.TempSetting.StreamLink.slice(this.TempSetting.StreamLink.lastIndexOf("/") + 1);
+      var UID = this.TempSetting.StreamLink.slice(0, this.TempSetting.StreamLink.lastIndexOf("/"));
+      UID = UID.slice(0, UID.lastIndexOf("/"));
+      UID = UID.slice(UID.lastIndexOf("/") + 1);
+      setTimeout(() => {
+        this.SetupIframeTC(MID, UID);
+      }, 100);
+      this.StopTimer(false);
+      this.VidLoad = true;
+      this.VidType = "IF";
+      this.ModalMenu = 0;
     } else if (this.TempSetting.StreamLink.indexOf("https://www.youtube.com/watch?v=") == 0){
       var YTID:string = this.TempSetting.StreamLink.replace("https://www.youtube.com/watch?v=", "");
       if (YTID.indexOf("&") != -1){
@@ -2325,6 +2469,31 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.LocalVidPlayer.nativeElement.src = "";
     }
 
+    if (this.VidType == "IF") {
+      window.removeEventListener("message", (e:any) => {
+        this.SessionStorageListener(e);
+      });
+    }
+
+    if (this.VidType == "TW") {
+      this.player.removeEventListener(window['Twitch'].Player.PAUSE, () => { 
+        this.PauseTracker = true;
+      });
+  
+      this.player.removeEventListener(window['Twitch'].Player.PLAY, () => {
+        this.PauseTracker = false;
+      });
+  
+      this.player.removeEventListener(window['Twitch'].Player.SEEK, (e: any) => { 
+        this.TimerTime = e.position*1000;
+        this.ScrollCalculator();
+      });
+    }
+
+    if (this.IframeRef) {
+      this.IframeRef.parentNode?.removeChild(this.IframeRef);
+    }
+
     var contr = document.getElementById("player");    
     if (contr) {
       while (contr.firstChild) {
@@ -2332,6 +2501,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
     this.VidLoad = false;
+    this.VidType = "";
     if(this.TrackerDelegate) {
       clearInterval(this.TrackerDelegate);
       this.TrackerDelegate = undefined;
@@ -2821,6 +2991,13 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
               this.player.pause();
             }
             break;
+
+          case "IF":
+            if (this.PauseTracker){
+              this.StartPing();
+            } else {
+              this.PausePing();
+            }
         }
       }
     } else {
@@ -2868,6 +3045,10 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
           case "LL":
             this.player.play();
             break;
+          
+          case "IF":
+            this.StartPing();
+            break;
         }
       }
     } else {
@@ -2902,6 +3083,10 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         case "LL":
           this.player.pause();
           break;
+
+        case "IF":
+          this.PausePing();
+          break;
       }      
     }
   }
@@ -2919,6 +3104,10 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
         case "LL":
           this.player.currentTime = this.TimerTime/1000;
+          break;
+
+        case "IF":
+          this.TimePing(this.TimerTime);
           break;
       }
     }
@@ -2958,6 +3147,27 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     if (this.AutoSaveTimer) {
       clearInterval(this.AutoSaveTimer);
+    }
+
+    if (this.VidType == "IF") {
+      window.removeEventListener("message", (e:any) => {
+        this.SessionStorageListener(e);
+      });
+    }
+
+    if (this.VidType == "TW") {
+      this.player.removeEventListener(window['Twitch'].Player.PAUSE, () => { 
+        this.PauseTracker = true;
+      });
+  
+      this.player.removeEventListener(window['Twitch'].Player.PLAY, () => {
+        this.PauseTracker = false;
+      });
+  
+      this.player.removeEventListener(window['Twitch'].Player.SEEK, (e: any) => { 
+        this.TimerTime = e.position*1000;
+        this.ScrollCalculator();
+      });
     }
 
     if (this.AutoSaveMode && this.CDCtrigger) {

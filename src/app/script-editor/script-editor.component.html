@@ -28,7 +28,7 @@
 
         <div style="display: flex; flex-direction: column; margin-right: 5px;">
           <button class="button" (click)="SessionLoader()" style="margin-bottom: 5px;" [disabled]="!AutoSaveMode">Load Last Session</button>
-          <a class="button" (click)="SaveLocal()">Save Session</a>
+          <a class="button" (click)="AutoSave(false)">Save Session</a>
         </div>
 
         <div style="display: flex; flex-direction: column; margin-right: 5px;">
@@ -127,7 +127,6 @@
       <!--  VIDEO CONTAINER  -->
       <div style="display: flex; flex-direction: column; padding-left: 5px; padding-bottom: 5px;" [style.border-left]="VidLoad ? '2px solid white' : ''" #TableHeightRef >
         <div *ngIf="VidLoad" style="width: 50vw; height: 100%;">
-          <iframe src="https://twitcasting.tv/akirosenthal/embeddedplayer/692950588?auto_play=false&default_mute=false" width="64px" height="36px" frameborder="0" allowfullscreen></iframe>
           <div id="player" style="width: 100%; height: 100%;">
             <div *ngIf="LoadLocalVideo" style="display: flex; flex-direction: row; width: 100%; height: 100%; background-color: black;">
               <video style="align-self: center;" width="100%" height="100%" controls #LocalVid></video>
@@ -243,8 +242,6 @@
             <a class="button" (click)="ShiftUp()" style="margin-right: 5px;">Shift Up</a>
             <a class="button" (click)="ShiftDown()" style="margin-right: 5px;">Shift Down</a>
             <a class="button" (click)="SetModalMenu(10)" style="margin-right: 5px;">Delete Profile</a>
-
-            <a class="button" (click)="TimePing()" style="margin-right: 5px;">Ping</a>
 
             <div style="border-left: solid 2px white; padding-left: 5px; border-right: solid 2px white; padding-right: 5px; margin-right: 5px;">
               <a class="button" (click)="SetModalMenu(12)">Shift Time All</a>
