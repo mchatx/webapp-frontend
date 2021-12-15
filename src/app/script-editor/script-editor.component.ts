@@ -2257,33 +2257,59 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   //-----------------  IFRAME  -----------------
   IframeRef: HTMLIFrameElement | undefined;
+  IFOrigin:string = "";
 
   TimePing(timestamp: number): void {
+    /*
     window.postMessage({
       n: "MChatXXMSync",
       d: timestamp
     },"*");
+    */
   }
 
   StartPing(): void {
+    /*
     window.postMessage({
       n: "MChatXXMSync",
       d: "s"
     }, "*");
+    */
   }
 
   ModePing(Mode: string): void {
+    /*
     window.postMessage({
       n: "MChatXXMSync",
       d: Mode
     }, "*");
+    */
+   switch (Mode) {
+     case "TC":
+       this.IFOrigin = "https://twitcasting.tv";
+       break;
+
+     case "NC":
+      this.IFOrigin = "https://embed.nicovideo.jp";
+      break;
+
+     case "BL":
+      this.IFOrigin = "https://player.bilibili.com";
+      break;
+    
+     default:
+       this.IFOrigin = "";
+       break;
+   }
   }
 
   PausePing(): void {
+    /*
     window.postMessage({
       n: "MChatXXMSync",
       d: "p"
     }, "*");
+    */
   }
 
   LoadIframe(Mode: string): void {
@@ -2302,22 +2328,24 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   SessionStorageListener(e: any):void {
-    if (e.data.n == "MSyncXMChatX") {
-      switch (e.data.d) {
-        case "p":
-          this.PauseTracker = true;
-          break;
-
-        case "s":
-          this.PauseTracker = false;
-          break;
-      
-        default:
-          if (typeof e.data.d == "number") {
-            this.TimerTime = e.data.d;
-            this.ScrollCalculator();
-          }
-          break;
+    if (e.origin == this.IFOrigin) {
+      if (e.data.n == "MSyncXMChatX") {
+        switch (e.data.d) {
+          case "p":
+            this.PauseTracker = true;
+            break;
+  
+          case "s":
+            this.PauseTracker = false;
+            break;
+        
+          default:
+            if (typeof e.data.d == "number") {
+              this.TimerTime = e.data.d;
+              this.ScrollCalculator();
+            }
+            break;
+        }
       }
     }
   }
@@ -2502,6 +2530,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.VidLoad = false;
     this.VidType = "";
+    this.IFOrigin = "";
     if(this.TrackerDelegate) {
       clearInterval(this.TrackerDelegate);
       this.TrackerDelegate = undefined;
