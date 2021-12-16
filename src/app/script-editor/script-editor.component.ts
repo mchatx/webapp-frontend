@@ -2312,6 +2312,15 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  SwitchPing(): void {
+    if (this.IframeRef?.contentWindow) {
+      this.IframeRef?.contentWindow.postMessage({
+        n: "MChatXXMSync",
+        d: "w"
+      }, this.IFOrigin);
+    }
+  }
+
   LoadIframe(Mode: string): void {
     if (this.IframeRef) {
       var PlayerDiv = document.getElementById('player');
@@ -2997,7 +3006,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   CtrlSpaceKeypress(event: KeyboardEvent):void {
     event.preventDefault();
     if (this.VidLoad){
-      if (this.player){
+      if (this.VidType == "IF") {
+        this.SwitchPing();
+      } else if (this.player){
         switch (this.VidType) {
           case "YT":
             if (this.player.getPlayerState() != 1) {
@@ -3022,13 +3033,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
               this.player.pause();
             }
             break;
-
-          case "IF":
-            if (this.PauseTracker){
-              this.StartPing();
-            } else {
-              this.PausePing();
-            }
         }
       }
     } else {
