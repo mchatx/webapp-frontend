@@ -2263,7 +2263,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.IframeRef?.contentWindow.postMessage({
         n: "MChatXXMSync",
         d: timestamp
-      }, "https://app.mchatx.org");
+      }, this.IFOrigin);
     }
   }
 
@@ -2272,35 +2272,35 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.IframeRef?.contentWindow.postMessage({
         n: "MChatXXMSync",
         d: "s"
-      }, "https://app.mchatx.org");
+      }, this.IFOrigin);
     }
   }
 
   ModePing(Mode: string): void {
+    switch (Mode) {
+      case "TC":
+        this.IFOrigin = "https://twitcasting.tv";
+        break;
+ 
+      case "NC":
+       this.IFOrigin = "https://embed.nicovideo.jp";
+       break;
+ 
+      case "BL":
+       this.IFOrigin = "https://player.bilibili.com";
+       break;
+     
+      default:
+        this.IFOrigin = "";
+        break;
+    }
+ 
     if (this.IframeRef?.contentWindow) {
       this.IframeRef?.contentWindow.postMessage({
         n: "MChatXXMSync",
         d: Mode
-      }, "https://app.mchatx.org");
+      }, this.IFOrigin);
     }
-
-    switch (Mode) {
-     case "TC":
-       this.IFOrigin = "https://twitcasting.tv";
-       break;
-
-     case "NC":
-      this.IFOrigin = "https://embed.nicovideo.jp";
-      break;
-
-     case "BL":
-      this.IFOrigin = "https://player.bilibili.com";
-      break;
-    
-     default:
-       this.IFOrigin = "";
-       break;
-   }
   }
 
   PausePing(): void {
@@ -2308,7 +2308,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.IframeRef?.contentWindow.postMessage({
         n: "MChatXXMSync",
         d: "p"
-      }, "https://app.mchatx.org");
+      }, this.IFOrigin);
     }
   }
 
@@ -2318,7 +2318,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       if (PlayerDiv){
         PlayerDiv.append(this.IframeRef);
 
-        this.ModePing(Mode);
+        this.IframeRef.onload = () => {
+          this.ModePing(Mode);
+        }
 
         window.addEventListener("message", (e:any) => {
           this.SessionStorageListener(e);
@@ -3041,21 +3043,34 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('document:keydown.control.arrowright', ['$event'])
   CtrlRightKeypress(event: KeyboardEvent):void {
-    this.TimerTime += 3000;
-    this.SendSeek(3000);
-    this.ScrollCalculator();
+    if (this.VidType == "IF") {
+      this.TimePing(3000);
+    } else {
+      this.TimerTime += 3000;
+      this.SendSeek();
+      this.ScrollCalculator();  
+    }
   }
 
   @HostListener('document:keydown.control.arrowleft', ['$event'])
   CtrlLeftKeypress(event: KeyboardEvent):void {
     if (this.TimerTime > 5000) {
-      this.TimerTime -= 3000;
-      this.SendSeek(-3000);
+      if (this.VidType == "IF") {
+        this.TimePing(-3000); 
+      } else {
+        this.TimerTime -= 3000;
+        this.SendSeek();  
+        this.ScrollCalculator();
+      }
     } else {
-      this.TimerTime = 0;
-      this.SendSeek(0);
+      if (this.VidType == "IF") {
+        this.TimePing(-this.TimerTime); 
+      } else {
+        this.TimerTime = 0;
+        this.SendSeek();  
+        this.ScrollCalculator();
+      }
     }
-    this.ScrollCalculator();
   }
 
 
@@ -3120,7 +3135,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  SendSeek(timechange: number = 0){
+  SendSeek(){
     if (this.player){
       switch (this.VidType) {
         case "YT":
@@ -3133,10 +3148,6 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
 
         case "LL":
           this.player.currentTime = this.TimerTime/1000;
-          break;
-        
-        case "IF":
-          this.TimePing(timechange);
           break;
       }
     }
