@@ -69,7 +69,7 @@
       <div style="width: 100%; display:flex; flex-direction: column; padding-left: 30px; padding-right: 30px; padding-top: 10px; padding-bottom: 10px;">
         
         <!--                SMALL MENU                   -->
-        <div *ngIf="WinWidth < 1590" style="width: 100%; display: flex; align-items: stretch;">
+        <div id="TopMenu" *ngIf="WinWidth < 1825" style="width: 100%; display: flex; align-items: stretch;">
           <div style="display: flex; flex-direction: row; align-items: center;">
             <a class="button" routerLink="/" [routerLinkActive]="['is-active']" style="margin-right: 5px; height: 77px; width: 77px;">
               Exit
@@ -78,7 +78,7 @@
 
           <div style="display: flex; flex-direction: column; margin-right: 5px;">
             <a class="button" (click)="SetModalMenu(3)">Extra Info (Stream Link, Tags, Note)</a>
-            <div style="display: flex; flex-direction: row; align-items: center; justify-content: left; margin-top: 5px;">
+            <div style="display: flex; flex-direction: row; align-items: center; justify-content: left; margin-top: 12px;">
               <div style="margin-left: 5px;">
                 <label style="color: black; margin-right: 5px;">Font Size</label>
                 <input style="width: 50px; margin-right: 5px;" type="number" min="1" [(ngModel)]="FFsize"/>
@@ -101,6 +101,11 @@
           </div>
 
           <div style="display: flex; flex-direction: column; margin-right: 5px;">
+            <a class="button" style="margin-bottom: 5px;" (click)="SetModalMenu(11)">Load Chat</a>
+            <a class="button" (click)="UnloadChat()">Unload Chat</a>
+          </div>
+
+          <div style="display: flex; flex-direction: column; margin-right: 5px;">
             <a class="button" (click)="SetModalMenu(5)" style="margin-bottom: 5px;">Export Script</a>
             <a class="button" (click)="SetModalMenu(6)">Save to Archive</a>
           </div>
@@ -109,9 +114,9 @@
             <a class="button" (click)="SetModalMenu(7)" style="height: 100%;">Clear Room</a>  
           </div>          
         </div>
-        
+
         <!--                BIG MENU                   -->
-        <div *ngIf="WinWidth >= 1590" style="width: 100%; display: flex; align-items: center;">
+        <div id="TopMenu" *ngIf="WinWidth >= 1825" style="width: 100%; display: flex; align-items: center;">
           <a class="button" routerLink="/" [routerLinkActive]="['is-active']" style="margin-right: 5px;">
             Exit
           </a>
@@ -131,37 +136,53 @@
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(4)">Password</a>
           <a class="button" style="margin-right: 5px;" (click)="StartSync()">Sync</a>
           <a class="button" style="margin-right: 5px;" (click)="StopSync()">UnSync</a>
+          <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(11)">Load Chat</a>
+          <a class="button" style="margin-right: 5px;" (click)="UnloadChat()">Unload Chat</a>
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(5)">Export Script</a>
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(6)">Save to Archive</a>
           <a class="button" style="margin-right: 5px;" (click)="SetModalMenu(7)">Clear Room</a>  
         </div>
+        
       </div>
     </div>
   </div>
   <!--==================== MENU ======================-->
 
   <!---------------------- ENTRY VIEWER ------------------------>
-  <div class="hero-body" (click)="OpenOption=false" style="position: relative; display:flex; align-items: stretch;">
-    <div class="container is-fluid">
-      <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" [style.font-size]="FFsize + 'px'" [style.text-align]="TxAlign" style="display: flex; flex-direction: column; overflow-y:hidden" #cardcontainer>
-        <div style="margin-top: auto;"></div>
-        <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft">
-          <h1>
-            {{ Entry.Stime }} 
-            <span [style.-webkit-text-fill-color]="'#' + Entry.CC" [style.-webkit-text-stroke-color]="'#' + Entry.OC" (click)=OpenEditEntry(i) style="cursor: pointer;">{{ Entry.Stext }}</span>
-          </h1>
+  <div class="hero-body" (click)="OpenOption=false" style="position: relative; display:flex; flex-direction: row; align-items: stretch;">
+    <div style="position: relative; display:flex; align-items: stretch; width: 100%;">
+      <div class="container is-fluid ">
+        <div [style.-webkit-text-stroke-width]="OT + 'px'" [style.font-family]="FStyle" [style.font-size]="FFsize + 'px'" [style.text-align]="TxAlign" style="display: flex; flex-direction: column; overflow-y:hidden" #cardcontainer>
+          <div style="margin-top: auto;"></div>
+          <div id="BoxShape" *ngFor="let Entry of EntryList; index as i" class="animate__animated animate__fadeInLeft">
+            <h1>
+              {{ Entry.Stime }} 
+              <span [style.-webkit-text-fill-color]="'#' + Entry.CC" [style.-webkit-text-stroke-color]="'#' + Entry.OC" (click)=OpenEditEntry(i) style="cursor: pointer;">{{ Entry.Stext }}</span>
+            </h1>
+          </div>
+        </div>
+      </div>
+  
+      <!-------------------- PROFILE LIST -------------------->
+      <div *ngIf="ProfileTab" style="position: absolute; bottom: 10px; z-index: 1; right: 25px; background-color: black; color: white; font-weight: bold;">
+        <div *ngFor="let prf of ProfileList; index as i;">
+          <p *ngIf="i == SelectedProfile">> {{ i + 1 }}. {{prf.Name}}</p>
+          <p *ngIf="i != SelectedProfile">{{ i + 1 }}. {{prf.Name}}</p>
+        </div>
+      </div>
+      <!--================== PROFILE LIST ==================-->    
+    </div>
+
+    <div *ngIf="SyncChat.length > 0" style="width: 3px; background-color: white;"></div>
+
+    <div id="IframeContainer" *ngIf="SyncChat.length > 0" style="padding-top: 25px; display: grid; grid-auto-flow: column; grid-gap: 5px;" [style.grid-template-rows]="SyncChat.length < 4 ? '1fr' : '1fr 1fr'" [style.width]="SyncChat.length < 4 ? 200/3*SyncChat.length + '%' : '200%'">
+      <div *ngFor="let dt of SyncChat; index as i" [id]="'ChatContainer_' + dt.VidID" style="width: 100%; display: flex; flex-direction: column;">
+        <div class="tag is-success" style="display: flex; flex-direction: row; padding-top: 5px; padding-bottom: 5px;">
+          <p class="has-text-centered" style="width: 100%; font-family: Ubunt; font-weight: bold;">{{ dt.VidID }}</p>
+          <button class="delete" (click)="RemoveOpenChat(i)"></button>
         </div>
       </div>
     </div>
-    
-    <!-------------------- PROFILE LIST -------------------->
-    <div *ngIf="ProfileTab" style="position: absolute; right: 25px; bottom: 10px; z-index: 1; background-color: black; color: white; font-weight: bold;">
-      <div *ngFor="let prf of ProfileList; index as i;">
-        <p *ngIf="i == SelectedProfile">> {{ i + 1 }}. {{prf.Name}}</p>
-        <p *ngIf="i != SelectedProfile">{{ i + 1 }}. {{prf.Name}}</p>
-      </div>
-    </div>
-    <!--================== PROFILE LIST ==================-->    
   </div>
   <!--==================== ENTRY VIEWER ======================-->
 
@@ -230,6 +251,7 @@
   8 => Edit Entry
   9 => Sync
   10 => Quick Setup
+  11 => LoadChat
 -->
 <!---------------------------------------------- MODALS ------------------------------------------------------->
 <div class="modal" [ngClass]="{ 'is-active' : ModalMenu != 0 }">
@@ -556,6 +578,48 @@
           <a class="button is-rounded is-success" style="width: 100%;" (click)="SaveQuickSetup()">OK</a>
         </div>
       </div>
+
+      <!-- VIDEO SYNC LOADER -->
+      <div *ngSwitchCase="11">
+        <p class="title has-text-black has-text-centered pt-2">Load Chat</p>
+
+        <div class="section">
+          <div class="field">
+            <label class="label">Chat URL</label>
+            <div class="control">
+              <input class="input is-rounded" type="text" placeholder="Enter URL link here" [(ngModel)]="ChatURLInput"/>
+            </div>
+          </div>
+  
+          <article class="message is-warning">
+            <div class="message-body">
+              Supported live chat platform
+              <ul>
+                <li>          
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faYoutube"></fa-icon>
+                  </span>
+                  <span> Youtube (with MSync)</span>
+                </li>
+                <li>          
+                  <span class="icon is-left is-small">
+                    <fa-icon [icon]="faTwitch"></fa-icon>
+                  </span>
+                  <span> Twitch (with MSync)</span>
+                </li>
+              </ul>
+            </div>
+          </article>
+  
+          <div class="field">
+            <div class="buttons" style="display: flex; flex-direction: row; justify-content: space-between;">
+              <a class="button" (click)="ModalMenu = 0;">Cancel</a>
+              <a class="button is-success" (click)="LoadChat();">Load</a>
+            </div>
+          </div>
+
+          </div>
+        </div>
       
     </div>
   </div>

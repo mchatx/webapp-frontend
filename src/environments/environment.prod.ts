@@ -3,5 +3,6 @@ export const environment = {
   DBConn: 'https://repo.mchatx.org',
   DBConn2: 'https://api.mchatx.org',
   DBConn3: 'https://repo.mchatx.org/Proxy',
-  DBConn4: 'https://repo.mchatx.org/APISync'
+  DBConn4: 'https://repo.mchatx.org/APISync',
+  OriginDomain: 'app.mchatx.org'
 };

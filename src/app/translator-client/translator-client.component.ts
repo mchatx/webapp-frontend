@@ -1,9 +1,10 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, OnDestroy, SecurityContext } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { TsugeGushiService } from '../services/tsuge-gushi.service';
 import { TranslatorService } from '../services/translator.service';
 import { faHome, faLock, faUser, faLink, faWindowClose, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { faYoutube, faTwitch } from '@fortawesome/free-brands-svg-icons';
 import { saveAs } from 'file-saver';
 import { LCEntries } from '../../constants/LanguageCode';
 
@@ -34,6 +35,11 @@ class RoomData {
   SessPass: string = "";
   PassList: string = "";
   AuxLink: string[] = [];
+}
+
+class ChatData {
+  VidID: string = "";
+  IFrameEle: HTMLIFrameElement = document.createElement('iframe');
 }
 
 @Component({
@@ -105,7 +111,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     private TGEnc: TsugeGushiService,
     private TLService: TranslatorService,
     private route: ActivatedRoute
-  ) { }
+    ) { }
 
   ngOnDestroy(): void {
     this.SyncES?.close();
@@ -326,6 +332,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   6 => Save to Archive
   7 => Clear room
   8 => Edit Entry
+  11 => Load Chat
   */
   SetModalMenu(idx: number):void {
     this.ModalMenu = idx;
@@ -369,6 +376,10 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
       case 7:
         
         break;
+
+      case 11:
+        this.OpenChatLoad();
+        break;
     }
   }
 
@@ -376,6 +387,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     this.ModalNotif = true;
     this.NotifText = "FLUSHING ROOM..."
     this.ModalMenu = 0;
+    this.UnloadChat();
 
     this.TLService.FetchRaw(this.AppToken, this.TGEnc.TGEncoding(JSON.stringify({
       act: "Clear Room"
@@ -503,6 +515,7 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     this.ModalNotif = true;
     this.NotifText = "SAVING ARCHIVE..."
     this.ModalMenu = 0;
+    this.UnloadChat();
 
     if ((this.PassCheck == false) || (this.PassString.trim() == "")){
       this.PassCheck = false;
@@ -1007,6 +1020,24 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
         });
       }
 
+      this.SyncChat.forEach(e => {
+        switch (e.VidID.slice(0,3)) {
+          case "YT_":
+            e.IFrameEle.contentWindow?.postMessage({
+              n: "MChatXXMSync",
+              d: this.LocalPref + TempEntry["Stext"]
+            }, "https://www.youtube.com");
+            break;
+        
+          case "TW_":
+            e.IFrameEle.contentWindow?.postMessage({
+              n: "MChatXXMSync",
+              d: this.LocalPref + TempEntry["Stext"]
+            }, "https://www.twitch.tv");
+            break;
+        }
+      })
+
       this.TLEntry.Stext = "";
       setTimeout(() => {
         this.SpamBlock = false;
@@ -1040,12 +1071,14 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     });
 
     if (this.EntryList.filter(e => (e.Stext.indexOf('- Stream Starts -') != -1)).length == 0) {
-      //this.NormalStart();
+      this.NormalStart();
+      /*
       if (this.VidID != ""){
         this.TryFetchStart();
       } else {
         this.NormalStart();
       }
+      */
     }
   }
 
@@ -1730,6 +1763,101 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
 
 
 
+  //------------------------------------- LOAD CHAT -------------------------------------
+  SyncChat: ChatData[] = [];
+  ChatURLInput: string = "";
+
+  LoadChat() {
+    if (this.ChatURLInput.indexOf("https://www.youtube.com/watch?v=") == 0) {
+      var s = this.ChatURLInput.slice("https://www.youtube.com/watch?v=".length);
+      if (s.indexOf("?") != -1){
+        s = s.slice(0, s.indexOf("?"));
+      }
+
+      if (this.SyncChat.filter(e => e.VidID == "YT_" + s).length == 0) {
+        let TempIF: ChatData = {
+          VidID: "YT_" + s,
+          IFrameEle: document.createElement('iframe')
+        }
+        this.SyncChat.push(TempIF);
+  
+        TempIF.IFrameEle.width = "100%";
+        TempIF.IFrameEle.height = "100%";
+        TempIF.IFrameEle.frameBorder = "0";
+        TempIF.IFrameEle.src = "https://www.youtube.com/live_chat?v=" + s + "&embed_domain=" + environment.OriginDomain;
+        setTimeout(() => {
+          document.getElementById("ChatContainer_" + TempIF.VidID)?.append(TempIF.IFrameEle);
+        }, 333);
+      }
+    } else if (this.ChatURLInput.indexOf("https://youtu.be/") == 0) {
+      var s = this.ChatURLInput.slice("https://youtu.be/".length);
+      if (s.indexOf("?") != -1){
+        s = s.slice(0, s.indexOf("?"));
+      }
+
+      if (this.SyncChat.filter(e => e.VidID == "YT_" + s).length == 0) {
+        let TempIF: ChatData = {
+          VidID: "YT_" + s,
+          IFrameEle: document.createElement('iframe')
+        }
+        this.SyncChat.push(TempIF);
+        
+        TempIF.IFrameEle.width = "100%";
+        TempIF.IFrameEle.height = "100%";
+        TempIF.IFrameEle.frameBorder = "0";
+        TempIF.IFrameEle.src = "https://www.youtube.com/live_chat?v=" + s + "&embed_domain=" + environment.OriginDomain;
+        setTimeout(() => {
+          if (TempIF.IFrameEle) {
+            document.getElementById("ChatContainer_" + TempIF.VidID)?.append(TempIF.IFrameEle);
+          }
+        }, 333);
+      }
+    } else if (this.ChatURLInput.indexOf("https://www.twitch.tv/") == 0) {
+      var s = this.ChatURLInput.slice("https://www.twitch.tv/".length);
+      if (s.indexOf("?") != -1){
+        s = s.slice(0, s.indexOf("?"));
+      }
+
+      if (this.SyncChat.filter(e => e.VidID == "TW_" + s).length == 0) {
+        let TempIF: ChatData = {
+          VidID: "TW_" + s,
+          IFrameEle: document.createElement('iframe')
+        }
+        this.SyncChat.push(TempIF);
+        
+        TempIF.IFrameEle.width = "100%";
+        TempIF.IFrameEle.height = "100%";
+        TempIF.IFrameEle.frameBorder = "0";
+        TempIF.IFrameEle.src ="https://www.twitch.tv/embed/" + s + "/chat?parent=" + environment.OriginDomain;
+        setTimeout(() => {
+          if (TempIF.IFrameEle) {
+            document.getElementById("ChatContainer_" + TempIF.VidID)?.append(TempIF.IFrameEle);
+          }
+        }, 333);
+      }
+    }
+    this.ModalMenu = 0;
+  }
+
+  UnloadChat() {
+    while (this.SyncChat.length > 0) {
+      const e = this.SyncChat.pop();
+      e?.IFrameEle.parentNode?.removeChild(e?.IFrameEle);
+    }
+  }
+
+  OpenChatLoad() {
+    this.ChatURLInput = this.RoomDt.StreamLink;
+  }
+
+  RemoveOpenChat(idx: number) {
+    this.SyncChat[idx].IFrameEle.parentNode?.removeChild(this.SyncChat[idx].IFrameEle);
+    this.SyncChat.splice(idx, 1);
+  }
+  //===================================== LOAD CHAT =====================================
+
+
+
   ModalBackgroundClick():void {
     if (this.ModalMenu != 10) {
       this.ModalMenu = 0;
@@ -1838,4 +1966,6 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
   faHome = faHome;
   faWindowClose = faWindowClose;
   faPlusSquare = faPlusSquare;
+  faYoutube = faYoutube;
+  faTwitch = faTwitch;
 }
