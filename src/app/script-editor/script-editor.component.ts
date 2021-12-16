@@ -2260,31 +2260,32 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   IFOrigin:string = "";
 
   TimePing(timestamp: number): void {
-    /*
-    window.postMessage({
-      n: "MChatXXMSync",
-      d: timestamp
-    },"*");
-    */
+    if (this.IframeRef?.contentWindow) {
+      this.IframeRef?.contentWindow.postMessage({
+        n: "MChatXXMSync",
+        d: timestamp
+      }, this.IFOrigin);
+    }
   }
 
   StartPing(): void {
-    /*
-    window.postMessage({
-      n: "MChatXXMSync",
-      d: "s"
-    }, "*");
-    */
+    if (this.IframeRef?.contentWindow) {
+      this.IframeRef?.contentWindow.postMessage({
+        n: "MChatXXMSync",
+        d: "s"
+      }, this.IFOrigin);
+    }
   }
 
   ModePing(Mode: string): void {
-    /*
-    window.postMessage({
-      n: "MChatXXMSync",
-      d: Mode
-    }, "*");
-    */
-   switch (Mode) {
+    if (this.IframeRef?.contentWindow) {
+      this.IframeRef?.contentWindow.postMessage({
+        n: "MChatXXMSync",
+        d: Mode
+      }, this.IFOrigin);
+    }
+
+    switch (Mode) {
      case "TC":
        this.IFOrigin = "https://twitcasting.tv";
        break;
@@ -2304,12 +2305,12 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   PausePing(): void {
-    /*
-    window.postMessage({
-      n: "MChatXXMSync",
-      d: "p"
-    }, "*");
-    */
+    if (this.IframeRef?.contentWindow) {
+      this.IframeRef?.contentWindow.postMessage({
+        n: "MChatXXMSync",
+        d: "p"
+      }, this.IFOrigin);
+    }
   }
 
   LoadIframe(Mode: string): void {
@@ -3042,7 +3043,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   @HostListener('document:keydown.control.arrowright', ['$event'])
   CtrlRightKeypress(event: KeyboardEvent):void {
     this.TimerTime += 3000;
-    this.SendSeek();
+    this.SendSeek(3000);
     this.ScrollCalculator();
   }
 
@@ -3050,10 +3051,10 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
   CtrlLeftKeypress(event: KeyboardEvent):void {
     if (this.TimerTime > 5000) {
       this.TimerTime -= 3000;
-      this.SendSeek();
+      this.SendSeek(-3000);
     } else {
       this.TimerTime = 0;
-      this.SendSeek();
+      this.SendSeek(0);
     }
     this.ScrollCalculator();
   }
@@ -3120,7 +3121,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  SendSeek(){
+  SendSeek(timechange: number = 0){
     if (this.player){
       switch (this.VidType) {
         case "YT":
@@ -3134,9 +3135,9 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
         case "LL":
           this.player.currentTime = this.TimerTime/1000;
           break;
-
+        
         case "IF":
-          this.TimePing(this.TimerTime);
+          this.TimePing(timechange);
           break;
       }
     }

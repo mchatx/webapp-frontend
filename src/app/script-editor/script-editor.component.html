@@ -141,9 +141,9 @@
           > {{ this.EntryList[this.ActiveEntry].Stext }} </label>
   
         <div style="display: flex; flex-direction: row; align-items: center; margin-top: 5px;">
-          <a *ngIf="IFOrigin==''" class="button" style="font-size: 12px;" (click)="StopTimer(true)"><fa-icon [icon]="faStop"></fa-icon></a>
+          <a class="button" style="font-size: 12px;" (click)="StopTimer(true)"><fa-icon [icon]="faStop"></fa-icon></a>
           <span class="has-text-centered" style="width: 100%; margin-left: 5px; margin-right: 5px;">{{ TimerTime/1000 | timePrinter:true:true }}</span>
-          <a *ngIf="IFOrigin==''" class="button" style="font-size: 12px;" (click)="StartTimer(true)"><fa-icon [icon]="faPlay"></fa-icon></a>
+          <a class="button" style="font-size: 12px;" (click)="StartTimer(true)"><fa-icon [icon]="faPlay"></fa-icon></a>
         </div>
       </div>
 
