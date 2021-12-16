@@ -2200,9 +2200,8 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.IframeRef) {
       this.IframeRef.parentNode?.removeChild(this.IframeRef);
     }
-
     this.IframeRef = document.createElement('iframe');
-    this.IframeRef.src = "https://twitcasting.tv/" + UID + "/embeddedplayer/" + MID + "?auto_play=false&default_mute=false"
+    this.IframeRef.src = "https://twitcasting.tv/" + UID + "/embeddedplayer/" + MID + "?auto_play=false&default_mute=false";
     this.IframeRef.width = "100%";
     this.IframeRef.height = "100%";
     this.IframeRef.frameBorder = "0";
@@ -2264,7 +2263,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.IframeRef?.contentWindow.postMessage({
         n: "MChatXXMSync",
         d: timestamp
-      }, this.IFOrigin);
+      }, "https://app.mchatx.org");
     }
   }
 
@@ -2273,7 +2272,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.IframeRef?.contentWindow.postMessage({
         n: "MChatXXMSync",
         d: "s"
-      }, this.IFOrigin);
+      }, "https://app.mchatx.org");
     }
   }
 
@@ -2282,7 +2281,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.IframeRef?.contentWindow.postMessage({
         n: "MChatXXMSync",
         d: Mode
-      }, this.IFOrigin);
+      }, "https://app.mchatx.org");
     }
 
     switch (Mode) {
@@ -2309,7 +2308,7 @@ export class ScriptEditorComponent implements OnInit, AfterViewInit, OnDestroy {
       this.IframeRef?.contentWindow.postMessage({
         n: "MChatXXMSync",
         d: "p"
-      }, this.IFOrigin);
+      }, "https://app.mchatx.org");
     }
   }
 
