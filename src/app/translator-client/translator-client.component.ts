@@ -540,13 +540,17 @@ export class TranslatorClientComponent implements OnInit, OnDestroy {
     }))).subscribe({
       next: data => {
         this.EntryList = [];
-        this.ModalNotif = false;
         this.RoomDt.SessPass = "";
         this.RoomDt.Empty = true;
         this.RoomDt.Note = "";
         this.RoomDt.AuxLink = [];
         this.RoomDt.Tags = "";
         this.RoomDt.StreamLink = "";
+
+        this.NotifText = "Don't forget to check the timing later...";
+        setTimeout(() => {
+          this.ModalNotif = false;
+        }, 3000);
       },
       error: err => {
         this.NotifText = "ERROR FLUSHING ROOM...";
